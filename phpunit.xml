@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.0/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         executionOrder="random"
+         failOnWarning="true"
+         failOnRisky="true"
+         failOnEmptyTestSuite="true"
+         beStrictAboutOutputDuringTests="true"
+         cacheDirectory=".phpunit.cache"
+         backupStaticProperties="false">
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+        <exclude>
+            <directory>src/config</directory>
+            <file>src/JtdFirebaseModelsServiceProvider.php</file>
+        </exclude>
+    </source>
+    <coverage>
+        <report>
+            <html outputDirectory="coverage-html" lowUpperBound="50" highLowerBound="90"/>
+            <text outputFile="coverage.txt" showUncoveredFiles="false" showOnlySummary="true"/>
+            <clover outputFile="coverage.xml"/>
+        </report>
+    </coverage>
+    <logging>
+        <junit outputFile="test-results.xml"/>
+    </logging>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="CACHE_DRIVER" value="array"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="QUEUE_DRIVER" value="sync"/>
+        <env name="DB_CONNECTION" value="testing"/>
+        
+        <!-- Firebase Testing Configuration -->
+        <env name="FIREBASE_PROJECT_ID" value="test-project"/>
+        <env name="FIREBASE_PRIVATE_KEY_ID" value="test-key-id"/>
+        <env name="FIREBASE_PRIVATE_KEY" value="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7VJTUt9Us8cKB\ntest-key-content\n-----END PRIVATE KEY-----\n"/>
+        <env name="FIREBASE_CLIENT_EMAIL" value="test@test-project.iam.gserviceaccount.com"/>
+        <env name="FIREBASE_CLIENT_ID" value="123456789"/>
+        <env name="FIREBASE_AUTH_URI" value="https://accounts.google.com/o/oauth2/auth"/>
+        <env name="FIREBASE_TOKEN_URI" value="https://oauth2.googleapis.com/token"/>
+        <env name="FIREBASE_AUTH_PROVIDER_X509_CERT_URL" value="https://www.googleapis.com/oauth2/v1/certs"/>
+        <env name="FIREBASE_CLIENT_X509_CERT_URL" value="https://www.googleapis.com/robot/v1/metadata/x509/test%40test-project.iam.gserviceaccount.com"/>
+        
+        <!-- Disable actual Firebase connections in tests -->
+        <env name="FIREBASE_MOCK_MODE" value="true"/>
+    </php>
+</phpunit>

@@ -1,0 +1,239 @@
+# Dependencies
+/vendor/
+/node_modules/
+composer.lock
+package-lock.json
+yarn.lock
+
+# Environment & Configuration
+.env
+.env.*
+!.env.example
+.env.local
+.env.production
+.env.testing
+
+# Firebase Credentials (NEVER commit these)
+firebase-service-account.json
+*-service-account.json
+firebase-adminsdk-*.json
+serviceAccountKey.json
+google-services.json
+GoogleService-Info.plist
+
+# IDE & Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Testing & Coverage
+/coverage/
+/build/
+/.phpunit.cache
+.phpunit.result.cache
+test-results.xml
+coverage.xml
+coverage.clover
+.coverage
+htmlcov/
+.pytest_cache/
+.testmondata
+
+# Logs
+*.log
+/storage/logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache & Temporary Files
+.cache/
+.tmp/
+.temp/
+*.tmp
+*.cache
+.sass-cache/
+
+# Build Artifacts
+/dist/
+/public/build/
+/public/hot
+/public/storage
+/public/mix-manifest.json
+
+# Laravel Specific
+/bootstrap/cache/
+/storage/app/
+/storage/framework/cache/
+/storage/framework/sessions/
+/storage/framework/testing/
+/storage/framework/views/
+/storage/logs/
+
+# Package Development
+.phpunit.cache
+.php_cs.cache
+.php-cs-fixer.cache
+.phpstan.cache
+.psalm.cache
+
+# Documentation Build
+/docs/_build/
+/docs/.vuepress/dist/
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup Files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Security & Sensitive Data
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+auth.json
+
+# Local Development
+.vagrant/
+.docker/
+docker-compose.override.yml
+.devcontainer/
+
+# Package Manager
+.pnpm-debug.log*
+
+# Runtime
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local History for Visual Studio Code
+.history/
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+
+# temporary files which can be created if a process still has a handle open of a deleted file
+.fuse_hidden*
+
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+# .nfs files are created when an open file is removed but is still being accessed
+.nfs*
