@@ -57,7 +57,7 @@ class LightweightFirestoreMock
                         $this->mock = $mock;
                     }
                     
-                    public function document(string $id = null)
+                    public function document(?string $id = null)
                     {
                         $id = $id ?: $this->mock->generateDocumentId();
                         return new class($this->name, $id, $this->mock) {
@@ -221,24 +221,48 @@ class LightweightFirestoreMock
             }
         };
 
+        // Create a mock FirestoreClient that extends the real class
+        $mockFirestoreClient = new class($this, $mockClient) extends \Google\Cloud\Firestore\FirestoreClient {
+            private $mock;
+            private $client;
+
+            public function __construct($mock, $client)
+            {
+                $this->mock = $mock;
+                $this->client = $client;
+                // Don't call parent constructor to avoid Firebase setup
+            }
+
+            public function collection(string $name)
+            {
+                return $this->client->collection($name);
+            }
+
+            public function document(string $path)
+            {
+                [$collection, $id] = explode('/', $path, 2);
+                return $this->client->collection($collection)->document($id);
+            }
+        };
+
         // Bind the mock client to the container
-        app()->instance(FirestoreClient::class, $mockClient);
+        app()->instance(\Google\Cloud\Firestore\FirestoreClient::class, $mockFirestoreClient);
 
         // Also mock the Kreait Firestore contract
-        $mockFirestore = new class($mockClient) {
+        $mockFirestore = new class($mockFirestoreClient) implements \Kreait\Firebase\Contract\Firestore {
             private $client;
-            
+
             public function __construct($client)
             {
                 $this->client = $client;
             }
-            
-            public function database()
+
+            public function database(): \Google\Cloud\Firestore\FirestoreClient
             {
                 return $this->client;
             }
         };
-        
+
         app()->instance(\Kreait\Firebase\Contract\Firestore::class, $mockFirestore);
     }
 

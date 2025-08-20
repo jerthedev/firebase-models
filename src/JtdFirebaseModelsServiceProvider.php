@@ -11,6 +11,9 @@ use Google\Cloud\Firestore\FirestoreClient;
 use JTD\FirebaseModels\Firestore\FirestoreDatabase;
 use JTD\FirebaseModels\Auth\FirebaseGuard;
 use JTD\FirebaseModels\Auth\FirebaseUserProvider;
+use JTD\FirebaseModels\Auth\Middleware\FirebaseAuth;
+use JTD\FirebaseModels\Auth\Middleware\VerifyFirebaseToken;
+use JTD\FirebaseModels\Auth\Middleware\EnsureEmailIsVerified;
 
 class JtdFirebaseModelsServiceProvider extends ServiceProvider
 {
@@ -39,6 +42,7 @@ class JtdFirebaseModelsServiceProvider extends ServiceProvider
         ], 'firebase-models-config');
 
         $this->bootAuthGuard();
+        $this->registerMiddleware();
         $this->bootEventDispatcher();
         $this->validateConfiguration();
     }
@@ -101,8 +105,14 @@ class JtdFirebaseModelsServiceProvider extends ServiceProvider
      */
     protected function registerAuthComponents(): void
     {
-        // Auth guard and provider will be registered here
-        // This will be implemented in the Auth task
+        // Register the Firebase user provider
+        Auth::provider('firebase', function ($app, array $config) {
+            return new FirebaseUserProvider(
+                $app[FirebaseAuthContract::class],
+                $config['model'],
+                $app['hash']
+            );
+        });
     }
 
     /**
@@ -110,7 +120,30 @@ class JtdFirebaseModelsServiceProvider extends ServiceProvider
      */
     protected function bootAuthGuard(): void
     {
-        // Guard registration will be implemented in the Auth task
+        // Register the Firebase guard
+        Auth::extend('firebase', function ($app, $name, array $config) {
+            return new FirebaseGuard(
+                Auth::createUserProvider($config['provider']),
+                $app['request'],
+                $app[FirebaseAuthContract::class],
+                $config['input_key'] ?? 'token',
+                $config['header_key'] ?? 'Authorization',
+                $config['cookie_key'] ?? 'firebase_token'
+            );
+        });
+    }
+
+    /**
+     * Register Firebase authentication middleware.
+     */
+    protected function registerMiddleware(): void
+    {
+        $router = $this->app['router'];
+
+        // Register middleware aliases
+        $router->aliasMiddleware('firebase.auth', FirebaseAuth::class);
+        $router->aliasMiddleware('firebase.token', VerifyFirebaseToken::class);
+        $router->aliasMiddleware('firebase.verified', EnsureEmailIsVerified::class);
     }
 
     /**

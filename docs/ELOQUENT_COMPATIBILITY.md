@@ -38,6 +38,49 @@ This document outlines the compatibility between Laravel's Eloquent ORM and JTD 
 - **✅ Model Hydration**: Automatic conversion of Firestore documents to model instances
 - **✅ Collection Methods**: Full access to Laravel's collection manipulation methods
 
+## ✅ Firebase Authentication (Sprint 2 Week 1)
+
+### Laravel Auth Integration
+- **✅ Authenticatable Interface**: Complete implementation with Firebase UID as primary key
+- **✅ Authorizable Interface**: Full authorization support with Laravel's Gate system
+- **✅ CanResetPassword Interface**: Password reset interface (adapted for Firebase)
+- **✅ Notifiable Trait**: Laravel notification system integration
+- **✅ Email Verification**: `hasVerifiedEmail()`, `markEmailAsVerified()`, `getEmailForVerification()`
+
+### Firebase-Specific Features
+- **✅ Token Hydration**: Automatic user data extraction from Firebase ID tokens
+- **✅ Claims Mapping**: Custom claims support for roles and permissions
+- **✅ UserRecord Integration**: Hydration from Firebase Admin SDK UserRecord objects
+- **✅ Multi-Provider Support**: Handle multiple authentication providers (Google, Facebook, etc.)
+
+### Laravel Auth System Integration
+- **✅ Firebase Guard**: Custom guard implementing Laravel's Guard interface
+- **✅ Firebase User Provider**: Custom provider implementing Laravel's UserProvider interface
+- **✅ Service Provider Registration**: Automatic guard and provider registration
+- **✅ Token Sources**: Support for Bearer tokens, query params, input fields, and cookies
+- **✅ Laravel Auth Facade**: Full compatibility with `Auth::user()`, `Auth::check()`, etc.
+
+### Middleware Integration
+- **✅ Firebase Auth Middleware**: Laravel-compatible auth middleware with Firebase-specific features
+- **✅ Token Verification Middleware**: Standalone token verification without full authentication
+- **✅ Email Verification Middleware**: Firebase-compatible email verification enforcement
+- **✅ Automatic Registration**: Middleware aliases automatically registered in Laravel
+- **✅ Multiple Token Sources**: Bearer header, query params, form input, cookies
+
+### Laravel-Compatible User Model
+- **✅ Standard Attributes**: `name`, `email`, `email_verified_at`, `created_at`, `updated_at`
+- **✅ Hidden Attributes**: `password`, `remember_token` (for compatibility)
+- **✅ Casting Support**: `email_verified_at` as datetime, `password` as hashed
+- **✅ Mass Assignment**: Standard Laravel fillable/guarded protection
+- **✅ Query Scopes**: `verified()`, `unverified()`, `withRole()` scopes
+
+### Computed Attributes & Helpers
+- **✅ Avatar Support**: Gravatar integration with photo_url fallback
+- **✅ Name Handling**: `full_name`, `initials` computed attributes
+- **✅ Role Checking**: `isAdmin()`, `isModerator()`, `hasRole()`, `hasPermission()`
+- **✅ Preferences**: User preference storage and management
+- **✅ Localization**: Timezone and locale support
+
 ## 🔄 Planned Features (Sprint 2+)
 
 ### Relationships
@@ -183,6 +226,37 @@ $post->tags; // Returns Collection
 ```
 
 ## 🚫 Firestore Limitations & Differences
+
+### Firebase Authentication Constraints
+- **❌ Password Methods**: `getAuthPassword()` and `getAuthPasswordName()` throw exceptions (Firebase handles auth)
+- **❌ Remember Token**: `getRememberToken()` and `setRememberToken()` are no-ops (Firebase manages sessions)
+- **⚠️ Password Reset**: Uses Firebase Auth password reset flow, not Laravel's default email-based reset
+- **⚠️ Email Verification**: Uses Firebase email verification, not Laravel's default verification emails
+- **⚠️ Primary Key**: Uses Firebase UID (`uid`) instead of auto-incrementing `id`
+- **⚠️ User Storage**: Users stored in Firestore collections, not traditional database tables
+
+### Firebase Authentication Compatibility
+- **✅ Auth Facades**: Works with `Auth::user()`, `Auth::check()`, `Auth::id()`, etc.
+- **✅ Middleware**: Compatible with `auth`, `verified`, and custom auth middleware
+- **✅ Gates & Policies**: Full Laravel authorization system support
+- **✅ Notifications**: Send notifications to Firebase-authenticated users
+- **✅ Model Events**: User model events work exactly like Eloquent
+- **✅ Query Scopes**: User query scopes work with Firestore queries
+- **✅ Relationships**: Can define relationships with other Firestore models
+
+### Guard and Provider Features
+- **✅ Multiple Token Sources**: Bearer header, query params, form input, cookies
+- **✅ Token Validation**: Firebase ID token verification with proper error handling
+- **✅ User Resolution**: Automatic user creation/retrieval from Firebase Auth
+- **✅ Session Management**: Stateless authentication with optional session support
+- **✅ Laravel Integration**: Standard `attempt()`, `validate()`, `logout()` methods
+
+### Middleware Features
+- **✅ Standard Auth Middleware**: `auth:firebase` works like Laravel's built-in auth
+- **✅ Firebase-Specific Middleware**: `firebase.auth`, `firebase.token`, `firebase.verified`
+- **✅ Optional Authentication**: Token verification without requiring authentication
+- **✅ Error Handling**: Proper JSON responses for API requests, redirects for web
+- **✅ Request Attributes**: Token data automatically added to request for downstream use
 
 ### Unsupported Features
 - **Complex Joins**: No server-side joins in Firestore (use relationships with multiple queries)

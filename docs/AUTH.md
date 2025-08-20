@@ -58,13 +58,57 @@ Optionally set defaults:
   - Optionally syncs to local DB (if sync mode enabled)
 
 ## Middleware
-- Use 'auth:firebase' on routes to require authentication
-- For APIs, pair with 'throttle' and other standard middleware
-- Example:
 
+The package provides several middleware for Firebase authentication:
+
+### 1. Firebase Authentication (`auth:firebase`)
+- Standard Laravel auth middleware with Firebase guard
+- Requires valid Firebase ID token for access
+- Redirects web requests to login, returns 401 for API requests
+
+```php
 Route::middleware(['auth:firebase'])->group(function () {
     Route::get('/me', fn() => Auth::user());
 });
+```
+
+### 2. Firebase Auth Alias (`firebase.auth`)
+- Alias for Firebase authentication middleware
+- Same functionality as `auth:firebase`
+
+```php
+Route::middleware(['firebase.auth'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+});
+```
+
+### 3. Token Verification (`firebase.token`)
+- Verifies Firebase tokens without full authentication
+- Adds token data to request attributes
+- Supports optional verification
+
+```php
+// Required token verification
+Route::middleware(['firebase.token'])->group(function () {
+    Route::get('/public-data', [DataController::class, 'public']);
+});
+
+// Optional token verification
+Route::middleware(['firebase.token:optional'])->group(function () {
+    Route::get('/mixed-content', [ContentController::class, 'mixed']);
+});
+```
+
+### 4. Email Verification (`firebase.verified`)
+- Ensures authenticated user has verified email
+- Works with Firebase email verification
+- Compatible with Laravel's email verification
+
+```php
+Route::middleware(['auth:firebase', 'firebase.verified'])->group(function () {
+    Route::get('/verified-only', [SecureController::class, 'index']);
+});
+```
 
 ## Sessions vs Stateless
 - Stateless APIs: prefer bearer tokens per request

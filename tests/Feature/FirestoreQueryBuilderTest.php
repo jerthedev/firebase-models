@@ -9,11 +9,11 @@ class TestPost extends FirestoreModel
 {
     protected ?string $collection = 'posts';
     
-    protected $fillable = [
+    protected array $fillable = [
         'title', 'content', 'published', 'author_id', 'views'
     ];
-    
-    protected $casts = [
+
+    protected array $casts = [
         'published' => 'boolean',
         'views' => 'integer',
         'published_at' => 'datetime',

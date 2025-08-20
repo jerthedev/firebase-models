@@ -9,18 +9,18 @@ class TestUser extends FirestoreModel
 {
     protected ?string $collection = 'users';
     
-    protected $fillable = [
+    protected array $fillable = [
         'name', 'email', 'active', 'age'
     ];
-    
-    protected $casts = [
+
+    protected array $casts = [
         'active' => 'boolean',
         'age' => 'integer',
         'created_at' => 'datetime',
         'metadata' => 'array',
     ];
     
-    protected $hidden = [
+    protected array $hidden = [
         'password'
     ];
 }

@@ -20,8 +20,8 @@ class LightweightTestProduct extends FirestoreModel
 
 describe('FirestoreModel CRUD - Lightweight Tests', function () {
     beforeEach(function () {
-        // Enable lightweight mock to avoid memory issues
-        $this->enableLightweightMock();
+        // Use regular mock with increased memory limit
+        // $this->enableLightweightMock();
         $this->clearFirestoreMocks();
         LightweightTestProduct::flushEventListeners();
     });
@@ -55,7 +55,7 @@ describe('FirestoreModel CRUD - Lightweight Tests', function () {
             expect($product->wasRecentlyCreated)->toBeTrue();
             expect($product->id)->toBeString();
             
-            $this->assertFirestoreOperationCalled('set', 'lightweight_test_products');
+            $this->assertFirestoreOperationCalled('create', 'lightweight_test_products');
         });
 
         it('can create a model using the create method', function () {
@@ -71,7 +71,7 @@ describe('FirestoreModel CRUD - Lightweight Tests', function () {
             expect($product->exists)->toBeTrue();
             expect($product->wasRecentlyCreated)->toBeTrue();
             
-            $this->assertFirestoreOperationCalled('set', 'lightweight_test_products');
+            $this->assertFirestoreOperationCalled('create', 'lightweight_test_products');
         });
     });
 
