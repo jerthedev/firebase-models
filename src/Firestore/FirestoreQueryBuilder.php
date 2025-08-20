@@ -10,6 +10,7 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Support\Facades\Request;
 use Closure;
+use JTD\FirebaseModels\Cache\Concerns\Cacheable;
 
 /**
  * Laravel-style query builder for Firestore.
@@ -19,6 +20,7 @@ use Closure;
  */
 class FirestoreQueryBuilder
 {
+    use Cacheable;
     protected FirestoreDatabase $database;
     protected string $collection;
     protected CollectionReference $query;
@@ -387,23 +389,31 @@ class FirestoreQueryBuilder
      */
     public function get(array $columns = ['*']): Collection
     {
+        return $this->getCached('get', [$columns]);
+    }
+
+    /**
+     * Execute the query without caching (original implementation).
+     */
+    protected function parentGet(array $columns = ['*']): Collection
+    {
         if (!empty($columns) && $columns !== ['*']) {
             $this->select($columns);
         }
 
         $query = $this->buildQuery();
         $documents = $query->documents();
-        
+
         $results = new Collection();
         foreach ($documents as $document) {
             $data = $document->data();
             $data['id'] = $document->id();
-            
+
             // Apply column selection
             if (!empty($this->selects) && $this->selects !== ['*']) {
                 $data = array_intersect_key($data, array_flip($this->selects));
             }
-            
+
             $results->push((object) $data);
         }
 
@@ -430,7 +440,15 @@ class FirestoreQueryBuilder
      */
     public function first(array $columns = ['*']): ?object
     {
-        $results = $this->limit(1)->get($columns);
+        return $this->getCached('first', [$columns]);
+    }
+
+    /**
+     * Get a single result from the query without caching.
+     */
+    protected function parentFirst(array $columns = ['*']): ?object
+    {
+        $results = $this->limit(1)->parentGet($columns);
         return $results->first();
     }
 
@@ -485,7 +503,15 @@ class FirestoreQueryBuilder
      */
     public function exists(): bool
     {
-        return $this->limit(1)->count() > 0;
+        return $this->getCached('exists');
+    }
+
+    /**
+     * Determine if any rows exist for the current query without caching.
+     */
+    protected function parentExists(): bool
+    {
+        return $this->limit(1)->parentCount() > 0;
     }
 
     /**
@@ -709,6 +735,14 @@ class FirestoreQueryBuilder
      * Get the count of the total records.
      */
     public function count(string $columns = '*'): int
+    {
+        return $this->getCached('count', [$columns]);
+    }
+
+    /**
+     * Get the count of the total records without caching.
+     */
+    protected function parentCount(string $columns = '*'): int
     {
         $query = $this->buildQuery();
         $documents = $query->documents();

@@ -1,0 +1,365 @@
+<?php
+
+use JTD\FirebaseModels\Firestore\FirestoreModel;
+use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
+// Complete test model demonstrating real-world usage
+class UserModel extends FirestoreModel
+{
+    protected ?string $collection = 'users';
+    
+    protected array $fillable = [
+        'first_name', 'last_name', 'email', 'password', 'phone', 
+        'birth_date', 'preferences', 'avatar_url', 'status'
+    ];
+    
+    protected array $hidden = ['password'];
+    
+    protected array $appends = ['full_name', 'age', 'avatar_thumbnail'];
+    
+    protected array $casts = [
+        'birth_date' => 'date',
+        'preferences' => 'array',
+    ];
+
+    // Legacy accessor - full name
+    public function getFullNameAttribute(): string
+    {
+        return trim(($this->attributes['first_name'] ?? '') . ' ' . ($this->attributes['last_name'] ?? ''));
+    }
+
+    // Legacy accessor - calculated age
+    public function getAgeAttribute(): ?int
+    {
+        if (!isset($this->attributes['birth_date'])) {
+            return null;
+        }
+        
+        $birthDate = $this->asDateTime($this->attributes['birth_date']);
+        return $birthDate->diffInYears(now());
+    }
+
+    // Legacy mutator - email normalization
+    public function setEmailAttribute(string $value): void
+    {
+        $this->attributes['email'] = strtolower(trim($value));
+    }
+
+    // Legacy mutator - password hashing
+    public function setPasswordAttribute(string $value): void
+    {
+        $this->attributes['password'] = password_hash($value, PASSWORD_DEFAULT);
+    }
+
+    // Modern accessor/mutator - phone formatting
+    public function phone(): Attribute
+    {
+        return Attribute::make(
+            get: function (?string $value) {
+                if (!$value) return null;
+                
+                // Format as (XXX) XXX-XXXX for display
+                $digits = preg_replace('/\D/', '', $value);
+                if (strlen($digits) === 10) {
+                    return sprintf('(%s) %s-%s', 
+                        substr($digits, 0, 3),
+                        substr($digits, 3, 3),
+                        substr($digits, 6, 4)
+                    );
+                }
+                return $value;
+            },
+            set: function (?string $value) {
+                if (!$value) return null;
+                
+                // Store only digits
+                return preg_replace('/\D/', '', $value);
+            }
+        );
+    }
+
+    // Modern accessor - avatar thumbnail
+    public function avatarThumbnail(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $avatarUrl = $this->attributes['avatar_url'] ?? null;
+                if (!$avatarUrl) return null;
+                
+                // Generate thumbnail URL
+                return str_replace('/avatars/', '/avatars/thumbs/', $avatarUrl);
+            }
+        );
+    }
+
+    // Modern mutator - status with validation
+    public function status(): Attribute
+    {
+        return Attribute::make(
+            set: function (string $value) {
+                $validStatuses = ['active', 'inactive', 'pending', 'suspended'];
+                
+                if (!in_array($value, $validStatuses)) {
+                    throw new \InvalidArgumentException("Invalid status: {$value}");
+                }
+                
+                return [
+                    'status' => $value,
+                    'status_updated_at' => now()->toISOString(),
+                ];
+            }
+        );
+    }
+
+    // Modern accessor/mutator - preferences with defaults
+    public function preferences(): Attribute
+    {
+        return Attribute::make(
+            get: function (?string $value) {
+                $prefs = json_decode($value, true) ?? [];
+                
+                // Apply defaults
+                return array_merge([
+                    'theme' => 'light',
+                    'notifications' => true,
+                    'language' => 'en',
+                    'timezone' => 'UTC',
+                ], $prefs);
+            },
+            set: function ($value) {
+                if (is_array($value)) {
+                    return json_encode($value);
+                }
+                return $value;
+            }
+        );
+    }
+
+    // Helper method to check if user is adult
+    public function isAdult(): bool
+    {
+        return ($this->age ?? 0) >= 18;
+    }
+
+    // Helper method to get display name
+    public function getDisplayName(): string
+    {
+        return $this->full_name ?: $this->email;
+    }
+}
+
+describe('Accessor/Mutator Integration', function () {
+    beforeEach(function () {
+        FirestoreMock::initialize();
+    });
+
+    afterEach(function () {
+        FirestoreMock::clear();
+    });
+
+    describe('Real-World User Model', function () {
+        it('can create and manipulate user with accessors and mutators', function () {
+            $user = new UserModel();
+            
+            $user->fill([
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'email' => '  JOHN.DOE@EXAMPLE.COM  ',
+                'password' => 'secret123',
+                'phone' => '(555) 123-4567',
+                'birth_date' => '1990-01-01',
+                'avatar_url' => '/avatars/john-doe.jpg',
+                'status' => 'active',
+                'preferences' => ['theme' => 'dark', 'notifications' => false],
+            ]);
+
+            // Test accessors
+            expect($user->full_name)->toBe('John Doe');
+            expect($user->age)->toBeInt();
+            expect($user->age)->toBeGreaterThan(30);
+            expect($user->avatar_thumbnail)->toBe('/avatars/thumbs/john-doe.jpg');
+
+            // Test mutators
+            expect($user->getAttributes()['email'])->toBe('john.doe@example.com');
+            expect($user->getAttributes()['phone'])->toBe('5551234567'); // digits only
+            expect($user->phone)->toBe('(555) 123-4567'); // formatted for display
+            expect(password_verify('secret123', $user->getAttributes()['password']))->toBeTrue();
+
+            // Test preferences with defaults
+            $prefs = $user->preferences;
+            expect($prefs['theme'])->toBe('dark'); // user value
+            expect($prefs['notifications'])->toBeFalse(); // user value
+            expect($prefs['language'])->toBe('en'); // default value
+            expect($prefs['timezone'])->toBe('UTC'); // default value
+
+            // Test status mutator
+            expect($user->getAttributes()['status'])->toBe('active');
+            expect($user->getAttributes())->toHaveKey('status_updated_at');
+
+            // Test helper methods
+            expect($user->isAdult())->toBeTrue();
+            expect($user->getDisplayName())->toBe('John Doe');
+        });
+
+        it('validates status changes', function () {
+            $user = new UserModel();
+            
+            // Valid status
+            $user->status = 'pending';
+            expect($user->getAttributes()['status'])->toBe('pending');
+            
+            // Invalid status
+            expect(function () use ($user) {
+                $user->status = 'invalid_status';
+            })->toThrow(\InvalidArgumentException::class);
+        });
+
+        it('handles array conversion with accessors', function () {
+            $user = new UserModel();
+            $user->fill([
+                'first_name' => 'Jane',
+                'last_name' => 'Smith',
+                'email' => 'jane@example.com',
+                'password' => 'secret',
+                'phone' => '5559876543',
+                'birth_date' => '1985-06-15',
+                'avatar_url' => '/avatars/jane.jpg',
+                'preferences' => ['theme' => 'light'],
+            ]);
+
+            $array = $user->toArray();
+
+            // Should include appended attributes
+            expect($array)->toHaveKey('full_name');
+            expect($array['full_name'])->toBe('Jane Smith');
+            expect($array)->toHaveKey('age');
+            expect($array)->toHaveKey('avatar_thumbnail');
+            expect($array['avatar_thumbnail'])->toBe('/avatars/thumbs/jane.jpg');
+
+            // Should hide password
+            expect($array)->not->toHaveKey('password');
+
+            // Should format phone for display
+            expect($array['phone'])->toBe('(555) 987-6543');
+
+            // Should include preferences with defaults
+            expect($array['preferences']['theme'])->toBe('light');
+            expect($array['preferences']['language'])->toBe('en'); // default
+        });
+
+        it('handles JSON conversion with accessors', function () {
+            $user = new UserModel();
+            $user->fill([
+                'first_name' => 'Bob',
+                'last_name' => 'Wilson',
+                'email' => 'bob@example.com',
+                'phone' => '5551112222',
+                'birth_date' => '1992-12-25',
+            ]);
+
+            $json = $user->toJson();
+            $data = json_decode($json, true);
+
+            expect($data['full_name'])->toBe('Bob Wilson');
+            expect($data['phone'])->toBe('(555) 111-2222');
+            expect($data)->toHaveKey('age');
+            expect($data)->not->toHaveKey('password');
+        });
+
+        it('works with model persistence', function () {
+            FirestoreMock::createDocument('users', 'user1', [
+                'first_name' => 'Alice',
+                'last_name' => 'Johnson',
+                'email' => 'alice@example.com',
+                'phone' => '5554445555',
+                'birth_date' => '1988-03-10',
+                'avatar_url' => '/avatars/alice.jpg',
+                'preferences' => json_encode(['theme' => 'dark']),
+            ]);
+
+            $user = UserModel::find('user1');
+            
+            expect($user)->not->toBeNull();
+            expect($user->full_name)->toBe('Alice Johnson');
+            expect($user->phone)->toBe('(555) 444-5555');
+            expect($user->avatar_thumbnail)->toBe('/avatars/thumbs/alice.jpg');
+            
+            $prefs = $user->preferences;
+            expect($prefs['theme'])->toBe('dark');
+            expect($prefs['language'])->toBe('en'); // default
+        });
+
+        it('handles updates with mutators', function () {
+            $user = new UserModel();
+            $user->fill([
+                'first_name' => 'Charlie',
+                'last_name' => 'Brown',
+                'email' => 'charlie@example.com',
+                'phone' => '5556667777',
+            ]);
+
+            // Update with mutators
+            $user->email = '  CHARLIE.BROWN@NEWDOMAIN.COM  ';
+            $user->phone = '(555) 888-9999';
+            $user->status = 'inactive';
+
+            expect($user->getAttributes()['email'])->toBe('charlie.brown@newdomain.com');
+            expect($user->getAttributes()['phone'])->toBe('5558889999');
+            expect($user->getAttributes()['status'])->toBe('inactive');
+            expect($user->phone)->toBe('(555) 888-9999'); // formatted display
+        });
+
+        it('maintains performance with caching', function () {
+            $user = new UserModel();
+            
+            // First access should cache the mutator methods
+            $hasMutator1 = $user->hasSetMutator('email');
+            
+            // Subsequent accesses should use cache
+            $start = microtime(true);
+            for ($i = 0; $i < 100; $i++) {
+                $user->hasSetMutator('email');
+            }
+            $time = microtime(true) - $start;
+            
+            expect($hasMutator1)->toBeTrue();
+            expect($time)->toBeLessThan(0.01); // Should be very fast due to caching
+        });
+    });
+
+    describe('Edge Cases and Error Handling', function () {
+        it('handles null and empty values gracefully', function () {
+            $user = new UserModel();
+            
+            $user->phone = null;
+            expect($user->phone)->toBeNull();
+            
+            $user->phone = '';
+            expect($user->phone)->toBeNull();
+            
+            $user->first_name = '';
+            $user->last_name = '';
+            expect($user->full_name)->toBe('');
+        });
+
+        it('handles missing birth_date gracefully', function () {
+            $user = new UserModel();
+            $user->first_name = 'Test';
+            
+            expect($user->age)->toBeNull();
+            expect($user->isAdult())->toBeFalse();
+        });
+
+        it('handles malformed data gracefully', function () {
+            $user = new UserModel();
+            
+            // Set malformed preferences directly
+            $user->getAttributes()['preferences'] = 'invalid json';
+            
+            $prefs = $user->preferences;
+            expect($prefs)->toBeArray();
+            expect($prefs['theme'])->toBe('light'); // should get defaults
+        });
+    });
+});

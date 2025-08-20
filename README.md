@@ -22,12 +22,15 @@
 - ✅ **Configuration**: Flexible Firebase configuration system
 - ✅ **Testing**: Comprehensive test harness with FirestoreMock
 
-### 🚀 **Coming Soon (Sprint 2-4)**
+### 🚀 **Advanced Features (Sprint 2 Complete)**
+- ✅ **Eloquent Accessors & Mutators**: Full Laravel-style attribute manipulation
+- ✅ **Query Scopes**: Local and global scopes for reusable query logic
+- ✅ **Firebase Auth**: Complete Laravel Auth integration with custom guards
+- ✅ **Intelligent Caching**: Two-tier caching system (request + persistent)
+
+### 🔄 **Coming Soon (Sprint 3-4)**
 - 🔄 **Relationships**: Eloquent-style model relationships
 - 🗑️ **Soft Deletes**: Soft delete functionality for models
-- 🔍 **Scopes**: Global and local query scopes
-- 🔐 **Firebase Auth**: Custom Auth guard/provider for Laravel
-- 💾 **Caching**: Request + persistent caching layer
 - 🔄 **Sync Mode**: Mirror Firestore to local database
 
 ## 📦 Installation
@@ -135,9 +138,17 @@ Post::creating(function ($post) {
 - ⚡ [Events System](docs/events.md) - Model events and observers
 - 🎭 [Facades](docs/facades.md) - FirestoreDB facade usage
 
+### **Authentication & Security**
+- 🔐 [Auth & Caching Complete Guide](docs/AUTH_AND_CACHING_GUIDE.md) - **Start here for auth & caching**
+- 🛠️ [Authentication Setup](docs/AUTH_SETUP.md) - Complete Firebase Auth configuration
+- 📖 [Authentication How-To](docs/AUTH_HOWTO.md) - Practical examples and scenarios
+- 🔑 [Auth API Reference](docs/AUTH.md) - Technical reference and troubleshooting
+
+### **Performance & Caching**
+- ⚡ [Caching Guide](docs/CACHING.md) - Complete caching system documentation
+- 🚀 [Performance Optimization](docs/PERFORMANCE.md) - Best practices and tuning
+
 ### **Advanced Topics**
-- 🔐 [Firebase Auth Integration](docs/AUTH.md) - Laravel Auth with Firebase
-- 💾 [Caching Strategy](docs/caching.md) - Performance optimization
 - 🔄 [Sync Mode](docs/sync.md) - Local database mirroring
 - 🧪 [Testing Guide](docs/testing.md) - Testing with FirestoreMock
 

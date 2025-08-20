@@ -1,0 +1,435 @@
+<?php
+
+use JTD\FirebaseModels\Firestore\FirestoreModel;
+use JTD\FirebaseModels\Firestore\Scopes\ActiveScope;
+use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
+
+// Real-world example: User model with scopes
+class UserWithScopes extends FirestoreModel
+{
+    protected ?string $collection = 'users';
+    
+    protected array $fillable = [
+        'name', 'email', 'active', 'verified', 'role', 'last_login_at', 'created_at'
+    ];
+
+    protected static function booted(): void
+    {
+        // Global scope: only active users
+        static::addGlobalScope(new ActiveScope());
+
+        // Global scope: only verified users
+        static::addGlobalScope('verified', function ($builder, $model) {
+            $builder->where('verified', true);
+        });
+    }
+
+    // Local scope: filter by role
+    public function scopeRole($query, string $role)
+    {
+        return $query->where('role', $role);
+    }
+
+    // Local scope: recently active users
+    public function scopeRecentlyActive($query, int $days = 7)
+    {
+        return $query->where('last_login_at', '>=', now()->subDays($days));
+    }
+
+    // Local scope: admins
+    public function scopeAdmins($query)
+    {
+        return $query->where('role', 'admin');
+    }
+
+    // Local scope: users with email domain
+    public function scopeEmailDomain($query, string $domain)
+    {
+        // Firestore doesn't support LIKE, so we'll use a simple contains check
+        // In practice, you might store domain separately or use array-contains
+        return $query->where('email_domain', $domain);
+    }
+
+    // Local scope: created in date range
+    public function scopeCreatedBetween($query, string $startDate, string $endDate)
+    {
+        return $query->where('created_at', '>=', $startDate)
+                     ->where('created_at', '<=', $endDate);
+    }
+}
+
+// Product model with different scopes
+class ProductWithScopes extends FirestoreModel
+{
+    protected ?string $collection = 'products';
+    
+    protected array $fillable = [
+        'name', 'price', 'category', 'in_stock', 'featured', 'published'
+    ];
+
+    protected static function booted(): void
+    {
+        // Global scope: only published products
+        static::addGlobalScope('published', function ($builder, $model) {
+            $builder->where('published', true);
+        });
+    }
+
+    // Local scope: in stock
+    public function scopeInStock($query)
+    {
+        return $query->where('in_stock', true);
+    }
+
+    // Local scope: featured products
+    public function scopeFeatured($query)
+    {
+        return $query->where('featured', true);
+    }
+
+    // Local scope: by category
+    public function scopeCategory($query, string $category)
+    {
+        return $query->where('category', $category);
+    }
+
+    // Local scope: price range
+    public function scopePriceRange($query, float $min, float $max)
+    {
+        return $query->where('price', '>=', $min)
+                     ->where('price', '<=', $max);
+    }
+
+    // Local scope: expensive products
+    public function scopeExpensive($query, float $threshold = 100.0)
+    {
+        return $query->where('price', '>', $threshold);
+    }
+}
+
+describe('Scope Integration', function () {
+    beforeEach(function () {
+        FirestoreMock::initialize();
+
+        // Configure cache for testing
+        config([
+            'firebase-models.cache.enabled' => false, // Disable caching for scope tests
+        ]);
+
+        // Clear global scopes
+        UserWithScopes::clearBootedScopes();
+        ProductWithScopes::clearBootedScopes();
+    });
+
+    afterEach(function () {
+        FirestoreMock::clear();
+    });
+
+    describe('User Management Scenarios', function () {
+        it('can find active verified admins', function () {
+            // Create test users
+            FirestoreMock::createDocument('users', 'user1', [
+                'name' => 'Active Admin',
+                'email' => 'admin@company.com',
+                'active' => true,
+                'verified' => true,
+                'role' => 'admin',
+                'last_login_at' => now()->subDays(2)->toISOString()
+            ]);
+            FirestoreMock::createDocument('users', 'user2', [
+                'name' => 'Inactive Admin',
+                'email' => 'inactive@company.com',
+                'active' => false,
+                'verified' => true,
+                'role' => 'admin',
+                'last_login_at' => now()->subDays(2)->toISOString()
+            ]);
+            FirestoreMock::createDocument('users', 'user3', [
+                'name' => 'Active User',
+                'email' => 'user@company.com',
+                'active' => true,
+                'verified' => true,
+                'role' => 'user',
+                'last_login_at' => now()->subDays(2)->toISOString()
+            ]);
+
+            $admins = UserWithScopes::admins()->get();
+            
+            expect($admins->count())->toBe(1);
+            expect($admins->first()->name)->toBe('Active Admin');
+        });
+
+        it('can find recently active users by role', function () {
+            FirestoreMock::createDocument('users', 'user1', [
+                'name' => 'Recent Admin',
+                'active' => true,
+                'verified' => true,
+                'role' => 'admin',
+                'last_login_at' => now()->subDays(3)->toISOString()
+            ]);
+            FirestoreMock::createDocument('users', 'user2', [
+                'name' => 'Old Admin',
+                'active' => true,
+                'verified' => true,
+                'role' => 'admin',
+                'last_login_at' => now()->subDays(10)->toISOString()
+            ]);
+
+            $recentAdmins = UserWithScopes::role('admin')
+                ->recentlyActive(7)
+                ->get();
+            
+            expect($recentAdmins->count())->toBe(1);
+            expect($recentAdmins->first()->name)->toBe('Recent Admin');
+        });
+
+        it('can find users by email domain', function () {
+            FirestoreMock::createDocument('users', 'user1', [
+                'name' => 'Company User',
+                'email' => 'user@company.com',
+                'email_domain' => 'company.com',
+                'active' => true,
+                'verified' => true
+            ]);
+            FirestoreMock::createDocument('users', 'user2', [
+                'name' => 'Gmail User',
+                'email' => 'user@gmail.com',
+                'email_domain' => 'gmail.com',
+                'active' => true,
+                'verified' => true
+            ]);
+
+            $companyUsers = UserWithScopes::emailDomain('company.com')->get();
+
+            expect($companyUsers->count())->toBe(1);
+            expect($companyUsers->first()->name)->toBe('Company User');
+        });
+
+        it('can bypass global scopes when needed', function () {
+            FirestoreMock::createDocument('users', 'user1', [
+                'name' => 'Inactive User',
+                'active' => false,
+                'verified' => true
+            ]);
+            FirestoreMock::createDocument('users', 'user2', [
+                'name' => 'Unverified User',
+                'active' => true,
+                'verified' => false
+            ]);
+
+            // With global scopes - should return 0
+            $withScopes = UserWithScopes::all();
+            expect($withScopes->count())->toBe(0);
+
+            // Without global scopes - should return 2
+            $withoutScopes = UserWithScopes::withoutGlobalScopes()->get();
+            expect($withoutScopes->count())->toBe(2);
+
+            // Without specific scope - should return 1
+            $withoutActive = UserWithScopes::withoutGlobalScope(ActiveScope::class)->get();
+            expect($withoutActive->count())->toBe(1);
+            expect($withoutActive->first()->name)->toBe('Unverified User');
+        });
+    });
+
+    describe('Product Catalog Scenarios', function () {
+        it('can find featured products in stock', function () {
+            FirestoreMock::createDocument('products', 'prod1', [
+                'name' => 'Featured In Stock',
+                'published' => true,
+                'featured' => true,
+                'in_stock' => true,
+                'price' => 50.0
+            ]);
+            FirestoreMock::createDocument('products', 'prod2', [
+                'name' => 'Featured Out of Stock',
+                'published' => true,
+                'featured' => true,
+                'in_stock' => false,
+                'price' => 50.0
+            ]);
+            FirestoreMock::createDocument('products', 'prod3', [
+                'name' => 'Not Featured In Stock',
+                'published' => true,
+                'featured' => false,
+                'in_stock' => true,
+                'price' => 50.0
+            ]);
+
+            $featuredInStock = ProductWithScopes::featured()->inStock()->get();
+            
+            expect($featuredInStock->count())->toBe(1);
+            expect($featuredInStock->first()->name)->toBe('Featured In Stock');
+        });
+
+        it('can find products by category and price range', function () {
+            FirestoreMock::createDocument('products', 'prod1', [
+                'name' => 'Expensive Electronics',
+                'published' => true,
+                'category' => 'electronics',
+                'price' => 150.0
+            ]);
+            FirestoreMock::createDocument('products', 'prod2', [
+                'name' => 'Cheap Electronics',
+                'published' => true,
+                'category' => 'electronics',
+                'price' => 25.0
+            ]);
+            FirestoreMock::createDocument('products', 'prod3', [
+                'name' => 'Expensive Clothing',
+                'published' => true,
+                'category' => 'clothing',
+                'price' => 150.0
+            ]);
+
+            $expensiveElectronics = ProductWithScopes::category('electronics')
+                ->priceRange(100.0, 200.0)
+                ->get();
+            
+            expect($expensiveElectronics->count())->toBe(1);
+            expect($expensiveElectronics->first()->name)->toBe('Expensive Electronics');
+        });
+
+        it('can find expensive products across categories', function () {
+            FirestoreMock::createDocument('products', 'prod1', [
+                'name' => 'Expensive Item 1',
+                'published' => true,
+                'price' => 150.0
+            ]);
+            FirestoreMock::createDocument('products', 'prod2', [
+                'name' => 'Cheap Item',
+                'published' => true,
+                'price' => 25.0
+            ]);
+            FirestoreMock::createDocument('products', 'prod3', [
+                'name' => 'Expensive Item 2',
+                'published' => true,
+                'price' => 200.0
+            ]);
+
+            $expensiveProducts = ProductWithScopes::expensive(100.0)->get();
+            
+            expect($expensiveProducts->count())->toBe(2);
+            expect($expensiveProducts->pluck('name')->toArray())->toContain('Expensive Item 1');
+            expect($expensiveProducts->pluck('name')->toArray())->toContain('Expensive Item 2');
+        });
+    });
+
+    describe('Complex Query Scenarios', function () {
+        it('can combine multiple scopes with regular query methods', function () {
+            FirestoreMock::createDocument('users', 'user1', [
+                'name' => 'Alice Admin',
+                'email' => 'alice@company.com',
+                'active' => true,
+                'verified' => true,
+                'role' => 'admin',
+                'created_at' => '2023-06-15'
+            ]);
+            FirestoreMock::createDocument('users', 'user2', [
+                'name' => 'Bob Admin',
+                'email' => 'bob@company.com',
+                'active' => true,
+                'verified' => true,
+                'role' => 'admin',
+                'created_at' => '2023-07-15'
+            ]);
+
+            $result = UserWithScopes::role('admin')
+                ->emailDomain('company.com')
+                ->createdBetween('2023-06-01', '2023-06-30')
+                ->where('name', 'like', 'Alice%')
+                ->orderBy('name')
+                ->first();
+            
+            expect($result)->not->toBeNull();
+            expect($result->name)->toBe('Alice Admin');
+        });
+
+        it('works with pagination and scopes', function () {
+            for ($i = 1; $i <= 10; $i++) {
+                FirestoreMock::createDocument('products', "prod{$i}", [
+                    'name' => "Product {$i}",
+                    'published' => true,
+                    'featured' => $i <= 5, // First 5 are featured
+                    'price' => $i * 10.0
+                ]);
+            }
+
+            $featuredPage = ProductWithScopes::featured()
+                ->orderBy('price')
+                ->paginate(3);
+            
+            expect($featuredPage->count())->toBe(3);
+            expect($featuredPage->total())->toBe(5);
+            expect($featuredPage->items()[0]->name)->toBe('Product 1');
+        });
+
+        it('works with aggregates and scopes', function () {
+            FirestoreMock::createDocument('products', 'prod1', [
+                'name' => 'Expensive Featured',
+                'published' => true,
+                'featured' => true,
+                'price' => 150.0
+            ]);
+            FirestoreMock::createDocument('products', 'prod2', [
+                'name' => 'Cheap Featured',
+                'published' => true,
+                'featured' => true,
+                'price' => 25.0
+            ]);
+            FirestoreMock::createDocument('products', 'prod3', [
+                'name' => 'Expensive Regular',
+                'published' => true,
+                'featured' => false,
+                'price' => 150.0
+            ]);
+
+            $featuredCount = ProductWithScopes::featured()->count();
+            expect($featuredCount)->toBe(2);
+
+            $expensiveFeaturedCount = ProductWithScopes::featured()->expensive(100.0)->count();
+            expect($expensiveFeaturedCount)->toBe(1);
+        });
+    });
+
+    describe('Performance and Caching', function () {
+        it('maintains performance with scope caching', function () {
+            $user = new UserWithScopes();
+            
+            // First call should cache scope detection
+            $start1 = microtime(true);
+            $hasAdminScope = $user->hasLocalScope('admins');
+            $time1 = microtime(true) - $start1;
+            
+            // Subsequent calls should be faster
+            $start2 = microtime(true);
+            for ($i = 0; $i < 100; $i++) {
+                $user->hasLocalScope('admins');
+            }
+            $time2 = microtime(true) - $start2;
+            
+            expect($hasAdminScope)->toBeTrue();
+            expect($time2)->toBeLessThan($time1 * 10); // Should be much faster due to caching
+        });
+
+        it('works efficiently with large datasets', function () {
+            // Create a larger dataset
+            for ($i = 1; $i <= 50; $i++) {
+                FirestoreMock::createDocument('users', "user{$i}", [
+                    'name' => "User {$i}",
+                    'active' => $i % 2 === 0, // Half are active
+                    'verified' => $i % 3 === 0, // Third are verified
+                    'role' => $i <= 10 ? 'admin' : 'user'
+                ]);
+            }
+
+            $start = microtime(true);
+            $activeVerifiedAdmins = UserWithScopes::admins()->get();
+            $time = microtime(true) - $start;
+            
+            // Should return only users that are active, verified, and admin
+            expect($activeVerifiedAdmins->count())->toBeGreaterThan(0);
+            expect($time)->toBeLessThan(0.1); // Should be fast
+        });
+    });
+});

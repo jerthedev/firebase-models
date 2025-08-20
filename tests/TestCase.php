@@ -63,6 +63,16 @@ abstract class TestCase extends Orchestra
 
         // Enable mock mode for testing
         $app['config']->set('firebase.mock_mode', true);
+
+        // Configure cache for testing
+        $app['config']->set('cache.default', 'array');
+        $app['config']->set('cache.stores.array', [
+            'driver' => 'array',
+            'serialize' => false,
+        ]);
+
+        // Configure firebase-models cache
+        $app['config']->set('firebase-models.cache.store', 'array');
     }
 
     // setUpFirestoreMocking is now provided by FirestoreMockTrait

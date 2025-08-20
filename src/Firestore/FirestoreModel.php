@@ -14,6 +14,8 @@ use JsonSerializable;
 use ArrayAccess;
 use JTD\FirebaseModels\Facades\FirestoreDB;
 use JTD\FirebaseModels\Firestore\Concerns\HasAttributes;
+use JTD\FirebaseModels\Firestore\Concerns\HasEloquentAccessors;
+use JTD\FirebaseModels\Firestore\Concerns\HasScopes;
 use JTD\FirebaseModels\Firestore\Concerns\HasTimestamps;
 use JTD\FirebaseModels\Firestore\Concerns\HasEvents;
 use JTD\FirebaseModels\Firestore\Concerns\GuardsAttributes;
@@ -27,6 +29,7 @@ use JTD\FirebaseModels\Firestore\Concerns\GuardsAttributes;
 abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonSerializable
 {
     use HasAttributes,
+        HasScopes,
         HasTimestamps,
         HasEvents,
         GuardsAttributes;
@@ -382,9 +385,14 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
      */
     public function newModelQuery(): FirestoreQueryBuilder
     {
-        return $this->newFirestoreQueryBuilder(
+        $builder = $this->newFirestoreQueryBuilder(
             $this->newBaseQueryBuilder()
         )->setModel($this);
+
+        // Apply global scopes
+        $this->applyGlobalScopes($builder);
+
+        return $builder;
     }
 
     /**
@@ -848,6 +856,11 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
 
         if ($resolver = $this->relationResolver(static::class, $method)) {
             return $resolver($this);
+        }
+
+        // Check if it's a local scope
+        if ($this->hasLocalScope($method)) {
+            return $this->newQuery()->$method(...$parameters);
         }
 
         return $this->forwardCallTo($this->newQuery(), $method, $parameters);

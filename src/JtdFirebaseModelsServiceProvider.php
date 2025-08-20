@@ -14,6 +14,10 @@ use JTD\FirebaseModels\Auth\FirebaseUserProvider;
 use JTD\FirebaseModels\Auth\Middleware\FirebaseAuth;
 use JTD\FirebaseModels\Auth\Middleware\VerifyFirebaseToken;
 use JTD\FirebaseModels\Auth\Middleware\EnsureEmailIsVerified;
+use JTD\FirebaseModels\Cache\Middleware\ClearRequestCache;
+use JTD\FirebaseModels\Cache\RequestCache;
+use JTD\FirebaseModels\Cache\PersistentCache;
+use JTD\FirebaseModels\Cache\CacheManager;
 
 class JtdFirebaseModelsServiceProvider extends ServiceProvider
 {
@@ -43,6 +47,7 @@ class JtdFirebaseModelsServiceProvider extends ServiceProvider
 
         $this->bootAuthGuard();
         $this->registerMiddleware();
+        $this->configureCaching();
         $this->bootEventDispatcher();
         $this->validateConfiguration();
     }
@@ -144,6 +149,50 @@ class JtdFirebaseModelsServiceProvider extends ServiceProvider
         $router->aliasMiddleware('firebase.auth', FirebaseAuth::class);
         $router->aliasMiddleware('firebase.token', VerifyFirebaseToken::class);
         $router->aliasMiddleware('firebase.verified', EnsureEmailIsVerified::class);
+        $router->aliasMiddleware('firebase.cache.clear', ClearRequestCache::class);
+    }
+
+    /**
+     * Configure caching system.
+     */
+    protected function configureCaching(): void
+    {
+        // Configure request cache settings
+        $maxItems = config('firebase-models.cache.max_items', 1000);
+        RequestCache::setMaxItems($maxItems);
+
+        // Configure persistent cache settings
+        $store = config('firebase-models.cache.store');
+        $ttl = config('firebase-models.cache.ttl', 3600);
+        $prefix = config('firebase-models.cache.prefix', 'firestore');
+
+        PersistentCache::setDefaultStore($store);
+        PersistentCache::setDefaultTtl($ttl);
+        PersistentCache::setKeyPrefix($prefix);
+
+        // Configure cache manager
+        CacheManager::configure([
+            'request_cache_enabled' => config('firebase-models.cache.request_enabled', true),
+            'persistent_cache_enabled' => config('firebase-models.cache.persistent_enabled', true),
+            'default_ttl' => $ttl,
+            'default_store' => $store,
+            'auto_promote' => config('firebase-models.cache.auto_promote', true),
+        ]);
+
+        // Enable/disable caching based on config
+        $enabled = config('firebase-models.cache.enabled', true);
+        if ($enabled) {
+            RequestCache::enable();
+            PersistentCache::enable();
+        } else {
+            RequestCache::disable();
+            PersistentCache::disable();
+        }
+
+        // Automatically add cache clearing middleware to web routes
+        if (config('firebase-models.cache.auto_clear', true)) {
+            $this->app['router']->pushMiddlewareToGroup('web', ClearRequestCache::class);
+        }
     }
 
     /**

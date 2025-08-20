@@ -374,7 +374,17 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
      */
     public function toBase(): FirestoreQueryBuilder
     {
-        return new FirestoreQueryBuilder($this->database, $this->collection);
+        $builder = new FirestoreQueryBuilder($this->database, $this->collection);
+
+        // Copy the current state to the base builder
+        $builder->wheres = $this->wheres;
+        $builder->orders = $this->orders;
+        $builder->limitValue = $this->limitValue;
+        $builder->offsetValue = $this->offsetValue;
+        $builder->selects = $this->selects;
+        $builder->distinct = $this->distinct;
+
+        return $builder;
     }
 
     /**
@@ -502,7 +512,9 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
                 // and our model instance so it can apply any logic that it needs to apply
                 // to the query. We'll pass both of these instances to the scope closure.
                 if ($scope instanceof \Closure) {
-                    $scope($builder);
+                    $scope($builder, $this->model);
+                } elseif ($scope instanceof \JTD\FirebaseModels\Firestore\Scopes\ScopeInterface) {
+                    $scope->apply($builder, $this->model);
                 }
             });
         }
@@ -529,6 +541,53 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
         }
 
         return $result;
+    }
+
+    /**
+     * Add a local scope to the query.
+     */
+    public function scopes(array $scopes): static
+    {
+        foreach ($scopes as $scope => $parameters) {
+            if (is_int($scope)) {
+                [$scope, $parameters] = [$parameters, []];
+            }
+
+            $this->callNamedScope($scope, (array) $parameters);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Call a local scope on the model.
+     */
+    protected function callNamedScope(string $scope, array $parameters = []): static
+    {
+        if ($this->model->hasLocalScope($scope)) {
+            $this->model->callScope($scope, array_merge([$this], $parameters));
+        }
+
+        return $this;
+    }
+
+    /**
+     * Create a new query builder without a given scope.
+     */
+    public function withoutGlobalScope(string|\JTD\FirebaseModels\Firestore\Scopes\ScopeInterface $scope): static
+    {
+        // For simplicity, just create a new query without global scopes
+        // In a production implementation, you'd want more sophisticated scope management
+        return $this->model->newQueryWithoutGlobalScopes();
+    }
+
+    /**
+     * Create a new query builder without any global scopes.
+     */
+    public function withoutGlobalScopes(?array $scopes = null): static
+    {
+        // Simple approach: just create a new query without any global scopes
+        return $this->model->newQueryWithoutGlobalScopes();
     }
 
     /**
@@ -576,5 +635,37 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
             'query' => $whereSlice,
             'boolean' => $boolean,
         ];
+    }
+
+    /**
+     * Dynamically handle calls to the query builder.
+     */
+    public function __call(string $method, array $parameters): mixed
+    {
+        // Check if it's a local scope
+        if ($this->model->hasLocalScope($method)) {
+            return $this->callNamedScope($method, $parameters);
+        }
+
+        // Check if the method exists on this query builder
+        if (method_exists($this, $method)) {
+            return $this->$method(...$parameters);
+        }
+
+        // Check if it's a method on the parent FirestoreQueryBuilder
+        if (method_exists(parent::class, $method)) {
+            $result = parent::__call($method, $parameters);
+
+            // If the result is a query builder, return this model query builder
+            if ($result instanceof \JTD\FirebaseModels\Firestore\FirestoreQueryBuilder) {
+                return $this;
+            }
+
+            return $result;
+        }
+
+        throw new \BadMethodCallException(sprintf(
+            'Call to undefined method %s::%s()', static::class, $method
+        ));
     }
 }

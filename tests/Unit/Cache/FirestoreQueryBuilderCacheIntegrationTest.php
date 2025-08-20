@@ -1,0 +1,253 @@
+<?php
+
+use JTD\FirebaseModels\Cache\RequestCache;
+use JTD\FirebaseModels\Firestore\FirestoreQueryBuilder;
+use JTD\FirebaseModels\Firestore\FirestoreDatabase;
+use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
+
+describe('FirestoreQueryBuilder Cache Integration', function () {
+    beforeEach(function () {
+        // Initialize Firestore mock
+        FirestoreMock::initialize();
+        
+        // Clear request cache
+        RequestCache::clear();
+        RequestCache::resetStats();
+        RequestCache::enable();
+        
+        // Create a mock database and query builder
+        $mockFirestore = app(\Kreait\Firebase\Contract\Firestore::class);
+        $this->database = new FirestoreDatabase($mockFirestore);
+        $this->builder = new FirestoreQueryBuilder($this->database, 'test_collection');
+    });
+
+    afterEach(function () {
+        RequestCache::clear();
+        FirestoreMock::clear();
+    });
+
+    describe('Query Caching', function () {
+        it('caches get() query results', function () {
+            // Mock some test data
+            FirestoreMock::createDocument('test_collection', 'doc1', ['name' => 'Test 1', 'active' => true]);
+            FirestoreMock::createDocument('test_collection', 'doc2', ['name' => 'Test 2', 'active' => true]);
+
+            // First call should execute query and cache result
+            $result1 = $this->builder->get();
+            $stats1 = RequestCache::getStats();
+            
+            expect($result1)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+            expect($result1->count())->toBe(2);
+            expect($stats1['sets'])->toBe(1);
+            expect($stats1['misses'])->toBe(1);
+            expect($stats1['hits'])->toBe(0);
+
+            // Second call should return cached result
+            $result2 = $this->builder->get();
+            $stats2 = RequestCache::getStats();
+            
+            expect($result2)->toBe($result1);
+            expect($stats2['hits'])->toBe(1);
+            expect($stats2['misses'])->toBe(1);
+            expect($stats2['sets'])->toBe(1);
+        });
+
+        it('caches first() query results', function () {
+            // Mock some test data
+            FirestoreMock::createDocument('test_collection', 'doc1', ['name' => 'First Item', 'active' => true]);
+
+            // First call should execute query and cache result
+            $result1 = $this->builder->first();
+            $stats1 = RequestCache::getStats();
+            
+            expect($result1)->toBeObject();
+            expect($result1->name)->toBe('First Item');
+            expect($stats1['sets'])->toBe(1);
+
+            // Second call should return cached result
+            $result2 = $this->builder->first();
+            $stats2 = RequestCache::getStats();
+            
+            expect($result2)->toBe($result1);
+            expect($stats2['hits'])->toBe(1);
+        });
+
+        it('caches count() query results', function () {
+            // Mock some test data
+            FirestoreMock::createDocument('test_collection', 'doc1', ['name' => 'Test 1']);
+            FirestoreMock::createDocument('test_collection', 'doc2', ['name' => 'Test 2']);
+            FirestoreMock::createDocument('test_collection', 'doc3', ['name' => 'Test 3']);
+
+            // First call should execute query and cache result
+            $count1 = $this->builder->count();
+            $stats1 = RequestCache::getStats();
+            
+            expect($count1)->toBe(3);
+            expect($stats1['sets'])->toBe(1);
+
+            // Second call should return cached result
+            $count2 = $this->builder->count();
+            $stats2 = RequestCache::getStats();
+            
+            expect($count2)->toBe($count1);
+            expect($stats2['hits'])->toBe(1);
+        });
+
+        it('caches exists() query results', function () {
+            // Mock some test data
+            FirestoreMock::createDocument('test_collection', 'doc1', ['name' => 'Test']);
+
+            // First call should execute query and cache result
+            $exists1 = $this->builder->exists();
+            $stats1 = RequestCache::getStats();
+            
+            expect($exists1)->toBeTrue();
+            expect($stats1['sets'])->toBe(1);
+
+            // Second call should return cached result
+            $exists2 = $this->builder->exists();
+            $stats2 = RequestCache::getStats();
+            
+            expect($exists2)->toBe($exists1);
+            expect($stats2['hits'])->toBe(1);
+        });
+    });
+
+    describe('Cache Invalidation', function () {
+        it('generates different cache keys for different queries', function () {
+            // Mock some test data
+            FirestoreMock::createDocument('test_collection', 'doc1', ['name' => 'Test 1', 'active' => true]);
+            FirestoreMock::createDocument('test_collection', 'doc2', ['name' => 'Test 2', 'active' => false]);
+
+            // Different where conditions should generate different cache keys
+            $result1 = $this->builder->where('active', '==', true)->get();
+            $result2 = (new FirestoreQueryBuilder($this->database, 'test_collection'))
+                ->where('active', '==', false)->get();
+            
+            $stats = RequestCache::getStats();
+            
+            // Should have 2 cache sets (different queries)
+            expect($stats['sets'])->toBe(2);
+            expect($stats['hits'])->toBe(0);
+            expect($result1->count())->toBe(1);
+            expect($result2->count())->toBe(1);
+        });
+
+        it('can disable caching for specific queries', function () {
+            // Mock some test data
+            FirestoreMock::createDocument('test_collection', 'doc1', ['name' => 'Test']);
+
+            // Disable caching
+            $result1 = $this->builder->withoutCache()->get();
+            $result2 = $this->builder->withoutCache()->get();
+            
+            $stats = RequestCache::getStats();
+            
+            // No caching should occur
+            expect($stats['sets'])->toBe(0);
+            expect($stats['hits'])->toBe(0);
+            expect($stats['misses'])->toBe(0);
+        });
+
+        it('can clear cache for specific queries', function () {
+            // Mock some test data
+            FirestoreMock::createDocument('test_collection', 'doc1', ['name' => 'Test']);
+
+            // Cache some results
+            $this->builder->get();
+            $this->builder->first();
+            
+            expect($this->builder->isCached('get'))->toBeTrue();
+            expect($this->builder->isCached('first'))->toBeTrue();
+            
+            // Clear cache
+            $this->builder->clearCache();
+            
+            expect($this->builder->isCached('get'))->toBeFalse();
+            expect($this->builder->isCached('first'))->toBeFalse();
+        });
+    });
+
+    describe('Cache Performance', function () {
+        it('improves performance for repeated queries', function () {
+            // Mock some test data
+            for ($i = 1; $i <= 100; $i++) {
+                FirestoreMock::createDocument('test_collection', "doc{$i}", ['name' => "Test {$i}"]);
+            }
+
+            // Time the first query (uncached)
+            $start1 = microtime(true);
+            $result1 = $this->builder->get();
+            $time1 = microtime(true) - $start1;
+
+            // Time the second query (cached)
+            $start2 = microtime(true);
+            $result2 = $this->builder->get();
+            $time2 = microtime(true) - $start2;
+
+            // Cached query should be significantly faster
+            expect($result1)->toBe($result2);
+            expect($time2)->toBeLessThan($time1 * 0.5); // At least 50% faster
+            
+            $stats = RequestCache::getStats();
+            expect($stats['hits'])->toBe(1);
+            expect($stats['sets'])->toBe(1);
+        });
+
+        it('handles large result sets efficiently', function () {
+            // Mock a large dataset
+            for ($i = 1; $i <= 1000; $i++) {
+                FirestoreMock::createDocument('test_collection', "doc{$i}", [
+                    'name' => "Test {$i}",
+                    'value' => $i,
+                    'active' => $i % 2 === 0,
+                ]);
+            }
+
+            // Query and cache large result set
+            $result = $this->builder->get();
+            
+            expect($result->count())->toBe(1000);
+            expect($this->builder->isCached('get'))->toBeTrue();
+            
+            // Verify cache hit on second call
+            $result2 = $this->builder->get();
+            expect($result2)->toBe($result);
+            
+            $stats = RequestCache::getStats();
+            expect($stats['hits'])->toBe(1);
+            expect($stats['hit_rate'])->toBe(50.0);
+        });
+    });
+
+    describe('Cache Configuration', function () {
+        it('respects global cache enable/disable', function () {
+            // Mock some test data
+            FirestoreMock::createDocument('test_collection', 'doc1', ['name' => 'Test']);
+
+            // Disable caching globally
+            RequestCache::disable();
+            
+            $result1 = $this->builder->get();
+            $result2 = $this->builder->get();
+            
+            $stats = RequestCache::getStats();
+            
+            // No caching should occur when disabled
+            expect($stats['sets'])->toBe(0);
+            expect($stats['hits'])->toBe(0);
+            
+            // Re-enable caching
+            RequestCache::enable();
+            
+            $result3 = $this->builder->get();
+            $result4 = $this->builder->get();
+            
+            $stats = RequestCache::getStats();
+            
+            // Caching should work again
+            expect($stats['sets'])->toBe(1);
+            expect($stats['hits'])->toBe(1);
+        });
+    });
+});

@@ -6,6 +6,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Google\Cloud\Firestore\Timestamp;
 
 /**
@@ -207,15 +208,184 @@ trait HasAttributes
      */
     public function hasSetMutator(string $key): bool
     {
+        return $this->hasLegacySetMutator($key) || $this->hasAttributeMutator($key);
+    }
+
+    /**
+     * Determine if a legacy set mutator exists for an attribute.
+     */
+    public function hasLegacySetMutator(string $key): bool
+    {
         return method_exists($this, 'set'.Str::studly($key).'Attribute');
     }
+
+
 
     /**
      * Set the value of an attribute using its mutator.
      */
     protected function setMutatedAttributeValue(string $key, mixed $value): static
     {
-        return $this->{'set'.Str::studly($key).'Attribute'}($value);
+        // Try legacy mutator first
+        if ($this->hasLegacySetMutator($key)) {
+            $this->{'set'.Str::studly($key).'Attribute'}($value);
+            return $this;
+        }
+
+        // Try attribute mutator
+        if ($this->hasAttributeMutator($key)) {
+            $this->setAttributeMutatorValue($key, $value);
+            return $this;
+        }
+
+        // Fallback to direct assignment
+        $this->attributes[$key] = $value;
+        return $this;
+    }
+
+    /**
+     * Set the value using an attribute mutator.
+     */
+    protected function setAttributeMutatorValue(string $key, mixed $value): void
+    {
+        $method = Str::camel($key);
+
+        if (!method_exists($this, $method)) {
+            $this->attributes[$key] = $value;
+            return;
+        }
+
+        // Get the Attribute object
+        $attribute = $this->$method();
+
+        if (!$attribute instanceof Attribute) {
+            $this->attributes[$key] = $value;
+            return;
+        }
+
+        // Call the set method if it exists
+        $set = $attribute->set;
+
+        if ($set instanceof \Closure) {
+            $result = $set($value, $this->attributes);
+
+            // If the setter returns an array, merge it with attributes
+            if (is_array($result)) {
+                foreach ($result as $k => $v) {
+                    $this->attributes[$k] = $v;
+                }
+            } else {
+                $this->attributes[$key] = $result;
+            }
+        } else {
+            $this->attributes[$key] = $value;
+        }
+    }
+
+    /**
+     * Create an Attribute object for modern accessor/mutator definition.
+     */
+    public static function make(?callable $get = null, ?callable $set = null): Attribute
+    {
+        return new Attribute($get, $set);
+    }
+
+    /**
+     * Set multiple attributes using mutators.
+     */
+    public function setMutatedAttributes(array $attributes): static
+    {
+        foreach ($attributes as $key => $value) {
+            if ($this->hasSetMutator($key)) {
+                $this->setMutatedAttributeValue($key, $value);
+            } else {
+                $this->attributes[$key] = $value;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get the original value of a mutated attribute.
+     */
+    public function getOriginalMutatedValue(string $key): mixed
+    {
+        return $this->original[$key] ?? null;
+    }
+
+    /**
+     * Determine if a mutated attribute has changed.
+     */
+    public function mutatedAttributeHasChanged(string $key): bool
+    {
+        if (!$this->hasSetMutator($key)) {
+            return false;
+        }
+
+        $current = $this->attributes[$key] ?? null;
+        $original = $this->original[$key] ?? null;
+
+        return $current !== $original;
+    }
+
+    /**
+     * Get all changed mutated attributes.
+     */
+    public function getChangedMutatedAttributes(): array
+    {
+        $changed = [];
+
+        // Check all current attributes to see if they have mutators and have changed
+        foreach (array_keys($this->attributes) as $key) {
+            if ($this->hasSetMutator($key) && $this->mutatedAttributeHasChanged($key)) {
+                $changed[$key] = $this->attributes[$key] ?? null;
+            }
+        }
+
+        return $changed;
+    }
+
+    /**
+     * Clear the mutator cache for a class.
+     */
+    public static function clearMutatorCache(?string $class = null): void
+    {
+        if ($class) {
+            unset(static::$mutatorCache[$class]);
+        } else {
+            static::$mutatorCache = [];
+        }
+    }
+
+    /**
+     * Get all cached mutators.
+     */
+    public static function getCachedMutators(): array
+    {
+        return [
+            'legacy' => static::$mutatorCache,
+            'modern' => [], // Modern mutators are detected on-demand
+        ];
+    }
+
+    /**
+     * Reset all mutated attributes to their original values.
+     */
+    public function resetMutatedAttributes(): static
+    {
+        // Check all current attributes to see if they have mutators
+        foreach (array_keys($this->attributes) as $key) {
+            if ($this->hasSetMutator($key)) {
+                if (array_key_exists($key, $this->original)) {
+                    $this->attributes[$key] = $this->original[$key];
+                } else {
+                    unset($this->attributes[$key]);
+                }
+            }
+        }
+
+        return $this;
     }
 
     /**
@@ -771,7 +941,42 @@ trait HasAttributes
      */
     public function hasGetMutator(string $key): bool
     {
+        return $this->hasLegacyGetMutator($key) || $this->hasAttributeAccessor($key);
+    }
+
+    /**
+     * Determine if a legacy get mutator exists for an attribute.
+     */
+    public function hasLegacyGetMutator(string $key): bool
+    {
         return method_exists($this, 'get'.Str::studly($key).'Attribute');
+    }
+
+    /**
+     * Determine if an attribute accessor exists for an attribute.
+     */
+    public function hasAttributeAccessor(string $key): bool
+    {
+        $method = Str::camel($key);
+
+        if (!method_exists($this, $method)) {
+            return false;
+        }
+
+        try {
+            $reflection = new \ReflectionMethod($this, $method);
+
+            // Skip if method has parameters
+            if ($reflection->getNumberOfParameters() > 0) {
+                return false;
+            }
+
+            // Check return type
+            $returnType = $reflection->getReturnType();
+            return $returnType && $returnType->getName() === Attribute::class;
+        } catch (\ReflectionException $e) {
+            return false;
+        }
     }
 
     /**
@@ -779,7 +984,45 @@ trait HasAttributes
      */
     protected function mutateAttribute(string $key, mixed $value): mixed
     {
-        return $this->{'get'.Str::studly($key).'Attribute'}($value);
+        // Try legacy accessor first
+        if ($this->hasLegacyGetMutator($key)) {
+            return $this->{'get'.Str::studly($key).'Attribute'}($value);
+        }
+
+        // Try attribute accessor
+        if ($this->hasAttributeAccessor($key)) {
+            return $this->getAttributeAccessorValue($key, $value);
+        }
+
+        return $value;
+    }
+
+    /**
+     * Get the value using an attribute accessor.
+     */
+    protected function getAttributeAccessorValue(string $key, mixed $value): mixed
+    {
+        $method = Str::camel($key);
+
+        if (!method_exists($this, $method)) {
+            return $value;
+        }
+
+        // Get the Attribute object
+        $attribute = $this->$method();
+
+        if (!$attribute instanceof Attribute) {
+            return $value;
+        }
+
+        // Call the get method if it exists
+        $get = $attribute->get;
+
+        if ($get instanceof \Closure) {
+            return $get($value, $this->attributes);
+        }
+
+        return $value;
     }
 
     /**
@@ -876,6 +1119,15 @@ trait HasAttributes
             $attributes[$key] = $this->mutateAttributeForArray(
                 $key, $attributes[$key]
             );
+        }
+
+        // Also check for any attributes that have accessors but aren't in the mutated list
+        foreach (array_keys($attributes) as $key) {
+            if (!in_array($key, $mutatedAttributes) && $this->hasGetMutator($key)) {
+                $attributes[$key] = $this->mutateAttributeForArray(
+                    $key, $attributes[$key]
+                );
+            }
         }
 
         return $attributes;
@@ -1008,7 +1260,72 @@ trait HasAttributes
             static::cacheMutatedAttributes($class);
         }
 
-        return static::$mutatorCache[$class];
+        // Also include modern Attribute accessors/mutators
+        $modernAttributes = $this->getModernAttributeAccessors();
+
+        return array_unique(array_merge(static::$mutatorCache[$class], $modernAttributes));
+    }
+
+    /**
+     * Get all modern Attribute accessor/mutator methods.
+     */
+    protected function getModernAttributeAccessors(): array
+    {
+        static $cache = [];
+        $class = static::class;
+
+        if (isset($cache[$class])) {
+            return $cache[$class];
+        }
+
+        $methods = get_class_methods($class);
+        $attributes = [];
+
+        foreach ($methods as $method) {
+            // Skip magic methods and known framework methods
+            if (str_starts_with($method, '__') ||
+                str_starts_with($method, 'get') ||
+                str_starts_with($method, 'set') ||
+                in_array($method, [
+                    'boot', 'booted', 'bootIfNotBooted', 'initializeTraits', 'fill', 'save',
+                    'delete', 'update', 'create', 'find', 'where', 'first', 'get', 'all',
+                    'toArray', 'toJson', 'getAttribute', 'setAttribute', 'hasGetMutator',
+                    'hasSetMutator', 'mutateAttribute', 'getMutatedAttributes', 'getModernAttributeAccessors'
+                ])) {
+                continue;
+            }
+
+            try {
+                $reflection = new \ReflectionMethod($class, $method);
+
+                // Skip if method has parameters
+                if ($reflection->getNumberOfParameters() > 0) {
+                    continue;
+                }
+
+                // Skip if method is not public
+                if (!$reflection->isPublic()) {
+                    continue;
+                }
+
+                // Check if method returns an Attribute object by calling it
+                try {
+                    $result = $this->$method();
+                    if ($result instanceof Attribute) {
+                        $attributeName = Str::snake($method);
+                        $attributes[] = $attributeName;
+                    }
+                } catch (\Throwable $e) {
+                    // Skip methods that throw exceptions when called
+                    continue;
+                }
+            } catch (\ReflectionException $e) {
+                // Skip methods that can't be reflected
+                continue;
+            }
+        }
+
+        return $cache[$class] = $attributes;
     }
 
     /**
@@ -1050,8 +1367,13 @@ trait HasAttributes
     /**
      * Decode the given JSON back into an array or object.
      */
-    protected function fromJson(string $value, bool $asObject = false): mixed
+    protected function fromJson(string|array $value, bool $asObject = false): mixed
     {
+        // If value is already an array, return it as-is
+        if (is_array($value)) {
+            return $asObject ? (object) $value : $value;
+        }
+
         $decoded = json_decode($value, !$asObject);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
