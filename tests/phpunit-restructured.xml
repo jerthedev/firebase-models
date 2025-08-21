@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         cacheDirectory=".phpunit.cache"
+         backupGlobals="false"
+         backupStaticAttributes="false">
+    
+    <!-- Test Suites organized by type and performance characteristics -->
+    <testsuites>
+        <!-- Ultra-fast unit tests with minimal memory usage -->
+        <testsuite name="Unit-UltraLight">
+            <directory>tests/Unit/Restructured</directory>
+            <directory>tests/Unit/Cache</directory>
+            <directory>tests/Unit/Auth</directory>
+        </testsuite>
+        
+        <!-- Integration tests with balanced performance -->
+        <testsuite name="Integration-Lightweight">
+            <directory>tests/Integration</directory>
+        </testsuite>
+        
+        <!-- Feature tests with full mock capabilities -->
+        <testsuite name="Feature-Full">
+            <directory>tests/Feature</directory>
+        </testsuite>
+        
+        <!-- Performance and memory tests -->
+        <testsuite name="Performance">
+            <file>tests/Unit/MemoryOptimizationTest.php</file>
+            <file>tests/Unit/MockSystemConsolidationTest.php</file>
+        </testsuite>
+        
+        <!-- Legacy tests (to be migrated) -->
+        <testsuite name="Legacy">
+            <directory>tests/Unit</directory>
+            <exclude>tests/Unit/Restructured</exclude>
+            <exclude>tests/Unit/Cache</exclude>
+            <exclude>tests/Unit/Auth</exclude>
+            <exclude>tests/Unit/MemoryOptimizationTest.php</exclude>
+            <exclude>tests/Unit/MockSystemConsolidationTest.php</exclude>
+        </testsuite>
+    </testsuites>
+
+    <!-- Source code coverage -->
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+        <exclude>
+            <directory>src/Console</directory>
+            <file>src/FirebaseModelsServiceProvider.php</file>
+        </exclude>
+    </source>
+
+    <!-- Environment variables for test configuration -->
+    <php>
+        <!-- Test environment configuration -->
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_KEY" value="base64:2fl+Ktvkdg+Yc/qjJ5/2SLDNDpfQBfbLiEcLGOQFiaY="/>
+        
+        <!-- Firebase configuration -->
+        <env name="FIREBASE_PROJECT_ID" value="test-project"/>
+        <env name="FIREBASE_PRIVATE_KEY" value="test-key"/>
+        <env name="FIREBASE_CLIENT_EMAIL" value="test@test-project.iam.gserviceaccount.com"/>
+        
+        <!-- Test-specific configuration -->
+        <env name="TEST_MOCK_TYPE" value="ultra"/>
+        <env name="TEST_MEMORY_LIMIT" value="256M"/>
+        <env name="TEST_TIMEOUT" value="30"/>
+        <env name="TEST_ENABLE_LOGGING" value="false"/>
+        <env name="TEST_ENABLE_PROFILING" value="false"/>
+        <env name="TEST_MEMORY_WARNING" value="50M"/>
+        <env name="TEST_MEMORY_CRITICAL" value="100M"/>
+        
+        <!-- Cache configuration -->
+        <env name="CACHE_DRIVER" value="array"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+    </php>
+
+    <!-- Logging configuration -->
+    <logging>
+        <junit outputFile="tests/reports/junit.xml"/>
+        <teamcity outputFile="tests/reports/teamcity.txt"/>
+    </logging>
+
+    <!-- Extensions for enhanced testing -->
+    <extensions>
+        <!-- Add memory usage reporting extension if available -->
+    </extensions>
+</phpunit>

@@ -198,6 +198,11 @@ trait HasAttributes
             $value = $this->castAttributeAsEncryptedString($key, $value);
         }
 
+        // Cast primitive types during setting for proper dirty tracking
+        if ($this->hasCast($key) && in_array($this->getCastType($key), static::$primitiveCastTypes)) {
+            $value = $this->castAttribute($key, $value);
+        }
+
         $this->attributes[$key] = $value;
 
         return $this;
@@ -418,6 +423,27 @@ trait HasAttributes
     }
 
     /**
+     * Return a boolean value.
+     */
+    protected function asBoolean(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_string($value)) {
+            $value = strtolower(trim($value));
+            return in_array($value, ['1', 'true', 'yes', 'on'], true);
+        }
+
+        if (is_numeric($value)) {
+            return (bool) $value;
+        }
+
+        return (bool) $value;
+    }
+
+    /**
      * Return a timestamp as DateTime object.
      */
     protected function asDateTime(mixed $value): Carbon
@@ -599,7 +625,7 @@ trait HasAttributes
                 return (string) $value;
             case 'bool':
             case 'boolean':
-                return (bool) $value;
+                return $this->asBoolean($value);
             case 'object':
                 return $this->fromJson($value, true);
             case 'array':
@@ -790,6 +816,9 @@ trait HasAttributes
     {
         $this->changes = $this->getDirty();
 
+        // After recording changes, sync original to make model clean
+        $this->syncOriginal();
+
         return $this;
     }
 
@@ -854,7 +883,8 @@ trait HasAttributes
 
         foreach ($this->getAttributes() as $key => $value) {
             if (!$this->originalIsEquivalent($key)) {
-                $dirty[$key] = $value;
+                // Return the cast value for consistency
+                $dirty[$key] = $this->hasCast($key) ? $this->castAttribute($key, $value) : $value;
             }
         }
 
@@ -867,6 +897,18 @@ trait HasAttributes
     public function getChanges(): array
     {
         return $this->changes;
+    }
+
+    /**
+     * Get the model's original attribute values.
+     */
+    public function getOriginal(?string $key = null): mixed
+    {
+        if ($key) {
+            return $this->original[$key] ?? null;
+        }
+
+        return $this->original;
     }
 
     /**

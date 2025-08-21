@@ -42,12 +42,20 @@ return [
 
     'cache' => [
         'enabled' => env('FIREBASE_CACHE_ENABLED', true),
-        
+
+        'request_enabled' => env('FIREBASE_CACHE_REQUEST_ENABLED', true),
+
+        'persistent_enabled' => env('FIREBASE_CACHE_PERSISTENT_ENABLED', true),
+
         'store' => env('FIREBASE_CACHE_STORE', 'redis'),
-        
+
         'ttl' => env('FIREBASE_CACHE_TTL', 300), // 5 minutes
-        
+
         'prefix' => env('FIREBASE_CACHE_PREFIX', 'firebase_models'),
+
+        'auto_promote' => env('FIREBASE_CACHE_AUTO_PROMOTE', true),
+
+        'max_items' => env('FIREBASE_CACHE_MAX_ITEMS', 1000),
     ],
 
     /*

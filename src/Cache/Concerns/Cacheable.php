@@ -124,9 +124,9 @@ trait Cacheable
             if (!is_array($columns)) {
                 $columns = [$columns];
             }
-            return QueryCacheKey::forModelQuery($this, $columns);
+            return QueryCacheKey::forModelQuery($this, $columns, $method);
         } elseif ($this instanceof \JTD\FirebaseModels\Firestore\FirestoreQueryBuilder) {
-            return QueryCacheKey::forQueryBuilder($this);
+            return QueryCacheKey::forQueryBuilder($this, $method, $arguments);
         }
 
         // Fallback to generic key generation

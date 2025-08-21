@@ -179,10 +179,34 @@ abstract class TestCase extends Orchestra
     {
         // Clear Firestore mocks
         $this->clearFirestoreMocks();
-        
+
         // Unfreeze time
         $this->unfreezeTimeAt();
-        
+
+        // Force garbage collection to free memory
+        $this->forceGarbageCollection();
+
         parent::tearDown();
+    }
+
+    /**
+     * Force garbage collection to free memory between tests.
+     */
+    protected function forceGarbageCollection(): void
+    {
+        // Close Mockery to free mock objects
+        if (class_exists(\Mockery::class)) {
+            \Mockery::close();
+        }
+
+        // Clear Laravel container instances (skip for now to avoid issues)
+
+        // Force PHP garbage collection
+        if (function_exists('gc_collect_cycles')) {
+            gc_collect_cycles();
+        }
+
+        // Clear any static caches
+        \Illuminate\Support\Facades\Cache::flush();
     }
 }

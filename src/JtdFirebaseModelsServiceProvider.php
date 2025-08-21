@@ -170,22 +170,33 @@ class JtdFirebaseModelsServiceProvider extends ServiceProvider
         PersistentCache::setDefaultTtl($ttl);
         PersistentCache::setKeyPrefix($prefix);
 
-        // Configure cache manager
+        // Get global cache enabled setting
+        $globalEnabled = config('firebase-models.cache.enabled', true);
+
+        // Determine individual cache component states
+        // If global cache is disabled, disable both components regardless of individual settings
+        $requestEnabled = $globalEnabled && config('firebase-models.cache.request_enabled', true);
+        $persistentEnabled = $globalEnabled && config('firebase-models.cache.persistent_enabled', true);
+
+        // Configure cache manager with proper enabled states
         CacheManager::configure([
-            'request_cache_enabled' => config('firebase-models.cache.request_enabled', true),
-            'persistent_cache_enabled' => config('firebase-models.cache.persistent_enabled', true),
+            'request_cache_enabled' => $requestEnabled,
+            'persistent_cache_enabled' => $persistentEnabled,
             'default_ttl' => $ttl,
             'default_store' => $store,
             'auto_promote' => config('firebase-models.cache.auto_promote', true),
         ]);
 
-        // Enable/disable caching based on config
-        $enabled = config('firebase-models.cache.enabled', true);
-        if ($enabled) {
+        // Enable/disable individual cache components
+        if ($requestEnabled) {
             RequestCache::enable();
-            PersistentCache::enable();
         } else {
             RequestCache::disable();
+        }
+
+        if ($persistentEnabled) {
+            PersistentCache::enable();
+        } else {
             PersistentCache::disable();
         }
 

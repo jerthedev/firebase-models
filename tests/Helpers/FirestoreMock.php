@@ -450,10 +450,28 @@ class FirestoreMock
 
     public static function clear(): void
     {
-        $instance = static::getInstance();
-        $instance->documents = [];
-        $instance->operations = [];
-        $instance->queryMocks = [];
+        if (static::$instance !== null) {
+            $instance = static::$instance;
+            $instance->documents = [];
+            $instance->operations = [];
+            $instance->queryMocks = [];
+
+            // Clear mock client and close Mockery
+            if ($instance->mockClient !== null) {
+                $instance->mockClient = null;
+            }
+        }
+
+        // Reset static instance to force recreation
+        static::$instance = null;
+
+        // Clear Laravel container bindings
+        if (app()->bound(\Google\Cloud\Firestore\FirestoreClient::class)) {
+            app()->forgetInstance(\Google\Cloud\Firestore\FirestoreClient::class);
+        }
+        if (app()->bound(\Kreait\Firebase\Contract\Firestore::class)) {
+            app()->forgetInstance(\Kreait\Firebase\Contract\Firestore::class);
+        }
     }
 
     public function getOperations(): array

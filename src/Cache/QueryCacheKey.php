@@ -177,7 +177,7 @@ class QueryCacheKey
     /**
      * Create a cache key for a specific query builder instance.
      */
-    public static function forQueryBuilder(\JTD\FirebaseModels\Firestore\FirestoreQueryBuilder $query): string
+    public static function forQueryBuilder(\JTD\FirebaseModels\Firestore\FirestoreQueryBuilder $query, string $method = 'get', array $arguments = []): string
     {
         // Get collection name
         $reflection = new \ReflectionClass($query);
@@ -188,13 +188,17 @@ class QueryCacheKey
         // Extract query data
         $queryData = static::extractQueryData($query);
 
+        // Include method and arguments to ensure different operations have different cache keys
+        $queryData['method'] = $method;
+        $queryData['arguments'] = $arguments;
+
         return static::generate($collection, $queryData);
     }
 
     /**
      * Create a cache key for a model query.
      */
-    public static function forModelQuery(\JTD\FirebaseModels\Firestore\FirestoreModelQueryBuilder $query, array $columns = ['*']): string
+    public static function forModelQuery(\JTD\FirebaseModels\Firestore\FirestoreModelQueryBuilder $query, array $columns = ['*'], string $method = 'get'): string
     {
         // Get model class for additional context
         $reflection = new \ReflectionClass($query);
@@ -206,6 +210,7 @@ class QueryCacheKey
         $queryData = static::extractQueryData($query);
         $queryData['model_class'] = get_class($model);
         $queryData['columns'] = $columns;
+        $queryData['method'] = $method;
 
         // Get collection from model query builder
         $collectionProperty = $reflection->getProperty('collection');
