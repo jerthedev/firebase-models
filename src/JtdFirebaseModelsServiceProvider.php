@@ -18,6 +18,11 @@ use JTD\FirebaseModels\Cache\Middleware\ClearRequestCache;
 use JTD\FirebaseModels\Cache\RequestCache;
 use JTD\FirebaseModels\Cache\PersistentCache;
 use JTD\FirebaseModels\Cache\CacheManager;
+use JTD\FirebaseModels\Sync\SyncManager;
+use JTD\FirebaseModels\Console\Commands\FirebaseSyncCommand;
+use JTD\FirebaseModels\Console\Commands\ScheduledSyncCommand;
+use JTD\FirebaseModels\Console\Commands\SyncStatusCommand;
+use JTD\FirebaseModels\Console\Commands\MakeSyncModelCommand;
 
 class JtdFirebaseModelsServiceProvider extends ServiceProvider
 {
@@ -34,6 +39,7 @@ class JtdFirebaseModelsServiceProvider extends ServiceProvider
         $this->registerFirebaseClients();
         $this->registerFacades();
         $this->registerAuthComponents();
+        $this->registerSyncComponents();
     }
 
     /**
@@ -49,6 +55,7 @@ class JtdFirebaseModelsServiceProvider extends ServiceProvider
         $this->registerMiddleware();
         $this->configureCaching();
         $this->bootEventDispatcher();
+        $this->registerCommands();
         $this->validateConfiguration();
     }
 
@@ -118,6 +125,36 @@ class JtdFirebaseModelsServiceProvider extends ServiceProvider
                 $app['hash']
             );
         });
+    }
+
+    /**
+     * Register sync components.
+     */
+    protected function registerSyncComponents(): void
+    {
+        // Register the SyncManager
+        $this->app->singleton(SyncManager::class, function ($app) {
+            $config = $app['config']['firebase-models.sync'] ?? [];
+            return new SyncManager($config);
+        });
+
+        // Register sync manager alias
+        $this->app->alias(SyncManager::class, 'firebase.sync');
+    }
+
+    /**
+     * Register console commands.
+     */
+    protected function registerCommands(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                FirebaseSyncCommand::class,
+                ScheduledSyncCommand::class,
+                SyncStatusCommand::class,
+                MakeSyncModelCommand::class,
+            ]);
+        }
     }
 
     /**
@@ -266,6 +303,8 @@ class JtdFirebaseModelsServiceProvider extends ServiceProvider
             'firebase.firestore', // backward compatibility
             'firebase.auth', // backward compatibility
             'firestore.db',
+            SyncManager::class,
+            'firebase.sync',
         ];
     }
 }

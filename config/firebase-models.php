@@ -69,16 +69,43 @@ return [
     */
 
     'sync' => [
-        'strategy' => env('FIREBASE_SYNC_STRATEGY', 'bidirectional'),
-        
-        'conflict_policy' => env('FIREBASE_SYNC_CONFLICT_POLICY', 'firestore_wins'),
-        
+        'strategy' => env('FIREBASE_SYNC_STRATEGY', 'one_way'),
+
+        'conflict_policy' => env('FIREBASE_SYNC_CONFLICT_POLICY', 'last_write_wins'),
+
         'batch_size' => env('FIREBASE_SYNC_BATCH_SIZE', 100),
-        
+
+        'read_strategy' => env('FIREBASE_SYNC_READ_STRATEGY', 'local_first'),
+
+        'write_strategy' => env('FIREBASE_SYNC_WRITE_STRATEGY', 'both'),
+
+        'timeout' => env('FIREBASE_SYNC_TIMEOUT', 300),
+
+        'retry_attempts' => env('FIREBASE_SYNC_RETRY_ATTEMPTS', 3),
+
+        'retry_delay' => env('FIREBASE_SYNC_RETRY_DELAY', 1000),
+
         'schedule' => [
             'enabled' => env('FIREBASE_SYNC_SCHEDULE_ENABLED', false),
             'frequency' => env('FIREBASE_SYNC_FREQUENCY', 'hourly'),
+            'collections' => env('FIREBASE_SYNC_COLLECTIONS', ''),
         ],
+
+        'mappings' => [
+            // Example mapping configuration
+            // 'posts' => [
+            //     'table' => 'posts',
+            //     'columns' => [
+            //         'title' => 'title',
+            //         'content' => 'body',
+            //         'author_id' => 'user_id',
+            //     ],
+            // ],
+        ],
+
+        'auto_create_tables' => env('FIREBASE_SYNC_AUTO_CREATE_TABLES', false),
+
+        'validate_schema' => env('FIREBASE_SYNC_VALIDATE_SCHEMA', true),
     ],
 
     /*

@@ -232,11 +232,87 @@ class FirestoreDatabase
             $this->logQuery('transaction', 'multiple', [], microtime(true) - $startTime, $e);
 
             if ($attempts > 1) {
+                // Add exponential backoff delay
+                $delay = (4 - $attempts) * 100; // 100ms, 200ms, 300ms
+                if ($delay > 0) {
+                    usleep($delay * 1000);
+                }
                 return $this->transaction($callback, $attempts - 1);
             }
 
             throw $e;
         }
+    }
+
+    /**
+     * Execute a transaction with enhanced retry logic.
+     */
+    public function transactionWithRetry(callable $callback, int $maxAttempts = 3, array $options = []): mixed
+    {
+        return \JTD\FirebaseModels\Firestore\Transactions\TransactionManager::executeWithRetry(
+            $callback,
+            $maxAttempts,
+            $options
+        );
+    }
+
+    /**
+     * Execute a transaction and return detailed result.
+     */
+    public function transactionWithResult(callable $callback, array $options = []): \JTD\FirebaseModels\Firestore\Transactions\TransactionResult
+    {
+        return \JTD\FirebaseModels\Firestore\Transactions\TransactionManager::executeWithResult(
+            $callback,
+            $options
+        );
+    }
+
+    /**
+     * Create a transaction builder for complex operations.
+     */
+    public function transactionBuilder(): \JTD\FirebaseModels\Firestore\Transactions\TransactionBuilder
+    {
+        return \JTD\FirebaseModels\Firestore\Transactions\TransactionManager::builder();
+    }
+
+    /**
+     * Create a batch operation builder.
+     */
+    public function batchBuilder(array $options = []): \JTD\FirebaseModels\Firestore\Batch\BatchOperation
+    {
+        return \JTD\FirebaseModels\Firestore\Batch\BatchManager::create($options);
+    }
+
+    /**
+     * Bulk insert documents.
+     */
+    public function bulkInsert(string $collection, array $documents, array $options = []): \JTD\FirebaseModels\Firestore\Batch\BatchResult
+    {
+        return \JTD\FirebaseModels\Firestore\Batch\BatchManager::bulkInsert($collection, $documents, $options);
+    }
+
+    /**
+     * Bulk update documents.
+     */
+    public function bulkUpdate(string $collection, array $updates, array $options = []): \JTD\FirebaseModels\Firestore\Batch\BatchResult
+    {
+        return \JTD\FirebaseModels\Firestore\Batch\BatchManager::bulkUpdate($collection, $updates, $options);
+    }
+
+    /**
+     * Bulk delete documents.
+     */
+    public function bulkDelete(string $collection, array $documentIds, array $options = []): \JTD\FirebaseModels\Firestore\Batch\BatchResult
+    {
+        return \JTD\FirebaseModels\Firestore\Batch\BatchManager::bulkDelete($collection, $documentIds, $options);
+    }
+
+    /**
+     * Bulk upsert documents.
+     */
+    public function bulkUpsert(string $collection, array $documents, array $options = []): \JTD\FirebaseModels\Firestore\Batch\BatchResult
+    {
+        return \JTD\FirebaseModels\Firestore\Batch\BatchManager::bulkUpsert($collection, $documents, $options);
     }
 
     /**

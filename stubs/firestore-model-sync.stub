@@ -1,0 +1,47 @@
+<?php
+
+namespace {{ namespace }};
+
+use JTD\FirebaseModels\Firestore\FirestoreModel;
+use JTD\FirebaseModels\Firestore\Concerns\HasVersioning;
+
+class {{ class }} extends FirestoreModel
+{
+    use HasVersioning;
+
+    /**
+     * The collection associated with the model.
+     */
+    protected ?string $collection = '{{ collection }}';
+
+    /**
+     * The local table name for sync operations.
+     */
+    protected string $syncTable = '{{ table }}';
+
+    /**
+     * The attributes that are mass assignable.
+     */
+    protected array $fillable = [
+        {{ fillable }}
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     */
+    protected array $hidden = [
+        {{ hidden }}
+    ];
+
+    /**
+     * The attributes that should be cast.
+     */
+    protected array $casts = [
+        {{ casts }}
+    ];
+
+    /**
+     * Indicates if the model should be timestamped.
+     */
+    public bool $timestamps = true;
+}

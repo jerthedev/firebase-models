@@ -19,6 +19,10 @@ use JTD\FirebaseModels\Firestore\Concerns\HasScopes;
 use JTD\FirebaseModels\Firestore\Concerns\HasTimestamps;
 use JTD\FirebaseModels\Firestore\Concerns\HasEvents;
 use JTD\FirebaseModels\Firestore\Concerns\GuardsAttributes;
+use JTD\FirebaseModels\Firestore\Concerns\HasSyncMode;
+use JTD\FirebaseModels\Firestore\Concerns\HasTransactions;
+use JTD\FirebaseModels\Firestore\Concerns\HasBatchOperations;
+use JTD\FirebaseModels\Firestore\Concerns\HasRelationships;
 
 /**
  * Abstract Firestore Model providing Eloquent-like functionality for Firestore documents.
@@ -32,7 +36,11 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
         HasScopes,
         HasTimestamps,
         HasEvents,
-        GuardsAttributes;
+        GuardsAttributes,
+        HasSyncMode,
+        HasTransactions,
+        HasBatchOperations,
+        HasRelationships;
 
     /**
      * The collection associated with the model.

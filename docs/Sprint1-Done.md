@@ -1,4 +1,4 @@
-# Sprint 1 (2 weeks)
+# Sprint 1 (2 weeks) - ✅ COMPLETED
 
 Scope: Package foundation, FirestoreModel MVP, initial docs. Aggressive timeline with AI-assisted development.
 Velocity guideline: 4 pts = 1 day; tasks 0.5–6 pts (max 8).

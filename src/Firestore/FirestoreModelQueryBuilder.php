@@ -5,6 +5,7 @@ namespace JTD\FirebaseModels\Firestore;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use JTD\FirebaseModels\Firestore\Relations\EagerLoader;
 
 /**
  * Firestore query builder for models.
@@ -18,6 +19,11 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
      * The model being queried.
      */
     protected FirestoreModel $model;
+
+    /**
+     * The relationships that should be eager loaded.
+     */
+    protected array $eagerLoad = [];
 
     /**
      * Create a new Firestore model query builder instance.
@@ -60,8 +66,16 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
     public function get(array $columns = ['*']): Collection
     {
         $results = parent::get($columns);
-        
-        return $this->hydrate($results->all());
+
+        $models = $this->hydrate($results->all());
+
+        // Apply eager loading if relationships are specified
+        if (!empty($this->eagerLoad)) {
+            $models = $this->eagerLoadRelations($models->all());
+            $models = $this->model->newCollection($models);
+        }
+
+        return $models;
     }
 
     /**
@@ -659,6 +673,127 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
             'query' => $whereSlice,
             'boolean' => $boolean,
         ];
+    }
+
+    /**
+     * Set the relationships that should be eager loaded.
+     */
+    public function with(array|string $relations): static
+    {
+        $eagerLoad = $this->parseWithRelations(is_string($relations) ? func_get_args() : $relations);
+
+        $this->eagerLoad = array_merge($this->eagerLoad, $eagerLoad);
+
+        return $this;
+    }
+
+    /**
+     * Prevent the specified relations from being eager loaded.
+     */
+    public function without(array|string $relations): static
+    {
+        if (is_string($relations)) {
+            $relations = func_get_args();
+        }
+
+        foreach ($relations as $relation) {
+            unset($this->eagerLoad[$relation]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Add subselect queries to count the relations.
+     */
+    public function withCount(array|string $relations): static
+    {
+        if (is_string($relations)) {
+            $relations = func_get_args();
+        }
+
+        // For now, we'll store these to be processed during eager loading
+        foreach ($relations as $relation) {
+            $this->eagerLoad[$relation . '_count'] = function ($query) {
+                // This will be handled by the EagerLoader
+            };
+        }
+
+        return $this;
+    }
+
+    /**
+     * Parse a list of relations into individuals.
+     */
+    protected function parseWithRelations(array $relations): array
+    {
+        $results = [];
+
+        foreach ($relations as $name => $constraints) {
+            if (is_numeric($name)) {
+                $name = $constraints;
+                $constraints = null;
+            }
+
+            $results = $this->addNestedWiths($name, $results);
+
+            if ($constraints) {
+                $results[$name] = $constraints;
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Parse the nested relationships in a relation.
+     */
+    protected function addNestedWiths(string $name, array $results): array
+    {
+        $progress = [];
+
+        foreach (explode('.', $name) as $segment) {
+            $progress[] = $segment;
+
+            if (!isset($results[$last = implode('.', $progress)])) {
+                $results[$last] = null;
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Eager load the relationships for the models.
+     */
+    public function eagerLoadRelations(array $models): array
+    {
+        if (empty($this->eagerLoad)) {
+            return $models;
+        }
+
+        $eagerLoader = new EagerLoader($this->eagerLoad);
+        $collection = $this->model->newCollection($models);
+
+        return $eagerLoader->load($collection)->all();
+    }
+
+    /**
+     * Get the relationships being eagerly loaded.
+     */
+    public function getEagerLoads(): array
+    {
+        return $this->eagerLoad;
+    }
+
+    /**
+     * Set the relationships being eagerly loaded.
+     */
+    public function setEagerLoads(array $eagerLoad): static
+    {
+        $this->eagerLoad = $eagerLoad;
+
+        return $this;
     }
 
     /**
