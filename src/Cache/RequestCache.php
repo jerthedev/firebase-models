@@ -244,8 +244,7 @@ class RequestCache
     public static function remember(string $key, \Closure $callback): mixed
     {
         $value = static::get($key);
-
-        if ($value !== null) {
+        if ($value !== null || static::has($key)) {
             return $value;
         }
 

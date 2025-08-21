@@ -576,9 +576,33 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
      */
     public function withoutGlobalScope(string|\JTD\FirebaseModels\Firestore\Scopes\ScopeInterface $scope): static
     {
-        // For simplicity, just create a new query without global scopes
-        // In a production implementation, you'd want more sophisticated scope management
-        return $this->model->newQueryWithoutGlobalScopes();
+        // Create a new query builder without applying global scopes
+        $builder = $this->model->newQueryWithoutGlobalScopes();
+
+        // Apply all global scopes except the one we want to exclude
+        foreach ($this->model->getGlobalScopes() as $identifier => $globalScope) {
+            $shouldSkip = false;
+
+            if ($scope instanceof \JTD\FirebaseModels\Firestore\Scopes\ScopeInterface) {
+                // Skip if it's the same scope instance or class
+                $shouldSkip = ($globalScope === $scope) ||
+                             ($globalScope instanceof \JTD\FirebaseModels\Firestore\Scopes\ScopeInterface &&
+                              get_class($globalScope) === get_class($scope));
+            } elseif (is_string($scope)) {
+                // Skip if the identifier matches
+                $shouldSkip = ($identifier === $scope);
+            }
+
+            if (!$shouldSkip) {
+                if ($globalScope instanceof \JTD\FirebaseModels\Firestore\Scopes\ScopeInterface) {
+                    $globalScope->apply($builder, $this->model);
+                } elseif ($globalScope instanceof \Closure) {
+                    $globalScope($builder, $this->model);
+                }
+            }
+        }
+
+        return $builder;
     }
 
     /**

@@ -31,7 +31,7 @@ class CacheManager
         // 1. Try request cache first (fastest)
         if (static::$config['request_cache_enabled'] && RequestCache::isEnabled()) {
             $value = RequestCache::get($key);
-            if ($value !== null) {
+            if ($value !== null || RequestCache::has($key)) {
                 return $value;
             }
         }
@@ -39,7 +39,7 @@ class CacheManager
         // 2. Try persistent cache
         if (static::$config['persistent_cache_enabled'] && PersistentCache::isEnabled()) {
             $value = PersistentCache::get($key, null, $store);
-            if ($value !== null) {
+            if ($value !== null || PersistentCache::has($key, $store)) {
                 // Auto-promote to request cache for faster subsequent access
                 if (static::$config['auto_promote'] && static::$config['request_cache_enabled']) {
                     RequestCache::put($key, $value);
@@ -106,18 +106,15 @@ class CacheManager
     public static function remember(string $key, \Closure $callback, ?int $ttl = null, array $tags = [], ?string $store = null): mixed
     {
         // Check cache hierarchy first
-        $value = static::get($key, null, $store);
-        if ($value !== null) {
-            return $value;
+        if (static::has($key, $store)) {
+            return static::get($key, null, $store);
         }
 
         // Execute callback
         $value = $callback();
 
         // Store in cache hierarchy
-        if ($value !== null) {
-            static::put($key, $value, $ttl, $tags, $store);
-        }
+        static::put($key, $value, $ttl, $tags, $store);
 
         return $value;
     }
@@ -128,18 +125,15 @@ class CacheManager
     public static function rememberForever(string $key, \Closure $callback, array $tags = [], ?string $store = null): mixed
     {
         // Check cache hierarchy first
-        $value = static::get($key, null, $store);
-        if ($value !== null) {
-            return $value;
+        if (static::has($key, $store)) {
+            return static::get($key, null, $store);
         }
 
         // Execute callback
         $value = $callback();
 
         // Store in cache hierarchy forever
-        if ($value !== null) {
-            static::forever($key, $value, $tags, $store);
-        }
+        static::forever($key, $value, $tags, $store);
 
         return $value;
     }
@@ -297,6 +291,22 @@ class CacheManager
     public static function getConfig(): array
     {
         return static::$config;
+    }
+
+    /**
+     * Check if a key exists in request cache.
+     */
+    protected static function hasInRequestCache(string $key): bool
+    {
+        return RequestCache::isEnabled() && RequestCache::has($key);
+    }
+
+    /**
+     * Check if a key exists in persistent cache.
+     */
+    protected static function hasInPersistentCache(string $key, ?string $store = null): bool
+    {
+        return PersistentCache::isEnabled() && PersistentCache::has($key, $store);
     }
 
     /**

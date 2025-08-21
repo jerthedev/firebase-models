@@ -265,6 +265,7 @@ class FirestoreMock
                     'in' => in_array($fieldValue, $where['value']),
                     'not-in' => !in_array($fieldValue, $where['value']),
                     'array-contains' => is_array($fieldValue) && in_array($where['value'], $fieldValue),
+                    'like' => str_contains(strtolower((string)$fieldValue), strtolower(str_replace('%', '', (string)$where['value']))),
                     default => false,
                 };
             });
@@ -275,10 +276,12 @@ class FirestoreMock
             usort($documents, function ($a, $b) use ($order) {
                 $aValue = $a->data()[$order['field']] ?? null;
                 $bValue = $b->data()[$order['field']] ?? null;
-                
+
                 $result = $aValue <=> $bValue;
-                
-                return $order['direction'] === 'DESC' ? -$result : $result;
+
+                // Handle both uppercase and lowercase direction values
+                $direction = strtolower($order['direction']);
+                return $direction === 'desc' || $direction === 'descending' ? -$result : $result;
             });
         }
 
@@ -295,7 +298,7 @@ class FirestoreMock
         return array_values($documents);
     }
 
-    protected function getCollectionDocuments(string $collection): array
+    public function getCollectionDocuments(string $collection): array
     {
         $documents = [];
         
@@ -311,7 +314,7 @@ class FirestoreMock
         if (!isset($this->documents[$collection])) {
             $this->documents[$collection] = [];
         }
-        
+
         $this->documents[$collection][$id] = $data;
     }
 
@@ -333,6 +336,11 @@ class FirestoreMock
     public function getDocument(string $collection, string $id): ?array
     {
         return $this->documents[$collection][$id] ?? null;
+    }
+
+    public function documentExists(string $collection, string $id): bool
+    {
+        return isset($this->documents[$collection][$id]);
     }
 
     protected function recordOperation(string $operation, string $collection, string $id): void
@@ -462,21 +470,45 @@ class FirestoreMock
             }
         }
 
+        // Close Mockery to free all mock objects
+        if (class_exists(\Mockery::class)) {
+            \Mockery::close();
+        }
+
         // Reset static instance to force recreation
         static::$instance = null;
 
         // Clear Laravel container bindings
         if (app()->bound(\Google\Cloud\Firestore\FirestoreClient::class)) {
             app()->forgetInstance(\Google\Cloud\Firestore\FirestoreClient::class);
+            app()->offsetUnset(\Google\Cloud\Firestore\FirestoreClient::class);
         }
         if (app()->bound(\Kreait\Firebase\Contract\Firestore::class)) {
             app()->forgetInstance(\Kreait\Firebase\Contract\Firestore::class);
+            app()->offsetUnset(\Kreait\Firebase\Contract\Firestore::class);
+        }
+
+        // Force garbage collection to free memory
+        if (function_exists('gc_collect_cycles')) {
+            gc_collect_cycles();
         }
     }
 
     public function getOperations(): array
     {
         return $this->operations;
+    }
+
+    public function getOperationsByType(string $type): array
+    {
+        return array_filter($this->operations, function ($operation) use ($type) {
+            return $operation['type'] === $type;
+        });
+    }
+
+    public function getCollectionCount(string $collection): int
+    {
+        return count($this->getCollectionDocuments($collection));
     }
 
     public function getQueries(): array
@@ -635,6 +667,7 @@ class FirestoreMock
                     'in' => in_array($fieldValue, $where['value']),
                     'not-in' => !in_array($fieldValue, $where['value']),
                     'array-contains' => is_array($fieldValue) && in_array($where['value'], $fieldValue),
+                    'like' => str_contains(strtolower((string)$fieldValue), strtolower(str_replace('%', '', (string)$where['value']))),
                     default => false,
                 };
             });
@@ -669,5 +702,21 @@ class FirestoreMock
     public function offsetDocuments(array $documents, int $offset): array
     {
         return array_slice($documents, $offset);
+    }
+
+    /**
+     * Clear all documents from a specific collection.
+     */
+    public function clearCollection(string $collection): void
+    {
+        unset($this->documents[$collection]);
+    }
+
+    /**
+     * Get the mock type identifier.
+     */
+    public function getMockType(): string
+    {
+        return 'firestore';
     }
 }

@@ -197,15 +197,15 @@ class FirebaseGuard implements Guard
     {
         $token = $this->request->query($this->inputKey);
 
-        if (empty($token)) {
+        if (is_null($token)) {
             $token = $this->request->input($this->inputKey);
         }
 
-        if (empty($token)) {
+        if (is_null($token)) {
             $token = $this->getBearerTokenFromHeader();
         }
 
-        if (empty($token)) {
+        if (is_null($token)) {
             $token = $this->request->cookie($this->cookieKey);
         }
 
@@ -220,7 +220,8 @@ class FirebaseGuard implements Guard
         $header = $this->request->header($this->headerKey);
 
         if (str_starts_with($header, 'Bearer ')) {
-            return substr($header, 7);
+            $token = substr($header, 7);
+            return $token === '' ? '' : $token;
         }
 
         return null;

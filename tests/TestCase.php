@@ -4,19 +4,19 @@ namespace JTD\FirebaseModels\Tests;
 
 use Orchestra\Testbench\TestCase as Orchestra;
 use JTD\FirebaseModels\JtdFirebaseModelsServiceProvider;
-use JTD\FirebaseModels\Tests\Helpers\FirestoreMockTrait;
+use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 abstract class TestCase extends Orchestra
 {
-    use RefreshDatabase, FirestoreMockTrait;
+    use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         // Set up Firestore mocking
-        $this->setUpFirestoreMocking();
+        FirestoreMock::initialize();
         
         // Set up test database if needed
         $this->setUpDatabase();
@@ -75,15 +75,11 @@ abstract class TestCase extends Orchestra
         $app['config']->set('firebase-models.cache.store', 'array');
     }
 
-    // setUpFirestoreMocking is now provided by FirestoreMockTrait
-
     protected function setUpDatabase(): void
     {
         // Set up any database tables needed for testing
         // This can be used for sync mode testing or local caching
     }
-
-    // Mock helper methods are now provided by FirestoreMockTrait
 
     /**
      * Create a test model instance.
@@ -178,7 +174,7 @@ abstract class TestCase extends Orchestra
     protected function tearDown(): void
     {
         // Clear Firestore mocks
-        $this->clearFirestoreMocks();
+        FirestoreMock::clear();
 
         // Unfreeze time
         $this->unfreezeTimeAt();
@@ -187,6 +183,45 @@ abstract class TestCase extends Orchestra
         $this->forceGarbageCollection();
 
         parent::tearDown();
+    }
+
+    /**
+     * Get the Firestore mock instance.
+     */
+    protected function getFirestoreMock(): FirestoreMock
+    {
+        return FirestoreMock::getInstance();
+    }
+
+    /**
+     * Mock Firestore query operations.
+     */
+    protected function mockFirestoreQuery(string $collection, array $documents): void
+    {
+        $mock = $this->getFirestoreMock();
+
+        // Store each document
+        foreach ($documents as $document) {
+            $id = $document['id'] ?? uniqid();
+            $mock->storeDocument($collection, $id, $document);
+        }
+    }
+
+    /**
+     * Mock Firestore create operations.
+     */
+    protected function mockFirestoreCreate(string $collection, ?string $id = null): void
+    {
+        $mock = $this->getFirestoreMock();
+
+        // Prepare the collection for create operations
+        if ($id) {
+            // Pre-create a document with the specified ID
+            $mock->storeDocument($collection, $id, ['id' => $id]);
+        }
+
+        // The mock is already set up to handle create operations
+        // No additional setup needed
     }
 
     /**
@@ -199,7 +234,14 @@ abstract class TestCase extends Orchestra
             \Mockery::close();
         }
 
-        // Clear Laravel container instances (skip for now to avoid issues)
+        // Clear Laravel container instances
+        $this->clearLaravelContainerInstances();
+
+        // Clear static caches in FirestoreModel
+        if (class_exists(\JTD\FirebaseModels\Firestore\FirestoreModel::class) &&
+            method_exists(\JTD\FirebaseModels\Firestore\FirestoreModel::class, 'clearStaticCaches')) {
+            \JTD\FirebaseModels\Firestore\FirestoreModel::clearStaticCaches();
+        }
 
         // Force PHP garbage collection
         if (function_exists('gc_collect_cycles')) {
@@ -207,6 +249,31 @@ abstract class TestCase extends Orchestra
         }
 
         // Clear any static caches
-        \Illuminate\Support\Facades\Cache::flush();
+        if (class_exists(\Illuminate\Support\Facades\Cache::class)) {
+            \Illuminate\Support\Facades\Cache::flush();
+        }
+    }
+
+    /**
+     * Clear Laravel container instances that might hold references.
+     */
+    protected function clearLaravelContainerInstances(): void
+    {
+        $app = app();
+
+        // Clear specific Firebase-related bindings
+        $bindings = [
+            \Google\Cloud\Firestore\FirestoreClient::class,
+            \Kreait\Firebase\Contract\Firestore::class,
+            'firebase.auth',
+            'firebase.firestore',
+        ];
+
+        foreach ($bindings as $binding) {
+            if ($app->bound($binding)) {
+                $app->forgetInstance($binding);
+                $app->offsetUnset($binding);
+            }
+        }
     }
 }

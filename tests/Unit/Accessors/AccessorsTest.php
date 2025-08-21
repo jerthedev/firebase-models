@@ -1,8 +1,12 @@
 <?php
 
+namespace JTD\FirebaseModels\Tests\Unit\Accessors;
+
 use JTD\FirebaseModels\Firestore\FirestoreModel;
 use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
+use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use PHPUnit\Framework\Attributes\Test;
 
 // Test model with legacy accessors
 class TestModelWithLegacyAccessors extends FirestoreModel
@@ -104,17 +108,40 @@ class TestModelWithModernAccessors extends FirestoreModel
     }
 }
 
-describe('Eloquent Accessors', function () {
-    beforeEach(function () {
+/**
+ * Eloquent Accessors Test
+ *
+ * Updated to use UnitTestSuite for optimized performance and memory management.
+ */
+class AccessorsTest extends UnitTestSuite
+{
+    protected function setUp(): void
+    {
+        // Configure test requirements for accessor testing
+        $this->setTestRequirements([
+            'document_count' => 30,
+            'memory_constraint' => true,
+            'needs_full_mockery' => false,
+        ]);
+
+        parent::setUp();
+
         FirestoreMock::initialize();
-    });
+    }
 
-    afterEach(function () {
+    protected function tearDown(): void
+    {
         FirestoreMock::clear();
-    });
+        parent::tearDown();
+    }
 
-    describe('Legacy Accessors', function () {
-        it('can use legacy getXAttribute accessors', function () {
+    // ========================================
+    // LEGACY ACCESSORS TESTS
+    // ========================================
+
+    #[Test]
+    public function it_can_use_legacy_get_x_attribute_accessors()
+    {
             $model = new TestModelWithLegacyAccessors();
             $model->fill([
                 'first_name' => 'John',
@@ -122,258 +149,295 @@ describe('Eloquent Accessors', function () {
                 'price' => 99.99,
             ]);
 
-            expect($model->full_name)->toBe('John Doe');
-            expect($model->display_price)->toBe('$99.99');
-        });
+        expect($model->full_name)->toBe('John Doe');
+        expect($model->display_price)->toBe('$99.99');
+    }
 
-        it('can use legacy setXAttribute mutators', function () {
-            $model = new TestModelWithLegacyAccessors();
-            
-            $model->email = 'TEST@EXAMPLE.COM';
-            expect($model->getAttributes()['email'])->toBe('test@example.com');
-            
-            $model->age = 200;
-            expect($model->getAttributes()['age'])->toBe(150);
-            
-            $model->age = -5;
-            expect($model->getAttributes()['age'])->toBe(0);
-        });
+    #[Test]
+    public function it_can_use_legacy_set_x_attribute_mutators()
+    {
+        $model = new TestModelWithLegacyAccessors();
 
-        it('includes appended attributes in array conversion', function () {
-            $model = new TestModelWithLegacyAccessors();
-            $model->fill([
-                'first_name' => 'Jane',
-                'last_name' => 'Smith',
-                'price' => 149.50,
-            ]);
+        $model->email = 'TEST@EXAMPLE.COM';
+        expect($model->getAttributes()['email'])->toBe('test@example.com');
 
-            $array = $model->toArray();
-            
-            expect($array)->toHaveKey('full_name');
-            expect($array['full_name'])->toBe('Jane Smith');
-            expect($array)->toHaveKey('display_price');
-            expect($array['display_price'])->toBe('$149.50');
-        });
+        $model->age = 200;
+        expect($model->getAttributes()['age'])->toBe(150);
 
-        it('detects legacy accessor methods correctly', function () {
-            $model = new TestModelWithLegacyAccessors();
-            
-            expect($model->hasGetMutator('full_name'))->toBeTrue();
-            expect($model->hasGetMutator('display_price'))->toBeTrue();
-            expect($model->hasGetMutator('non_existent'))->toBeFalse();
-        });
+        $model->age = -5;
+        expect($model->getAttributes()['age'])->toBe(0);
+    }
 
-        it('detects legacy mutator methods correctly', function () {
-            $model = new TestModelWithLegacyAccessors();
-            
-            expect($model->hasSetMutator('email'))->toBeTrue();
-            expect($model->hasSetMutator('age'))->toBeTrue();
-            expect($model->hasSetMutator('non_existent'))->toBeFalse();
-        });
-    });
+    #[Test]
+    public function it_includes_appended_attributes_in_array_conversion()
+    {
+        $model = new TestModelWithLegacyAccessors();
+        $model->fill([
+            'first_name' => 'Jane',
+            'last_name' => 'Smith',
+            'price' => 149.50,
+        ]);
 
-    describe('Modern Attribute Accessors', function () {
-        it('can use modern Attribute accessors', function () {
-            $model = new TestModelWithModernAccessors();
-            $model->fill([
-                'name' => 'john doe',
-                'is_active' => true,
-                'age' => 25,
-            ]);
+        $array = $model->toArray();
 
-            expect($model->name)->toBe('John Doe'); // ucwords applied
-            expect($model->formatted_name)->toBe('JOHN DOE'); // uppercase applied
-            expect($model->status_text)->toBe('Active Adult');
-        });
+        expect($array)->toHaveKey('full_name');
+        expect($array['full_name'])->toBe('Jane Smith');
+        expect($array)->toHaveKey('display_price');
+        expect($array['display_price'])->toBe('$149.50');
+    }
 
-        it('can use modern Attribute mutators', function () {
-            $model = new TestModelWithModernAccessors();
-            
-            $model->name = 'JANE SMITH';
-            expect($model->getAttributes()['name'])->toBe('jane smith'); // strtolower applied
-            
-            $model->email = '  TEST@EXAMPLE.COM  ';
-            expect($model->getAttributes()['email'])->toBe('test@example.com'); // trimmed and lowercased
-        });
+    #[Test]
+    public function it_detects_legacy_accessor_methods_correctly()
+    {
+        $model = new TestModelWithLegacyAccessors();
 
-        it('supports complex modern accessors', function () {
-            $model = new TestModelWithModernAccessors();
-            
-            $model->fill(['is_active' => true, 'age' => 16]);
-            expect($model->status_text)->toBe('Active Minor');
-            
-            $model->fill(['is_active' => false, 'age' => 25]);
-            expect($model->status_text)->toBe('Inactive');
-            
-            $model->fill(['is_active' => true, 'age' => 30]);
-            expect($model->status_text)->toBe('Active Adult');
-        });
+        expect($model->hasGetMutator('full_name'))->toBeTrue();
+        expect($model->hasGetMutator('display_price'))->toBeTrue();
+        expect($model->hasGetMutator('non_existent'))->toBeFalse();
+    }
 
-        it('supports mutators that set multiple attributes', function () {
-            $model = new TestModelWithModernAccessors();
-            
-            $metadata = ['key' => 'value', 'count' => 42];
-            $model->metadata = $metadata;
-            
-            expect($model->getAttributes()['metadata'])->toBe(json_encode($metadata));
-            expect($model->getAttributes())->toHaveKey('metadata_updated_at');
-            
-            // Test accessor
-            expect($model->metadata)->toBe($metadata);
-        });
+    #[Test]
+    public function it_detects_legacy_mutator_methods_correctly()
+    {
+        $model = new TestModelWithLegacyAccessors();
 
-        it('detects modern accessor methods correctly', function () {
-            $model = new TestModelWithModernAccessors();
-            
-            expect($model->hasGetMutator('name'))->toBeTrue();
-            expect($model->hasGetMutator('formatted_name'))->toBeTrue();
-            expect($model->hasGetMutator('status_text'))->toBeTrue();
-            expect($model->hasGetMutator('non_existent'))->toBeFalse();
-        });
+        expect($model->hasSetMutator('email'))->toBeTrue();
+        expect($model->hasSetMutator('age'))->toBeTrue();
+        expect($model->hasSetMutator('non_existent'))->toBeFalse();
+    }
 
-        it('detects modern mutator methods correctly', function () {
-            $model = new TestModelWithModernAccessors();
-            
-            expect($model->hasSetMutator('name'))->toBeTrue();
-            expect($model->hasSetMutator('email'))->toBeTrue();
-            expect($model->hasSetMutator('metadata'))->toBeTrue();
-            expect($model->hasSetMutator('non_existent'))->toBeFalse();
-        });
-    });
+    // ========================================
+    // MODERN ATTRIBUTE ACCESSORS TESTS
+    // ========================================
 
-    describe('Accessor/Mutator Integration', function () {
-        it('can mix legacy and modern accessors in the same model', function () {
-            // Create a model that uses both patterns
-            $model = new class extends FirestoreModel {
-                protected ?string $collection = 'mixed_models';
-                protected array $fillable = ['name', 'email'];
-                protected array $appends = ['legacy_name', 'modern_name'];
+    #[Test]
+    public function it_can_use_modern_attribute_accessors()
+    {
+        $model = new TestModelWithModernAccessors();
+        $model->fill([
+            'name' => 'john doe',
+            'is_active' => true,
+            'age' => 25,
+        ]);
 
-                // Legacy accessor
-                public function getLegacyNameAttribute(): string
-                {
-                    return 'Legacy: ' . ($this->attributes['name'] ?? '');
-                }
+        expect($model->name)->toBe('John Doe'); // ucwords applied
+        expect($model->formatted_name)->toBe('JOHN DOE'); // uppercase applied
+        expect($model->status_text)->toBe('Active Adult');
+    }
 
-                // Modern accessor
-                public function modernName(): Attribute
-                {
-                    return Attribute::make(
-                        get: fn () => 'Modern: ' . ($this->attributes['name'] ?? ''),
-                    );
-                }
-            };
+    #[Test]
+    public function it_can_use_modern_attribute_mutators()
+    {
+        $model = new TestModelWithModernAccessors();
 
-            $model->name = 'Test User';
-            
-            expect($model->legacy_name)->toBe('Legacy: Test User');
-            expect($model->modern_name)->toBe('Modern: Test User');
-            
-            $array = $model->toArray();
-            expect($array['legacy_name'])->toBe('Legacy: Test User');
-            expect($array['modern_name'])->toBe('Modern: Test User');
-        });
+        $model->name = 'JANE SMITH';
+        expect($model->getAttributes()['name'])->toBe('jane smith'); // strtolower applied
 
-        it('prioritizes legacy accessors over modern ones', function () {
-            $model = new class extends FirestoreModel {
-                protected ?string $collection = 'priority_models';
-                protected array $fillable = ['name'];
+        $model->email = '  TEST@EXAMPLE.COM  ';
+        expect($model->getAttributes()['email'])->toBe('test@example.com'); // trimmed and lowercased
+    }
 
-                // Legacy accessor
-                public function getNameAttribute(string $value): string
-                {
-                    return 'Legacy: ' . $value;
-                }
+    #[Test]
+    public function it_supports_complex_modern_accessors()
+    {
+        $model = new TestModelWithModernAccessors();
 
-                // Modern accessor (should be ignored due to legacy priority)
-                public function name(): Attribute
-                {
-                    return Attribute::make(
-                        get: fn (string $value) => 'Modern: ' . $value,
-                    );
-                }
-            };
+        $model->fill(['is_active' => true, 'age' => 16]);
+        expect($model->status_text)->toBe('Active Minor');
 
-            $model->fill(['name' => 'Test']);
-            
-            // Legacy should take priority
-            expect($model->name)->toBe('Legacy: Test');
-        });
+        $model->fill(['is_active' => false, 'age' => 25]);
+        expect($model->status_text)->toBe('Inactive');
 
-        it('can detect individual accessor methods', function () {
-            $model = new TestModelWithModernAccessors();
+        $model->fill(['is_active' => true, 'age' => 30]);
+        expect($model->status_text)->toBe('Active Adult');
+    }
 
-            // Test individual accessor detection
-            expect($model->hasGetMutator('name'))->toBeTrue();
-            expect($model->hasGetMutator('formatted_name'))->toBeTrue();
-            expect($model->hasGetMutator('status_text'))->toBeTrue();
-            expect($model->hasSetMutator('name'))->toBeTrue();
-            expect($model->hasSetMutator('email'))->toBeTrue();
-            expect($model->hasSetMutator('metadata'))->toBeTrue();
+    #[Test]
+    public function it_supports_mutators_that_set_multiple_attributes()
+    {
+        $model = new TestModelWithModernAccessors();
 
-            // Test that non-existent accessors return false
-            expect($model->hasGetMutator('non_existent'))->toBeFalse();
-            expect($model->hasSetMutator('non_existent'))->toBeFalse();
-        });
-    });
+        $metadata = ['key' => 'value', 'count' => 42];
+        $model->metadata = $metadata;
 
-    describe('Array and JSON Conversion', function () {
-        it('applies accessors during array conversion', function () {
-            $model = new TestModelWithModernAccessors();
-            $model->fill([
-                'name' => 'test user',
-                'is_active' => true,
-                'age' => 25,
-            ]);
+        expect($model->getAttributes()['metadata'])->toBe(json_encode($metadata));
+        expect($model->getAttributes())->toHaveKey('metadata_updated_at');
 
-            $array = $model->toArray();
+        // Test accessor
+        expect($model->metadata)->toBe($metadata);
+    }
 
-            expect($array['name'])->toBe('Test User'); // ucwords applied
-            expect($array['formatted_name'])->toBe('TEST USER'); // uppercase applied
-            expect($array['status_text'])->toBe('Active Adult');
-        });
+    #[Test]
+    public function it_detects_modern_accessor_methods_correctly()
+    {
+        $model = new TestModelWithModernAccessors();
 
-        it('applies accessors during JSON conversion', function () {
-            $model = new TestModelWithModernAccessors();
-            $model->fill([
-                'name' => 'json user',
-                'is_active' => false,
-                'age' => 30,
-            ]);
+        expect($model->hasGetMutator('name'))->toBeTrue();
+        expect($model->hasGetMutator('formatted_name'))->toBeTrue();
+        expect($model->hasGetMutator('status_text'))->toBeTrue();
+        expect($model->hasGetMutator('non_existent'))->toBeFalse();
+    }
 
-            $json = json_decode($model->toJson(), true);
-            
-            expect($json['name'])->toBe('Json User'); // ucwords applied
-            expect($json['formatted_name'])->toBe('JSON USER'); // uppercase applied
-            expect($json['status_text'])->toBe('Inactive');
-        });
+    #[Test]
+    public function it_detects_modern_mutator_methods_correctly()
+    {
+        $model = new TestModelWithModernAccessors();
 
-        it('respects hidden and visible attributes', function () {
-            $model = new class extends FirestoreModel {
-                protected ?string $collection = 'visibility_models';
-                protected array $fillable = ['name', 'email', 'secret'];
-                protected array $hidden = ['secret'];
-                protected array $appends = ['display_name'];
+        expect($model->hasSetMutator('name'))->toBeTrue();
+        expect($model->hasSetMutator('email'))->toBeTrue();
+        expect($model->hasSetMutator('metadata'))->toBeTrue();
+        expect($model->hasSetMutator('non_existent'))->toBeFalse();
+    }
 
-                public function getDisplayNameAttribute(): string
-                {
-                    return 'Display: ' . ($this->attributes['name'] ?? '');
-                }
-            };
+    // ========================================
+    // ACCESSOR/MUTATOR INTEGRATION TESTS
+    // ========================================
 
-            $model->fill([
-                'name' => 'Test User',
-                'email' => 'test@example.com',
-                'secret' => 'hidden_value',
-            ]);
+    #[Test]
+    public function it_can_mix_legacy_and_modern_accessors_in_the_same_model()
+    {
+        // Create a model that uses both patterns
+        $model = new class extends FirestoreModel {
+            protected ?string $collection = 'mixed_models';
+            protected array $fillable = ['name', 'email'];
+            protected array $appends = ['legacy_name', 'modern_name'];
 
-            $array = $model->toArray();
-            
-            expect($array)->toHaveKey('name');
-            expect($array)->toHaveKey('email');
-            expect($array)->toHaveKey('display_name');
-            expect($array)->not->toHaveKey('secret'); // Should be hidden
-            expect($array['display_name'])->toBe('Display: Test User');
-        });
-    });
-});
+            // Legacy accessor
+            public function getLegacyNameAttribute(): string
+            {
+                return 'Legacy: ' . ($this->attributes['name'] ?? '');
+            }
+
+            // Modern accessor
+            public function modernName(): Attribute
+            {
+                return Attribute::make(
+                    get: fn () => 'Modern: ' . ($this->attributes['name'] ?? ''),
+                );
+            }
+        };
+
+        $model->name = 'Test User';
+
+        expect($model->legacy_name)->toBe('Legacy: Test User');
+        expect($model->modern_name)->toBe('Modern: Test User');
+
+        $array = $model->toArray();
+        expect($array['legacy_name'])->toBe('Legacy: Test User');
+        expect($array['modern_name'])->toBe('Modern: Test User');
+    }
+
+    #[Test]
+    public function it_prioritizes_legacy_accessors_over_modern_ones()
+    {
+        $model = new class extends FirestoreModel {
+            protected ?string $collection = 'priority_models';
+            protected array $fillable = ['name'];
+
+            // Legacy accessor
+            public function getNameAttribute(string $value): string
+            {
+                return 'Legacy: ' . $value;
+            }
+
+            // Modern accessor (should be ignored due to legacy priority)
+            public function name(): Attribute
+            {
+                return Attribute::make(
+                    get: fn (string $value) => 'Modern: ' . $value,
+                );
+            }
+        };
+
+        $model->fill(['name' => 'Test']);
+
+        // Legacy should take priority
+        expect($model->name)->toBe('Legacy: Test');
+    }
+
+    #[Test]
+    public function it_can_detect_individual_accessor_methods()
+    {
+        $model = new TestModelWithModernAccessors();
+
+        // Test individual accessor detection
+        expect($model->hasGetMutator('name'))->toBeTrue();
+        expect($model->hasGetMutator('formatted_name'))->toBeTrue();
+        expect($model->hasGetMutator('status_text'))->toBeTrue();
+        expect($model->hasSetMutator('name'))->toBeTrue();
+        expect($model->hasSetMutator('email'))->toBeTrue();
+        expect($model->hasSetMutator('metadata'))->toBeTrue();
+
+        // Test that non-existent accessors return false
+        expect($model->hasGetMutator('non_existent'))->toBeFalse();
+        expect($model->hasSetMutator('non_existent'))->toBeFalse();
+    }
+
+    // ========================================
+    // ARRAY AND JSON CONVERSION TESTS
+    // ========================================
+
+    #[Test]
+    public function it_applies_accessors_during_array_conversion()
+    {
+        $model = new TestModelWithModernAccessors();
+        $model->fill([
+            'name' => 'test user',
+            'is_active' => true,
+            'age' => 25,
+        ]);
+
+        $array = $model->toArray();
+
+        expect($array['name'])->toBe('Test User'); // ucwords applied
+        expect($array['formatted_name'])->toBe('TEST USER'); // uppercase applied
+        expect($array['status_text'])->toBe('Active Adult');
+    }
+
+    #[Test]
+    public function it_applies_accessors_during_json_conversion()
+    {
+        $model = new TestModelWithModernAccessors();
+        $model->fill([
+            'name' => 'json user',
+            'is_active' => false,
+            'age' => 30,
+        ]);
+
+        $json = json_decode($model->toJson(), true);
+
+        expect($json['name'])->toBe('Json User'); // ucwords applied
+        expect($json['formatted_name'])->toBe('JSON USER'); // uppercase applied
+        expect($json['status_text'])->toBe('Inactive');
+    }
+
+    #[Test]
+    public function it_respects_hidden_and_visible_attributes()
+    {
+        $model = new class extends FirestoreModel {
+            protected ?string $collection = 'visibility_models';
+            protected array $fillable = ['name', 'email', 'secret'];
+            protected array $hidden = ['secret'];
+            protected array $appends = ['display_name'];
+
+            public function getDisplayNameAttribute(): string
+            {
+                return 'Display: ' . ($this->attributes['name'] ?? '');
+            }
+        };
+
+        $model->fill([
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'secret' => 'hidden_value',
+        ]);
+
+        $array = $model->toArray();
+
+        expect($array)->toHaveKey('name');
+        expect($array)->toHaveKey('email');
+        expect($array)->toHaveKey('display_name');
+        expect($array)->not->toHaveKey('secret'); // Should be hidden
+        expect($array['display_name'])->toBe('Display: Test User');
+    }
+}

@@ -283,6 +283,14 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     }
 
     /**
+     * Get the collection name for the model (static version).
+     */
+    public static function getCollectionName(): string
+    {
+        return (new static)->getCollection();
+    }
+
+    /**
      * Set the collection associated with the model.
      */
     public function setCollection(string $collection): static
@@ -1160,5 +1168,18 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
         }
 
         throw new \InvalidArgumentException("Class [{$castType}] does not exist.");
+    }
+
+    /**
+     * Clear all static caches to prevent memory leaks during testing.
+     * This method should only be called during testing.
+     */
+    public static function clearStaticCaches(): void
+    {
+        static::$booted = [];
+        static::$traitInitializers = [];
+        static::$mutatorCache = [];
+        static::$attributeMutatorCache = [];
+        static::$relationResolvers = [];
     }
 }

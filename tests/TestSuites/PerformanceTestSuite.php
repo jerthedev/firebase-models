@@ -2,18 +2,16 @@
 
 namespace JTD\FirebaseModels\Tests\TestSuites;
 
-use JTD\FirebaseModels\Tests\Helpers\FirestoreMockFactory;
-
 /**
  * PerformanceTestSuite is specialized for performance and memory testing
  * with comprehensive monitoring and optimization features.
  */
 abstract class PerformanceTestSuite extends BaseTestSuite
 {
-    protected string $mockType = FirestoreMockFactory::TYPE_ULTRA;
     protected bool $autoCleanup = true;
     protected array $performanceMetrics = [];
     protected array $memoryThresholds = [];
+    protected string $mockType = 'standard';
 
     /**
      * Configure performance test requirements.
@@ -72,16 +70,21 @@ abstract class PerformanceTestSuite extends BaseTestSuite
      */
     protected function stopPerformanceMonitoring(): void
     {
+        // Ensure monitoring was started
+        if (!isset($this->performanceMetrics['start_time'])) {
+            $this->startPerformanceMonitoring();
+        }
+
         $this->performanceMetrics['end_time'] = microtime(true);
         $this->performanceMetrics['end_memory'] = memory_get_usage();
         $this->performanceMetrics['end_peak_memory'] = memory_get_peak_usage();
-        
+
         // Calculate totals
-        $this->performanceMetrics['total_time'] = 
+        $this->performanceMetrics['total_time'] =
             $this->performanceMetrics['end_time'] - $this->performanceMetrics['start_time'];
-        $this->performanceMetrics['memory_delta'] = 
+        $this->performanceMetrics['memory_delta'] =
             $this->performanceMetrics['end_memory'] - $this->performanceMetrics['start_memory'];
-        $this->performanceMetrics['peak_memory_delta'] = 
+        $this->performanceMetrics['peak_memory_delta'] =
             $this->performanceMetrics['end_peak_memory'] - $this->performanceMetrics['start_peak_memory'];
     }
 

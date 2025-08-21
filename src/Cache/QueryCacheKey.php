@@ -77,8 +77,13 @@ class QueryCacheKey
     /**
      * Normalize query data to ensure consistent cache keys.
      */
-    protected static function normalizeQueryData(array $queryData): array
+    protected static function normalizeQueryData(array $queryData, int $depth = 0, array &$seen = []): array
     {
+        // Prevent infinite recursion
+        if ($depth > 10) {
+            return ['__max_depth_reached__' => true];
+        }
+
         $normalized = [];
 
         // Sort all array keys to ensure consistent ordering
@@ -87,10 +92,18 @@ class QueryCacheKey
         foreach ($queryData as $key => $value) {
             if (is_array($value)) {
                 // Recursively normalize nested arrays
-                $normalized[$key] = static::normalizeQueryData($value);
+                $normalized[$key] = static::normalizeQueryData($value, $depth + 1, $seen);
             } elseif (is_object($value)) {
-                // Convert objects to arrays for consistent serialization
-                $normalized[$key] = static::normalizeQueryData((array) $value);
+                // Check for circular references
+                $objectId = spl_object_id($value);
+                if (isset($seen[$objectId])) {
+                    $normalized[$key] = ['__circular_reference__' => get_class($value)];
+                } else {
+                    $seen[$objectId] = true;
+                    // Convert objects to arrays for consistent serialization
+                    $normalized[$key] = static::normalizeQueryData((array) $value, $depth + 1, $seen);
+                    unset($seen[$objectId]);
+                }
             } else {
                 $normalized[$key] = $value;
             }

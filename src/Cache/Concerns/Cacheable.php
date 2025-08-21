@@ -269,19 +269,18 @@ trait Cacheable
     {
         if ($this->customCacheKey !== null) {
             RequestCache::forget($this->customCacheKey);
+            CacheManager::forget($this->customCacheKey, $this->cacheStore);
             return;
         }
 
-        // Clear cache based on collection
-        $collection = $this->getCollection();
-        $prefix = QueryCacheKey::getCollectionPrefix($collection);
-        
-        // Get all cache keys and remove matching ones
-        foreach (RequestCache::keys() as $key) {
-            if (QueryCacheKey::extractCollection($key) === $collection) {
-                RequestCache::forget($key);
-            }
+        // Clear cache for specific operations that were cached
+        foreach ($this->cachedKeys as $method => $cacheKey) {
+            RequestCache::forget($cacheKey);
+            CacheManager::forget($cacheKey, $this->cacheStore);
         }
+
+        // Clear the stored cache keys
+        $this->cachedKeys = [];
     }
 
     /**
@@ -304,7 +303,8 @@ trait Cacheable
      */
     public function getCacheStats(): array
     {
-        return CacheManager::getStats();
+        $stats = CacheManager::getStats();
+        return $stats['combined'] ?? [];
     }
 
     /**
@@ -318,6 +318,13 @@ trait Cacheable
 
         // Use stored cache key if available, otherwise generate new one
         $cacheKey = $this->cachedKeys[$method] ?? $this->getCacheKey($method, $arguments);
+
+        // Check request cache first (most common case)
+        if (RequestCache::has($cacheKey)) {
+            return true;
+        }
+
+        // Check cache manager for persistent cache
         return CacheManager::has($cacheKey, $this->cacheStore);
     }
 
@@ -369,9 +376,28 @@ trait Cacheable
     public function flushCache(): void
     {
         $collection = $this->getCollection();
-        
-        // Use cache manager to flush from both caches
-        CacheManager::flushTags([$collection], $this->cacheStore);
+
+        // Clear cached keys for this specific query instance
+        foreach ($this->cachedKeys as $method => $cacheKey) {
+            RequestCache::forget($cacheKey);
+            if ($this->persistentCacheEnabled && PersistentCache::isEnabled()) {
+                CacheManager::forget($cacheKey, $this->cacheStore);
+            }
+        }
+        $this->cachedKeys = [];
+
+        // Also clear from request cache - get all keys and remove matching ones
+        foreach (RequestCache::keys() as $key) {
+            $extractedCollection = QueryCacheKey::extractCollection($key);
+            if ($extractedCollection === $collection) {
+                RequestCache::forget($key);
+            }
+        }
+
+        // Clear from persistent cache using tags
+        if ($this->persistentCacheEnabled && PersistentCache::isEnabled()) {
+            PersistentCache::flushTags([$collection], $this->cacheStore);
+        }
     }
 
     /**

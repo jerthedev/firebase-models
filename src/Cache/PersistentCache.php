@@ -329,7 +329,12 @@ class PersistentCache
      */
     public static function flush(?string $store = null): bool
     {
-        return static::flushTags([static::$keyPrefix], $store);
+        try {
+            $cache = static::cache($store);
+            return $cache->flush();
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     /**

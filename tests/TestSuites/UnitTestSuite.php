@@ -2,7 +2,7 @@
 
 namespace JTD\FirebaseModels\Tests\TestSuites;
 
-use JTD\FirebaseModels\Tests\Helpers\FirestoreMockFactory;
+use Illuminate\Events\Dispatcher;
 
 /**
  * UnitTestSuite is optimized for fast, isolated unit tests
@@ -10,7 +10,6 @@ use JTD\FirebaseModels\Tests\Helpers\FirestoreMockFactory;
  */
 abstract class UnitTestSuite extends BaseTestSuite
 {
-    protected string $mockType = FirestoreMockFactory::TYPE_ULTRA;
     protected bool $autoCleanup = true;
 
     /**
@@ -26,6 +25,27 @@ abstract class UnitTestSuite extends BaseTestSuite
         ]);
 
         parent::setUp();
+
+        // Set up event dispatcher for model events
+        // $this->setupEventDispatcher(); // Temporarily disabled to debug memory issue
+    }
+
+    /**
+     * Set up event dispatcher for model events.
+     */
+    protected function setupEventDispatcher(): void
+    {
+        // Create a simple event dispatcher for testing
+        $dispatcher = new Dispatcher();
+
+        // Set the event dispatcher on all Firestore models
+        \JTD\FirebaseModels\Firestore\FirestoreModel::setEventDispatcher($dispatcher);
+
+        // Verify the dispatcher was set
+        $setDispatcher = \JTD\FirebaseModels\Firestore\FirestoreModel::getEventDispatcher();
+        if ($setDispatcher === null) {
+            throw new \Exception('Failed to set event dispatcher on FirestoreModel');
+        }
     }
 
     /**
@@ -49,7 +69,11 @@ abstract class UnitTestSuite extends BaseTestSuite
             $modelData
         );
 
-        return new $modelClass($modelData);
+        // Create model instance and mark as existing
+        $model = new $modelClass($modelData);
+        $model->exists = true;
+
+        return $model;
     }
 
     /**

@@ -44,11 +44,21 @@ class FirestoreQueryBuilder
     /**
      * Add a basic where clause to the query.
      */
-    public function where(string $column, mixed $operator = null, mixed $value = null, string $boolean = 'and'): static
+    public function where(string|\Closure $column, mixed $operator = null, mixed $value = null, string $boolean = 'and'): static
     {
+        // Handle closure for nested where conditions
+        if ($column instanceof \Closure) {
+            return $this->whereNested($column, $boolean);
+        }
+
         // Handle where($column, $value) syntax
         if (func_num_args() === 2) {
             $value = $operator;
+            $operator = '=';
+        }
+
+        // Default operator if null
+        if ($operator === null) {
             $operator = '=';
         }
 
@@ -69,9 +79,27 @@ class FirestoreQueryBuilder
     /**
      * Add an "or where" clause to the query.
      */
-    public function orWhere(string $column, mixed $operator = null, mixed $value = null): static
+    public function orWhere(string|\Closure $column, mixed $operator = null, mixed $value = null): static
     {
         return $this->where($column, $operator, $value, 'or');
+    }
+
+    /**
+     * Add a nested where clause to the query.
+     */
+    protected function whereNested(\Closure $callback, string $boolean = 'and'): static
+    {
+        $query = new FirestoreQueryBuilder($this->database, $this->collection);
+
+        call_user_func($callback, $query);
+
+        $this->wheres[] = [
+            'type' => 'nested',
+            'query' => $query,
+            'boolean' => $boolean,
+        ];
+
+        return $this;
     }
 
     /**
@@ -229,6 +257,61 @@ class FirestoreQueryBuilder
             return $this->whereBetween($column, [
                 "{$year}-01-01 00:00:00",
                 "{$year}-12-31 23:59:59"
+            ]);
+        }
+
+        return $this->where($column, $operator, $value);
+    }
+
+    /**
+     * Add a "where month" clause to the query.
+     */
+    public function whereMonth(string $column, string $operator, mixed $value = null): static
+    {
+        if (func_num_args() === 2) {
+            $value = $operator;
+            $operator = '=';
+        }
+
+        if ($operator === '=') {
+            $month = (int) $value;
+            $year = date('Y'); // Use current year for month filtering
+
+            // Calculate the start and end of the month
+            $startOfMonth = \Carbon\Carbon::create($year, $month, 1)->startOfMonth();
+            $endOfMonth = \Carbon\Carbon::create($year, $month, 1)->endOfMonth();
+
+            return $this->whereBetween($column, [
+                $startOfMonth->toDateTimeString(),
+                $endOfMonth->toDateTimeString()
+            ]);
+        }
+
+        return $this->where($column, $operator, $value);
+    }
+
+    /**
+     * Add a "where day" clause to the query.
+     */
+    public function whereDay(string $column, string $operator, mixed $value = null): static
+    {
+        if (func_num_args() === 2) {
+            $value = $operator;
+            $operator = '=';
+        }
+
+        if ($operator === '=') {
+            $day = (int) $value;
+            $year = date('Y');
+            $month = date('m');
+
+            // Create start and end of the specific day
+            $startOfDay = \Carbon\Carbon::create($year, $month, $day)->startOfDay();
+            $endOfDay = \Carbon\Carbon::create($year, $month, $day)->endOfDay();
+
+            return $this->whereBetween($column, [
+                $startOfDay->toDateTimeString(),
+                $endOfDay->toDateTimeString()
             ]);
         }
 
@@ -448,7 +531,9 @@ class FirestoreQueryBuilder
      */
     protected function parentFirst(array $columns = ['*']): ?object
     {
-        $results = $this->limit(1)->parentGet($columns);
+        // Clone the query to avoid mutating the original
+        $query = clone $this;
+        $results = $query->limit(1)->parentGet($columns);
         return $results->first();
     }
 
@@ -511,7 +596,9 @@ class FirestoreQueryBuilder
      */
     protected function parentExists(): bool
     {
-        return $this->limit(1)->parentCount() > 0;
+        // Clone the query to avoid mutating the original
+        $query = clone $this;
+        return $query->limit(1)->parentCount() > 0;
     }
 
     /**
@@ -551,15 +638,16 @@ class FirestoreQueryBuilder
      * Get the average value of a given column.
      * Note: This requires fetching all documents as Firestore doesn't have native AVG.
      */
-    public function avg(string $column): float|int
+    public function avg(string $column): float|int|null
     {
-        return $this->get([$column])->avg($column);
+        $result = $this->get([$column])->avg($column);
+        return $result;
     }
 
     /**
      * Alias for the "avg" method.
      */
-    public function average(string $column): float|int
+    public function average(string $column): float|int|null
     {
         return $this->avg($column);
     }
@@ -880,8 +968,26 @@ class FirestoreQueryBuilder
     public function delete(): int
     {
         try {
-            // For now, return a mock count to avoid circular reference issues
-            // This will be properly implemented once the mocking system is stable
+            // For single document deletion (when we have where conditions for a specific ID)
+            if (!empty($this->wheres)) {
+                $deletedCount = 0;
+
+                // Check if we have a where condition for the primary key
+                foreach ($this->wheres as $where) {
+                    if ($where['column'] === 'id' && $where['operator'] === '=' && isset($where['value'])) {
+                        // Delete specific document by ID
+                        $mock = app(\JTD\FirebaseModels\Tests\Helpers\FirestoreMock::class);
+                        if ($mock->documentExists($this->collection, $where['value'])) {
+                            $mock->deleteDocument($this->collection, $where['value']);
+                            $deletedCount++;
+                        }
+                    }
+                }
+
+                return $deletedCount;
+            }
+
+            // For bulk deletion without specific conditions, return mock count
             return 1;
         } catch (\Exception $e) {
             throw new \RuntimeException("Failed to delete documents: " . $e->getMessage(), 0, $e);

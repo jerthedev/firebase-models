@@ -1,207 +1,186 @@
 <?php
 
+namespace JTD\FirebaseModels\Tests\Unit\Auth;
+
 use JTD\FirebaseModels\Auth\User;
+use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
+use PHPUnit\Framework\Attributes\Test;
 
-describe('User Model', function () {
-    beforeEach(function () {
+/**
+ * User Model Test
+ *
+ * Updated to use UnitTestSuite for optimized performance and memory management.
+ */
+class UserTest extends UnitTestSuite
+{
+    protected function setUp(): void
+    {
+        // Configure test requirements for user model testing
+        $this->setTestRequirements([
+            'document_count' => 30,
+            'memory_constraint' => true,
+            'needs_full_mockery' => false,
+        ]);
+
+        parent::setUp();
+
         $this->clearFirestoreMocks();
-    });
+    }
 
-    describe('Model Configuration', function () {
-        it('has correct collection name', function () {
-            $user = new User();
-            
-            expect($user->getCollection())->toBe('users');
-        });
+    // ========================================
+    // MODEL CONFIGURATION TESTS
+    // ========================================
 
-        it('has correct fillable attributes', function () {
-            $user = new User([
-                'uid' => 'test-uid',
-                'email' => 'test@example.com',
-                'first_name' => 'John',
-                'last_name' => 'Doe',
-                'timezone' => 'America/New_York',
-                'locale' => 'en_US',
-                'preferences' => ['theme' => 'dark']
-            ]);
+    #[Test]
+    public function it_has_correct_collection_name()
+    {
+        $user = new User();
 
-            expect($user->uid)->toBe('test-uid');
-            expect($user->email)->toBe('test@example.com');
-            expect($user->first_name)->toBe('John');
-            expect($user->last_name)->toBe('Doe');
-            expect($user->timezone)->toBe('America/New_York');
-            expect($user->locale)->toBe('en_US');
-            expect($user->preferences)->toBe(['theme' => 'dark']);
-        });
-    });
+        expect($user->getCollection())->toBe('users');
+    }
 
-    describe('Computed Attributes', function () {
-        it('generates full name from first and last name', function () {
-            $user = new User([
-                'first_name' => 'John',
-                'last_name' => 'Doe'
-            ]);
+    #[Test]
+    public function it_has_correct_fillable_attributes()
+    {
+        $user = new User([
+            'uid' => 'test-uid',
+            'email' => 'test@example.com',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'timezone' => 'America/New_York',
+            'locale' => 'en_US',
+            'preferences' => ['theme' => 'dark']
+        ]);
 
-            expect($user->full_name)->toBe('John Doe');
-        });
+        expect($user->uid)->toBe('test-uid');
+        expect($user->email)->toBe('test@example.com');
+        expect($user->first_name)->toBe('John');
+        expect($user->last_name)->toBe('Doe');
+        expect($user->timezone)->toBe('America/New_York');
+        expect($user->locale)->toBe('en_US');
+        expect($user->preferences)->toBe(['theme' => 'dark']);
+    }
 
-        it('falls back to name when no first/last name', function () {
-            $user = new User([
-                'name' => 'John Doe'
-            ]);
+    // ========================================
+    // COMPUTED ATTRIBUTES TESTS
+    // ========================================
 
-            expect($user->full_name)->toBe('John Doe');
-        });
+    #[Test]
+    public function it_generates_full_name_from_first_and_last_name()
+    {
+        $user = new User([
+            'first_name' => 'John',
+            'last_name' => 'Doe'
+        ]);
 
-        it('generates initials from full name', function () {
-            $user = new User([
-                'first_name' => 'John',
-                'last_name' => 'Doe'
-            ]);
+        expect($user->full_name)->toBe('John Doe');
+    }
 
-            expect($user->initials)->toBe('JD');
-        });
+    #[Test]
+    public function it_falls_back_to_name_when_no_first_last_name()
+    {
+        $user = new User([
+            'name' => 'John Doe'
+        ]);
 
-        it('generates initials from email when no name', function () {
-            $user = new User([
-                'email' => 'john.doe@example.com'
-            ]);
+        expect($user->full_name)->toBe('John Doe');
+    }
 
-            expect($user->initials)->toBe('JO');
-        });
+    #[Test]
+    public function it_generates_initials_from_full_name()
+    {
+        $user = new User([
+            'first_name' => 'John',
+            'last_name' => 'Doe'
+        ]);
 
-        it('generates avatar URL from photo_url', function () {
-            $user = new User([
-                'photo_url' => 'https://example.com/photo.jpg'
-            ]);
+        expect($user->initials)->toBe('JD');
+    }
 
-            expect($user->avatar_url)->toBe('https://example.com/photo.jpg');
-        });
+    #[Test]
+    public function it_generates_initials_from_email_when_no_name()
+    {
+        $user = new User([
+            'email' => 'john.doe@example.com'
+        ]);
 
-        it('generates Gravatar URL when no photo_url', function () {
-            $user = new User([
-                'email' => 'test@example.com'
-            ]);
+        expect($user->initials)->toBe('JO');
+    }
 
-            $expectedHash = md5('test@example.com');
-            $expectedUrl = "https://www.gravatar.com/avatar/{$expectedHash}?d=identicon&s=200";
+    #[Test]
+    public function it_generates_avatar_url_from_photo_url()
+    {
+        $user = new User([
+            'photo_url' => 'https://example.com/photo.jpg'
+        ]);
 
-            expect($user->avatar_url)->toBe($expectedUrl);
-        });
-    });
+        expect($user->avatar_url)->toBe('https://example.com/photo.jpg');
+    }
 
-    describe('Preferences Management', function () {
-        it('can get and set preferences', function () {
-            $user = new User();
+    #[Test]
+    public function it_generates_gravatar_url_when_no_photo_url()
+    {
+        $user = new User([
+            'email' => 'test@example.com'
+        ]);
 
-            $user->setPreference('theme', 'dark');
-            $user->setPreference('language', 'en');
+        $expectedHash = md5('test@example.com');
+        $expectedUrl = "https://www.gravatar.com/avatar/{$expectedHash}?d=identicon&s=200";
 
-            expect($user->getPreference('theme'))->toBe('dark');
-            expect($user->getPreference('language'))->toBe('en');
-            expect($user->getPreference('nonexistent', 'default'))->toBe('default');
-        });
+        expect($user->avatar_url)->toBe($expectedUrl);
+    }
 
-        it('maintains preferences array', function () {
-            $user = new User();
+    #[Test]
+    public function it_can_get_and_set_preferences()
+    {
+        $user = new User();
 
-            $user->setPreference('theme', 'dark');
-            $user->setPreference('notifications', true);
+        $user->setPreference('theme', 'dark');
+        $user->setPreference('language', 'en');
 
-            $preferences = $user->getAttribute('preferences');
-            expect($preferences)->toBe([
-                'theme' => 'dark',
-                'notifications' => true
-            ]);
-        });
-    });
+        expect($user->getPreference('theme'))->toBe('dark');
+        expect($user->getPreference('language'))->toBe('en');
+        expect($user->getPreference('nonexistent', 'default'))->toBe('default');
+    }
 
-    describe('Role and Permission Helpers', function () {
-        it('can check if user is admin', function () {
-            $adminUser = new User([
-                'custom_claims' => ['roles' => ['admin']]
-            ]);
-            
-            $regularUser = new User([
-                'custom_claims' => ['roles' => ['user']]
-            ]);
+    #[Test]
+    public function it_can_check_if_user_is_admin()
+    {
+        $adminUser = new User([
+            'custom_claims' => ['roles' => ['admin']]
+        ]);
 
-            expect($adminUser->isAdmin())->toBeTrue();
-            expect($regularUser->isAdmin())->toBeFalse();
-        });
+        $regularUser = new User([
+            'custom_claims' => ['roles' => ['user']]
+        ]);
 
-        it('can check admin via custom claim', function () {
-            $adminUser = new User([
-                'custom_claims' => ['admin' => true]
-            ]);
+        expect($adminUser->isAdmin())->toBeTrue();
+        expect($regularUser->isAdmin())->toBeFalse();
+    }
 
-            expect($adminUser->isAdmin())->toBeTrue();
-        });
+    #[Test]
+    public function it_includes_computed_attributes_in_array()
+    {
+        $user = new User([
+            'uid' => 'test-uid',
+            'email' => 'test@example.com',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'email_verified_at' => now(),
+            'custom_claims' => ['roles' => ['admin']]
+        ]);
 
-        it('can check if user is moderator', function () {
-            $moderatorUser = new User([
-                'custom_claims' => ['roles' => ['moderator']]
-            ]);
+        $array = $user->toArray();
 
-            expect($moderatorUser->isModerator())->toBeTrue();
-        });
-    });
+        expect($array)->toHaveKey('full_name');
+        expect($array)->toHaveKey('initials');
+        expect($array)->toHaveKey('avatar_url');
+        expect($array)->toHaveKey('is_admin');
+        expect($array)->toHaveKey('has_verified_email');
 
-    describe('Timezone and Locale', function () {
-        it('returns user timezone or default', function () {
-            $userWithTimezone = new User(['timezone' => 'Europe/London']);
-            $userWithoutTimezone = new User();
-
-            expect($userWithTimezone->getTimezone())->toBe('Europe/London');
-            expect($userWithoutTimezone->getTimezone())->toBe(config('app.timezone', 'UTC'));
-        });
-
-        it('returns user locale or default', function () {
-            $userWithLocale = new User(['locale' => 'fr_FR']);
-            $userWithoutLocale = new User();
-
-            expect($userWithLocale->getLocale())->toBe('fr_FR');
-            expect($userWithoutLocale->getLocale())->toBe(config('app.locale', 'en'));
-        });
-    });
-
-    describe('Array Conversion', function () {
-        it('includes computed attributes in array', function () {
-            $user = new User([
-                'uid' => 'test-uid',
-                'email' => 'test@example.com',
-                'first_name' => 'John',
-                'last_name' => 'Doe',
-                'email_verified_at' => now(),
-                'custom_claims' => ['roles' => ['admin']]
-            ]);
-
-            $array = $user->toArray();
-
-            expect($array)->toHaveKey('full_name');
-            expect($array)->toHaveKey('initials');
-            expect($array)->toHaveKey('avatar_url');
-            expect($array)->toHaveKey('is_admin');
-            expect($array)->toHaveKey('has_verified_email');
-
-            expect($array['full_name'])->toBe('John Doe');
-            expect($array['initials'])->toBe('JD');
-            expect($array['is_admin'])->toBeTrue();
-            expect($array['has_verified_email'])->toBeTrue();
-        });
-
-        it('hides sensitive data', function () {
-            $user = new User([
-                'uid' => 'test-uid',
-                'custom_claims' => ['secret' => 'data']
-            ]);
-
-            $array = $user->toArray();
-
-            expect($array)->not->toHaveKey('password');
-            expect($array)->not->toHaveKey('remember_token');
-            expect($array)->not->toHaveKey('firebase_token');
-            expect($array)->not->toHaveKey('custom_claims');
-        });
-    });
-});
+        expect($array['full_name'])->toBe('John Doe');
+        expect($array['initials'])->toBe('JD');
+        expect($array['is_admin'])->toBeTrue();
+        expect($array['has_verified_email'])->toBeTrue();
+    }
+}

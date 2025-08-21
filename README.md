@@ -159,7 +159,7 @@ Post::creating(function ($post) {
 
 ## 🧪 Testing
 
-This package includes a comprehensive testing suite:
+This package includes a comprehensive testing suite with **clean test organization** for better performance and maintainability:
 
 ```bash
 # Run all tests
@@ -168,16 +168,34 @@ composer test
 # Run tests with coverage
 composer test-coverage
 
+# Run specific test suites (using Pest)
+vendor/bin/pest --testsuite=Unit          # Unit tests
+vendor/bin/pest --testsuite=Feature       # End-to-end feature tests
+vendor/bin/pest --testsuite=Integration   # Integration tests
+vendor/bin/pest --testsuite=Performance   # Performance benchmarks
+
+# Run all tests
+vendor/bin/pest --testsuite=All
+
 # Run code quality checks
 composer format
 composer analyse
 ```
 
+### **Testing Architecture**
+- 🏗️ **Clean Test Organization** - Optimized test suites with specialized base classes
+- ⚡ **UnitTestSuite** - Memory-optimized unit tests with selective mocking
+- 🎯 **FeatureTestSuite** - Comprehensive end-to-end testing with performance monitoring
+- 🔗 **IntegrationTestSuite** - Real Firebase integration testing
+- 📊 **PerformanceTestSuite** - Automated performance benchmarking and memory profiling
+
 ### **Testing Features**
-- ✅ **100% Unit Test Coverage** - Comprehensive test coverage for all features
+- ✅ **Comprehensive Test Coverage** - Extensive test coverage for all features
 - 🎭 **FirestoreMock** - In-memory Firestore emulation for fast testing
 - 🔧 **Test Helpers** - Custom expectations and assertions for Firebase models
+- 📈 **Performance Monitoring** - Automatic benchmarking and memory usage tracking
 - 🚀 **CI/CD Ready** - GitHub Actions integration with quality gates
+- 🧹 **Clean Structure** - Standardized test organization and naming conventions
 
 ## 🤝 Contributing
 

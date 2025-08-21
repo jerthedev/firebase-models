@@ -2,15 +2,12 @@
 
 namespace JTD\FirebaseModels\Tests\TestSuites;
 
-use JTD\FirebaseModels\Tests\Helpers\FirestoreMockFactory;
-
 /**
  * IntegrationTestSuite is designed for integration tests that require
  * more comprehensive mocking and realistic data scenarios.
  */
 abstract class IntegrationTestSuite extends BaseTestSuite
 {
-    protected string $mockType = FirestoreMockFactory::TYPE_LIGHTWEIGHT;
     protected bool $autoCleanup = true;
 
     /**
@@ -77,8 +74,16 @@ abstract class IntegrationTestSuite extends BaseTestSuite
     /**
      * Mock complex query scenarios.
      */
-    protected function mockComplexQuery(string $collection, array $filters = [], array $orderBy = [], int $limit = null): array
+    protected function mockComplexQuery(string $collection, array $filters = [], array $orderBy = [], ?int $limit = null, ?array $testData = null): array
     {
+        // If test data is provided, store it in the mock first
+        if ($testData !== null) {
+            foreach ($testData as $data) {
+                $id = $data['id'] ?? uniqid();
+                $this->getFirestoreMock()->storeDocument($collection, $id, $data);
+            }
+        }
+
         $documents = $this->getFirestoreMock()->getCollectionDocuments($collection);
         
         // Apply filters
@@ -118,12 +123,34 @@ abstract class IntegrationTestSuite extends BaseTestSuite
     /**
      * Apply a filter to a document.
      */
-    protected function applyFilter(array $document, array $filter): bool
+    protected function applyFilter($document, array $filter): bool
     {
         $field = $filter['field'];
         $operator = $filter['operator'];
         $value = $filter['value'];
-        $docValue = $document[$field] ?? null;
+
+        // Handle both array and DocumentSnapshot formats
+        if (is_array($document)) {
+            $docValue = $document[$field] ?? null;
+        } else {
+            // Assume it's a DocumentSnapshot object
+            $data = $document->data();
+            $docValue = $data[$field] ?? null;
+        }
+
+        // Handle boolean comparisons with type coercion
+        if (is_bool($value)) {
+            // Convert stored value to boolean for comparison
+            $docValueBool = $this->convertToBoolean($docValue);
+            $value = (bool) $value;
+
+            return match ($operator) {
+                '=' => $docValueBool === $value,
+                '!=' => $docValueBool !== $value,
+                '==' => $docValueBool === $value,
+                default => false,
+            };
+        }
 
         return match ($operator) {
             '=' => $docValue == $value,
@@ -138,6 +165,26 @@ abstract class IntegrationTestSuite extends BaseTestSuite
             'array-contains-any' => is_array($docValue) && !empty(array_intersect($docValue, $value)),
             default => false,
         };
+    }
+
+    /**
+     * Convert a value to boolean using Laravel-style casting.
+     */
+    protected function convertToBoolean($value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value)) {
+            return (bool) $value;
+        }
+
+        if (is_string($value)) {
+            return in_array(strtolower($value), ['true', '1', 'yes', 'on'], true);
+        }
+
+        return (bool) $value;
     }
 
     /**
@@ -235,5 +282,97 @@ abstract class IntegrationTestSuite extends BaseTestSuite
                 }
             }
         }
+    }
+
+    /**
+     * Create multiple test models for batch testing.
+     */
+    protected function createTestModels(string $modelClass, int $count = 5, array $baseData = []): array
+    {
+        $models = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $data = array_merge($baseData, [
+                'id' => 'test-model-' . $i,
+                'name' => "Test Model {$i}",
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Store in mock
+            $this->getFirestoreMock()->storeDocument(
+                $modelClass::getCollectionName(),
+                $data['id'],
+                $data
+            );
+
+            $models[] = new $modelClass($data);
+        }
+
+        return $models;
+    }
+
+    /**
+     * Enable memory monitoring for performance-sensitive tests.
+     */
+    protected function enableMemoryMonitoring(): void
+    {
+        $this->memorySnapshots['test_start'] = memory_get_usage();
+    }
+
+    /**
+     * Benchmark a callable and return execution time.
+     */
+    protected function benchmark(callable $callback): float
+    {
+        $startTime = microtime(true);
+        $callback();
+        return microtime(true) - $startTime;
+    }
+
+    /**
+     * Check memory usage and fail if it exceeds threshold.
+     */
+    protected function assertMemoryUsageWithinThreshold(int $maxBytes): void
+    {
+        $currentUsage = memory_get_usage();
+
+        $this->assertLessThanOrEqual(
+            $maxBytes,
+            $currentUsage,
+            "Memory usage ({$this->formatBytes($currentUsage)}) exceeds threshold ({$this->formatBytes($maxBytes)})"
+        );
+    }
+
+    /**
+     * Clear test data from the mock.
+     */
+    protected function clearTestData(): void
+    {
+        \JTD\FirebaseModels\Tests\Helpers\FirestoreMock::clear();
+    }
+
+    /**
+     * Format bytes for human-readable output.
+     */
+    protected function formatBytes(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $unitIndex = 0;
+
+        while ($bytes >= 1024 && $unitIndex < count($units) - 1) {
+            $bytes /= 1024;
+            $unitIndex++;
+        }
+
+        return round($bytes, 2) . ' ' . $units[$unitIndex];
+    }
+
+    /**
+     * Get operations performed by the mock system.
+     */
+    protected function getPerformedOperations(): array
+    {
+        return $this->getFirestoreMock()->getOperations();
     }
 }

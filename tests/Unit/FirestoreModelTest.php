@@ -1,8 +1,21 @@
 <?php
 
+namespace JTD\FirebaseModels\Tests\Unit\Restructured;
+
 use JTD\FirebaseModels\Firestore\FirestoreModel;
-use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
+use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
+use PHPUnit\Framework\Attributes\Test;
+use JTD\FirebaseModels\Tests\Utilities\TestDataFactory;
 use Illuminate\Support\Carbon;
+
+/**
+ * Comprehensive FirestoreModel Test
+ * 
+ * Migrated from:
+ * - tests/Unit/FirestoreModelTest.php
+ * 
+ * Uses new UnitTestSuite for optimized performance and memory management.
+ */
 
 // Test model for testing purposes
 class TestUser extends FirestoreModel
@@ -25,261 +38,299 @@ class TestUser extends FirestoreModel
     ];
 }
 
-describe('FirestoreModel', function () {
-    beforeEach(function () {
-        $this->clearFirestoreMocks();
-    });
+class FirestoreModelTest extends UnitTestSuite
+{
+    protected function setUp(): void
+    {
+        // Configure test requirements for model operations
+        $this->setTestRequirements([
+            'document_count' => 50,
+            'memory_constraint' => true,
+            'needs_full_mockery' => false,
+        ]);
 
-    describe('Model Creation', function () {
-        it('can create a new model instance', function () {
-            $user = new TestUser();
-            
-            expect($user)->toBeFirestoreModel();
-            expect($user->exists)->toBeFalse();
-            expect($user->wasRecentlyCreated)->toBeFalse();
-        });
+        parent::setUp();
+    }
 
-        it('can create a model with attributes', function () {
-            $user = new TestUser([
-                'name' => 'John Doe',
-                'email' => 'john@example.com',
-                'active' => true,
-                'age' => 30
+    // ========================================
+    // MODEL CREATION AND ATTRIBUTES
+    // ========================================
+
+    #[Test]
+    public function it_can_create_models_and_manage_attributes()
+    {
+        // Test basic model creation
+        $user = new TestUser();
+        
+        expect($user)->toBeFirestoreModel();
+        expect($user->exists)->toBeFalse();
+        expect($user->wasRecentlyCreated)->toBeFalse();
+        
+        // Test model creation with attributes using TestDataFactory
+        $userData = TestDataFactory::createUser([
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+            'active' => true,
+            'age' => 30
+        ]);
+        
+        $user = new TestUser($userData);
+        
+        expect($user->name)->toBe('John Doe');
+        expect($user->email)->toBe('john@example.com');
+        expect($user->active)->toBe(true);
+        expect($user->age)->toBe(30);
+        
+        // Test fillable attributes protection
+        $protectedUser = new TestUser([
+            'name' => 'Jane Doe',
+            'password' => 'secret', // Not fillable
+            'admin' => true // Not fillable
+        ]);
+        
+        expect($protectedUser->name)->toBe('Jane Doe');
+        expect($protectedUser->hasAttribute('password'))->toBeFalse();
+        expect($protectedUser->hasAttribute('admin'))->toBeFalse();
+        
+        // Test attribute management
+        $user->name = 'Updated Name';
+        expect($user->name)->toBe('Updated Name');
+        expect($user->hasAttribute('name'))->toBeTrue();
+        expect($user->hasAttribute('nonexistent'))->toBeFalse();
+    }
+
+    #[Test]
+    public function it_handles_attribute_casting_correctly()
+    {
+        // Test boolean casting
+        $user = new TestUser(['active' => '1']);
+        expect($user->active)->toBe(true);
+        expect($user)->toHaveCast('active', 'boolean');
+        
+        // Test integer casting
+        $user = new TestUser(['age' => '30']);
+        expect($user->age)->toBe(30);
+        expect($user)->toHaveCast('age', 'integer');
+        
+        // Test array casting
+        $user = new TestUser(['metadata' => '{"key": "value"}']);
+        expect($user->metadata)->toBe(['key' => 'value']);
+        expect($user)->toHaveCast('metadata', 'array');
+        
+        // Test datetime casting
+        $date = '2023-01-01 12:00:00';
+        $user = new TestUser(['created_at' => $date]);
+        expect($user->created_at)->toBeInstanceOf(Carbon::class);
+        expect($user->created_at->format('Y-m-d H:i:s'))->toBe($date);
+        
+        // Performance test for casting operations
+        $executionTime = $this->benchmark(function () {
+            $testData = TestDataFactory::createUser([
+                'active' => '1',
+                'age' => '25',
+                'metadata' => '{"test": "data"}',
+                'created_at' => '2023-01-01 12:00:00'
             ]);
-            
-            expect($user->name)->toBe('John Doe');
-            expect($user->email)->toBe('john@example.com');
-            expect($user->active)->toBe(true);
-            expect($user->age)->toBe(30);
+            return new TestUser($testData);
         });
+        
+        expect($executionTime)->toBeLessThan(0.01); // Casting should be very fast
+    }
 
-        it('respects fillable attributes', function () {
-            $user = new TestUser([
-                'name' => 'John Doe',
-                'password' => 'secret', // Not fillable
-                'admin' => true // Not fillable
-            ]);
-            
-            expect($user->name)->toBe('John Doe');
-            expect($user->hasAttribute('password'))->toBeFalse();
-            expect($user->hasAttribute('admin'))->toBeFalse();
-        });
-    });
+    // ========================================
+    // DIRTY TRACKING AND MASS ASSIGNMENT
+    // ========================================
 
-    describe('Attribute Casting', function () {
-        it('casts boolean attributes correctly', function () {
-            $user = new TestUser(['active' => '1']);
-            
-            expect($user->active)->toBe(true);
-            expect($user)->toHaveCast('active', 'boolean');
-        });
+    #[Test]
+    public function it_tracks_dirty_attributes_and_handles_mass_assignment()
+    {
+        $userData = TestDataFactory::createUser(['name' => 'John Doe']);
+        $user = new TestUser($userData);
+        $user->syncOriginal();
+        
+        // Test clean state
+        expect($user)->toBeClean();
+        
+        // Test dirty tracking
+        $user->name = 'Jane Doe';
+        expect($user)->toBeDirty(['name']);
+        expect($user->isDirty('name'))->toBeTrue();
+        expect($user->isClean('email'))->toBeTrue();
+        
+        // Test mass assignment protection
+        expect($user->isFillable('name'))->toBeTrue();
+        expect($user->isFillable('email'))->toBeTrue();
+        expect($user->isFillable('password'))->toBeFalse();
+        expect($user->isFillable('admin'))->toBeFalse();
+        
+        // Test force fill
+        $user->forceFill(['password' => 'secret']);
+        expect($user->hasAttribute('password'))->toBeTrue();
+        expect($user->password)->toBe('secret');
+        
+        // Test fillable mass assignment
+        $user->fill([
+            'name' => 'Mass Assigned',
+            'email' => 'mass@example.com',
+            'password' => 'ignored' // Should be ignored
+        ]);
+        
+        expect($user->name)->toBe('Mass Assigned');
+        expect($user->email)->toBe('mass@example.com');
+        expect($user->password)->toBe('secret'); // Should remain unchanged
+    }
 
-        it('casts integer attributes correctly', function () {
-            $user = new TestUser(['age' => '30']);
-            
-            expect($user->age)->toBe(30);
-            expect($user)->toHaveCast('age', 'integer');
-        });
+    // ========================================
+    // TIMESTAMPS AND COLLECTION MANAGEMENT
+    // ========================================
 
-        it('casts array attributes correctly', function () {
-            $user = new TestUser(['metadata' => '{"key": "value"}']);
-            
-            expect($user->metadata)->toBe(['key' => 'value']);
-            expect($user)->toHaveCast('metadata', 'array');
-        });
+    #[Test]
+    public function it_manages_timestamps_and_collections_correctly()
+    {
+        $user = new TestUser();
+        
+        // Test timestamp configuration
+        expect($user->usesTimestamps())->toBeTrue();
+        expect($user->getCreatedAtColumn())->toBe('created_at');
+        expect($user->getUpdatedAtColumn())->toBe('updated_at');
+        
+        // Test disabling timestamps
+        $user->timestamps = false;
+        expect($user->usesTimestamps())->toBeFalse();
+        
+        // Test collection management
+        expect($user->getCollection())->toBe('users');
+        
+        $user->setCollection('custom_users');
+        expect($user->getCollection())->toBe('custom_users');
+        
+        // Test primary key management
+        expect($user->getKeyName())->toBe('id');
+        expect($user->getKeyType())->toBe('string');
+        expect($user->getIncrementing())->toBeFalse();
+        
+        // Test custom primary key
+        $user->setKeyName('uuid');
+        $user->setKeyType('string');
+        expect($user->getKeyName())->toBe('uuid');
+        expect($user->getKeyType())->toBe('string');
+    }
 
-        it('casts datetime attributes correctly', function () {
-            $date = '2023-01-01 12:00:00';
-            $user = new TestUser(['created_at' => $date]);
-            
-            expect($user->created_at)->toBeInstanceOf(Carbon::class);
-            expect($user->created_at->format('Y-m-d H:i:s'))->toBe($date);
-        });
-    });
+    // ========================================
+    // SERIALIZATION AND COMPARISON
+    // ========================================
 
-    describe('Attribute Management', function () {
-        it('can get and set attributes', function () {
-            $user = new TestUser();
-            
-            $user->name = 'Jane Doe';
-            expect($user->name)->toBe('Jane Doe');
-            
-            $user->setAttribute('email', 'jane@example.com');
-            expect($user->getAttribute('email'))->toBe('jane@example.com');
+    #[Test]
+    public function it_handles_serialization_and_model_comparison()
+    {
+        $userData = TestDataFactory::createUser([
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+            'active' => true
+        ]);
+        
+        $user = new TestUser($userData);
+        
+        // Test array conversion
+        $array = $user->toArray();
+        expect($array)->toHaveKeys(['name', 'email', 'active']);
+        expect($array['name'])->toBe('John Doe');
+        expect($array['email'])->toBe('john@example.com');
+        expect($array['active'])->toBe(true);
+        
+        // Test JSON conversion
+        $json = $user->toJson();
+        $decoded = json_decode($json, true);
+        expect($decoded['name'])->toBe('John Doe');
+        expect($decoded['email'])->toBe('john@example.com');
+        
+        // Test hidden attributes
+        $user->forceFill(['password' => 'secret']);
+        $array = $user->toArray();
+        expect($array)->not->toHaveKey('password'); // Should be hidden
+        
+        // Test model comparison
+        $user1 = new TestUser(['id' => '123', 'name' => 'John']);
+        $user2 = new TestUser(['id' => '123', 'name' => 'John']);
+        $user3 = new TestUser(['id' => '456', 'name' => 'Jane']);
+        
+        expect($user1->is($user2))->toBeTrue();
+        expect($user1->is($user3))->toBeFalse();
+        
+        // Performance test for serialization
+        $executionTime = $this->benchmark(function () use ($user) {
+            return $user->toArray();
         });
+        
+        expect($executionTime)->toBeLessThan(0.005); // Serialization should be fast
+    }
 
-        it('tracks dirty attributes', function () {
-            $user = new TestUser(['name' => 'John Doe']);
-            $user->syncOriginal();
-            
-            expect($user)->toBeClean();
-            
-            $user->name = 'Jane Doe';
-            expect($user)->toBeDirty();
-            expect($user)->toBeDirty('name');
-            expect($user)->toBeClean('email');
-        });
+    // ========================================
+    // ARRAY ACCESS AND PERFORMANCE
+    // ========================================
 
-        it('can check if attributes exist', function () {
-            $user = new TestUser(['name' => 'John Doe']);
+    #[Test]
+    public function it_supports_array_access_and_optimizes_performance()
+    {
+        $userData = TestDataFactory::createUser(['name' => 'John Doe']);
+        $user = new TestUser($userData);
+        
+        // Test ArrayAccess implementation
+        expect($user['name'])->toBe('John Doe');
+        expect(isset($user['name']))->toBeTrue();
+        expect(isset($user['nonexistent']))->toBeFalse();
+        
+        $user['email'] = 'john@example.com';
+        expect($user['email'])->toBe('john@example.com');
+        
+        unset($user['email']);
+        expect(isset($user['email']))->toBeFalse();
+        
+        // Test performance with multiple operations
+        $executionTime = $this->benchmark(function () {
+            $testData = TestDataFactory::createUser();
+            $model = new TestUser($testData);
             
-            expect($user->hasAttribute('name'))->toBeTrue();
-            expect($user->hasAttribute('nonexistent'))->toBeFalse();
+            // Perform various operations
+            $model->fill(['name' => 'Performance Test']);
+            $model->toArray();
+            $model->isDirty('name');
+            $model->getOriginal('name');
+            
+            return $model;
         });
-    });
+        
+        expect($executionTime)->toBeLessThan(0.01); // All operations should be fast
+        
+        // Memory usage test
+        $this->enableMemoryMonitoring();
+        
+        // Create multiple models
+        $models = [];
+        for ($i = 0; $i < 10; $i++) {
+            $models[] = new TestUser(TestDataFactory::createUser());
+        }
+        
+        $this->assertMemoryUsageWithinThreshold(5 * 1024 * 1024); // 5MB threshold
+    }
 
-    describe('Mass Assignment Protection', function () {
-        it('allows fillable attributes', function () {
-            $user = new TestUser();
-            
-            expect($user->isFillable('name'))->toBeTrue();
-            expect($user->isFillable('email'))->toBeTrue();
-        });
-
-        it('protects against non-fillable attributes', function () {
-            $user = new TestUser();
-            
-            expect($user->isFillable('password'))->toBeFalse();
-            expect($user->isFillable('admin'))->toBeFalse();
-        });
-
-        it('can force fill attributes', function () {
-            $user = new TestUser();
-            $user->forceFill(['password' => 'secret']);
-            
-            expect($user->hasAttribute('password'))->toBeTrue();
-            expect($user->password)->toBe('secret');
-        });
-    });
-
-    describe('Timestamps', function () {
-        it('uses timestamps by default', function () {
-            $user = new TestUser();
-            
-            expect($user->usesTimestamps())->toBeTrue();
-        });
-
-        it('can disable timestamps', function () {
-            $user = new TestUser();
-            $user->timestamps = false;
-            
-            expect($user->usesTimestamps())->toBeFalse();
-        });
-
-        it('has correct timestamp column names', function () {
-            $user = new TestUser();
-            
-            expect($user->getCreatedAtColumn())->toBe('created_at');
-            expect($user->getUpdatedAtColumn())->toBe('updated_at');
-        });
-    });
-
-    describe('Collection Management', function () {
-        it('uses correct collection name', function () {
-            $user = new TestUser();
-            
-            expect($user->getCollection())->toBe('users');
-        });
-
-        it('can set collection name', function () {
-            $user = new TestUser();
-            $user->setCollection('custom_users');
-            
-            expect($user->getCollection())->toBe('custom_users');
-        });
-    });
-
-    describe('Primary Key Management', function () {
-        it('has correct default primary key', function () {
-            $user = new TestUser();
-            
-            expect($user->getKeyName())->toBe('id');
-            expect($user->getKeyType())->toBe('string');
-            expect($user->getIncrementing())->toBeFalse();
-        });
-
-        it('can set custom primary key', function () {
-            $user = new TestUser();
-            $user->setKeyName('uuid');
-            $user->setKeyType('string');
-            
-            expect($user->getKeyName())->toBe('uuid');
-            expect($user->getKeyType())->toBe('string');
-        });
-    });
-
-    describe('Serialization', function () {
-        it('can convert to array', function () {
-            $user = new TestUser([
-                'name' => 'John Doe',
-                'email' => 'john@example.com',
-                'active' => true
-            ]);
-            
-            $array = $user->toArray();
-            
-            expect($array)->toBeArray();
-            expect($array['name'])->toBe('John Doe');
-            expect($array['email'])->toBe('john@example.com');
-            expect($array['active'])->toBe(true);
-        });
-
-        it('can convert to JSON', function () {
-            $user = new TestUser([
-                'name' => 'John Doe',
-                'email' => 'john@example.com'
-            ]);
-            
-            $json = $user->toJson();
-            $decoded = json_decode($json, true);
-            
-            expect($decoded['name'])->toBe('John Doe');
-            expect($decoded['email'])->toBe('john@example.com');
-        });
-
-        it('respects hidden attributes', function () {
-            $user = new TestUser([
-                'name' => 'John Doe',
-                'password' => 'secret'
-            ]);
-            $user->forceFill(['password' => 'secret']);
-            
-            $array = $user->toArray();
-            
-            expect($array)->not->toHaveKey('password');
-            expect($array)->toHaveKey('name');
-        });
-    });
-
-    describe('Model Comparison', function () {
-        it('can compare models for equality', function () {
-            $user1 = new TestUser(['id' => '123', 'name' => 'John']);
-            $user2 = new TestUser(['id' => '123', 'name' => 'John']);
-            $user3 = new TestUser(['id' => '456', 'name' => 'Jane']);
-            
-            expect($user1->is($user2))->toBeTrue();
-            expect($user1->isNot($user3))->toBeTrue();
-        });
-    });
-
-    describe('ArrayAccess Implementation', function () {
-        it('supports array access syntax', function () {
-            $user = new TestUser(['name' => 'John Doe']);
-            
-            // Test offsetGet
-            expect($user['name'])->toBe('John Doe');
-            
-            // Test offsetSet
-            $user['email'] = 'john@example.com';
-            expect($user['email'])->toBe('john@example.com');
-            
-            // Test offsetExists
-            expect(isset($user['name']))->toBeTrue();
-            expect(isset($user['nonexistent']))->toBeFalse();
-            
-            // Test offsetUnset
-            unset($user['name']);
-            expect(isset($user['name']))->toBeFalse();
-        });
-    });
-});
+    #[Test]
+    public function it_cleans_up_test_data_properly()
+    {
+        // Create test models
+        $models = $this->createTestModels(TestUser::class, 3);
+        
+        // Verify models were created
+        expect($models)->toHaveCount(3);
+        foreach ($models as $model) {
+            expect($model)->toBeInstanceOf(TestUser::class);
+        }
+        
+        // Clear test data
+        $this->clearTestData();
+        
+        // Verify cleanup
+        $operations = $this->getPerformedOperations();
+        expect($operations)->toBeEmpty();
+    }
+}
