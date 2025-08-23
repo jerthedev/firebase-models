@@ -910,6 +910,17 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     }
 
     /**
+     * Determine if two models have the same ID and belong to the same collection.
+     */
+    public function is(?FirestoreModel $model): bool
+    {
+        return !is_null($model) &&
+               $this->getKey() === $model->getKey() &&
+               $this->getCollection() === $model->getCollection() &&
+               get_class($this) === get_class($model);
+    }
+
+    /**
      * Throw a bad method call exception for the given method.
      */
     protected static function throwBadMethodCallException(string $method): void

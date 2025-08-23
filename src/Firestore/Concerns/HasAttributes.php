@@ -1416,6 +1416,11 @@ trait HasAttributes
             return $asObject ? (object) $value : $value;
         }
 
+        // Handle null or empty values
+        if (is_null($value) || $value === '') {
+            return $asObject ? new \stdClass() : [];
+        }
+
         $decoded = json_decode($value, !$asObject);
 
         if (json_last_error() !== JSON_ERROR_NONE) {

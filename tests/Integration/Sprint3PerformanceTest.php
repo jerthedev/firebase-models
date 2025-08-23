@@ -1,8 +1,8 @@
 <?php
 
-namespace Tests\Integration;
+namespace JTD\FirebaseModels\Tests\Integration;
 
-use Tests\TestCase;
+use JTD\FirebaseModels\Tests\TestSuites\PerformanceTestSuite;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use JTD\FirebaseModels\Firestore\Batch\BatchManager;
 use JTD\FirebaseModels\Firestore\Transactions\TransactionManager;
@@ -12,7 +12,7 @@ use JTD\FirebaseModels\Testing\BatchTestHelper;
 /**
  * Performance and stress tests for Sprint 3 features.
  */
-class Sprint3PerformanceTest extends TestCase
+class Sprint3PerformanceTest extends PerformanceTestSuite
 {
     use RefreshDatabase;
 

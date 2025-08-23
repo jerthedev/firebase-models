@@ -1,8 +1,8 @@
 <?php
 
-namespace Tests\Integration;
+namespace JTD\FirebaseModels\Tests\Integration;
 
-use Tests\TestCase;
+use JTD\FirebaseModels\Tests\TestSuites\IntegrationTestSuite;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use JTD\FirebaseModels\Firestore\Batch\BatchManager;
@@ -12,14 +12,14 @@ use JTD\FirebaseModels\Testing\RelationshipTestHelper;
 /**
  * Integration tests for batch operations with relationship functionality.
  */
-class BatchRelationshipIntegrationTest extends TestCase
+class BatchRelationshipIntegrationTest extends IntegrationTestSuite
 {
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->createTestModels();
+        $this->createBatchTestModels();
     }
 
     /**
@@ -411,27 +411,27 @@ class BatchRelationshipIntegrationTest extends TestCase
     }
 
     /**
-     * Helper method to create test models.
+     * Helper method to create test models for this specific test.
      */
-    private function createTestModels(): void
+    protected function createBatchTestModels(): void
     {
         if (!class_exists('TestUser')) {
             eval('
                 class TestUser extends JTD\FirebaseModels\Firestore\FirestoreModel
                 {
-                    protected $collection = "users";
-                    protected $fillable = ["name", "email", "bio"];
-                    
+                    protected ?string $collection = "users";
+                    protected array $fillable = ["name", "email", "bio"];
+
                     public function posts()
                     {
                         return $this->hasMany(TestPost::class, "user_id");
                     }
                 }
-                
+
                 class TestPost extends JTD\FirebaseModels\Firestore\FirestoreModel
                 {
-                    protected $collection = "posts";
-                    protected $fillable = ["title", "content", "user_id", "category_id", "status", "views", "likes", "priority", "editor_notes", "featured_at", "published_at"];
+                    protected ?string $collection = "posts";
+                    protected array $fillable = ["title", "content", "user_id", "category_id", "status", "views", "likes", "priority", "editor_notes", "featured_at", "published_at"];
                     
                     public function user()
                     {
@@ -446,8 +446,8 @@ class BatchRelationshipIntegrationTest extends TestCase
                 
                 class TestCategory extends JTD\FirebaseModels\Firestore\FirestoreModel
                 {
-                    protected $collection = "categories";
-                    protected $fillable = ["name", "description"];
+                    protected ?string $collection = "categories";
+                    protected array $fillable = ["name", "description"];
                     
                     public function posts()
                     {

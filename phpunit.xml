@@ -27,6 +27,25 @@
             <directory>tests/Performance</directory>
         </testsuite>
 
+        <!-- E2E Test Suites -->
+        <testsuite name="E2E">
+            <directory>tests/E2E</directory>
+        </testsuite>
+        <testsuite name="E2E-Models">
+            <directory>tests/E2E/Models</directory>
+        </testsuite>
+        <testsuite name="E2E-Auth">
+            <directory>tests/E2E/Auth</directory>
+        </testsuite>
+        <testsuite name="E2E-Cloud">
+            <directory>tests/E2E/Cloud</directory>
+        </testsuite>
+        <testsuite name="E2E-Sync">
+            <directory>tests/E2E/Sync</directory>
+        </testsuite>
+        <testsuite name="E2E-Performance">
+            <directory>tests/E2E/Performance</directory>
+        </testsuite>
 
     </testsuites>
     <source>

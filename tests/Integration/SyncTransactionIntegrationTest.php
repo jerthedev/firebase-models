@@ -1,8 +1,8 @@
 <?php
 
-namespace Tests\Integration;
+namespace JTD\FirebaseModels\Tests\Integration;
 
-use Tests\TestCase;
+use JTD\FirebaseModels\Tests\TestSuites\IntegrationTestSuite;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use JTD\FirebaseModels\Firestore\Transactions\TransactionManager;
 use JTD\FirebaseModels\Sync\SyncManager;
@@ -12,7 +12,7 @@ use JTD\FirebaseModels\Sync\ConflictResolvers\VersionBasedResolver;
 /**
  * Integration tests for sync mode with transaction support.
  */
-class SyncTransactionIntegrationTest extends TestCase
+class SyncTransactionIntegrationTest extends IntegrationTestSuite
 {
     use RefreshDatabase;
 

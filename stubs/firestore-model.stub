@@ -1,0 +1,93 @@
+<?php
+
+namespace {{ namespace }};
+
+use JTD\FirebaseModels\Firestore\FirestoreModel;
+
+class {{ class }} extends FirestoreModel
+{
+    /**
+     * The collection associated with the model.
+     */
+    protected ?string $collection = '{{ collection }}';
+
+    /**
+     * Indicates if the model should be timestamped.
+     */
+    public bool $timestamps = {{ timestamps }};
+
+    /**
+     * The attributes that are mass assignable.
+     */
+    protected array $fillable = {{ fillable }};
+
+    /**
+     * The attributes that should be cast.
+     */
+    protected array $casts = {{ casts }};
+
+    /**
+     * The attributes that should be hidden for serialization.
+     */
+    protected array $hidden = [
+        // Add attributes to hide from JSON serialization
+    ];
+
+    /**
+     * The accessors to append to the model's array form.
+     */
+    protected array $appends = [
+        // Add computed attributes
+    ];
+
+    /**
+     * Boot the model.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        // Add model event listeners here
+        // static::creating(function ($model) {
+        //     // Logic before creating
+        // });
+        
+        // static::created(function ($model) {
+        //     // Logic after creating
+        // });
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return $this->getKeyName();
+    }
+
+    // Add your custom methods here
+
+    /**
+     * Example scope for filtering published records.
+     */
+    // public function scopePublished($query)
+    // {
+    //     return $query->where('published', true);
+    // }
+
+    /**
+     * Example accessor for computed attribute.
+     */
+    // public function getFullNameAttribute(): string
+    // {
+    //     return $this->first_name . ' ' . $this->last_name;
+    // }
+
+    /**
+     * Example mutator for attribute transformation.
+     */
+    // public function setEmailAttribute($value): void
+    // {
+    //     $this->attributes['email'] = strtolower($value);
+    // }
+}

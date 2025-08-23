@@ -1,8 +1,8 @@
 <?php
 
-namespace Tests\Integration;
+namespace JTD\FirebaseModels\Tests\Integration;
 
-use Tests\TestCase;
+use JTD\FirebaseModels\Tests\TestSuites\IntegrationTestSuite;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use JTD\FirebaseModels\Firestore\FirestoreModel;
@@ -16,7 +16,7 @@ use JTD\FirebaseModels\Testing\RelationshipTestHelper;
  * Comprehensive integration tests for Sprint 3 features.
  * Tests the interaction between sync, transactions, batch operations, and relationships.
  */
-class Sprint3IntegrationTest extends TestCase
+class Sprint3IntegrationTest extends IntegrationTestSuite
 {
     use RefreshDatabase;
 
@@ -425,7 +425,7 @@ class Sprint3IntegrationTest extends TestCase
     /**
      * Helper method to create test models.
      */
-    private function createTestModels(): void
+    protected function createTestModels(): void
     {
         // Test models are created dynamically for testing
         if (!class_exists('TestUser')) {
