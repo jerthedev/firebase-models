@@ -21,6 +21,9 @@ serviceAccountKey.json
 google-services.json
 GoogleService-Info.plist
 
+# E2E Testing Credentials (NEVER commit these)
+tests/credentials/e2e-credentials.json
+
 # IDE & Editor Files
 .vscode/
 .idea/

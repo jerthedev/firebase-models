@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  firebase-models-e2e:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.e2e
+    volumes:
+      - ..:/app
+      - ../tests/credentials:/app/tests/credentials:ro
+    environment:
+      - PHP_VERSION=8.2
+    working_dir: /app
+    command: tail -f /dev/null  # Keep container running

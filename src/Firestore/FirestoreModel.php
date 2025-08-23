@@ -40,7 +40,11 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
         HasSyncMode,
         HasTransactions,
         HasBatchOperations,
-        HasRelationships;
+        HasRelationships {
+            HasRelationships::getRelationValue insteadof HasAttributes;
+            HasRelationships::getRelationshipFromMethod insteadof HasAttributes;
+            HasEvents::fireModelEvent insteadof HasRelationships;
+        }
 
     /**
      * The collection associated with the model.

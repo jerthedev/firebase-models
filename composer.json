@@ -19,21 +19,26 @@
     ],
     "require": {
         "php": "^8.2",
-        "illuminate/support": "^12.0",
-        "illuminate/database": "^12.0",
+        "google/cloud-firestore": "^1.53",
         "illuminate/auth": "^12.0",
-        "illuminate/contracts": "^12.0",
         "illuminate/collections": "^12.0",
+        "illuminate/contracts": "^12.0",
+        "illuminate/database": "^12.0",
+        "illuminate/support": "^12.0",
         "kreait/firebase-php": "^7.0"
     },
+    "suggest": {
+        "ext-grpc": "Required for optimal performance with Firebase Firestore API. Essential for E2E testing."
+    },
+
     "require-dev": {
+        "laravel/pint": "^1.13",
+        "mockery/mockery": "^1.6",
+        "orchestra/testbench": "^10.0",
         "pestphp/pest": "^3.0",
         "pestphp/pest-plugin-laravel": "^3.0",
-        "phpunit/phpunit": "^11.0",
-        "orchestra/testbench": "^10.0",
-        "mockery/mockery": "^1.6",
         "phpstan/phpstan": "^1.10",
-        "laravel/pint": "^1.13"
+        "phpunit/phpunit": "^11.0"
     },
     "autoload": {
         "psr-4": {
@@ -49,6 +54,12 @@
         "test": "vendor/bin/pest",
         "test-coverage": "vendor/bin/pest --coverage",
         "test-coverage-html": "vendor/bin/pest --coverage --coverage-html=coverage-html",
+        "test-e2e": "php tests/run-e2e-tests.php",
+        "test-e2e-coverage": "php tests/run-e2e-tests.php --coverage",
+        "test-unit": "vendor/bin/pest --group=unit",
+        "test-integration": "vendor/bin/pest --group=integration",
+        "test-performance": "vendor/bin/pest --group=performance",
+        "test-all": "vendor/bin/pest --exclude-group=e2e",
         "analyse": "vendor/bin/phpstan analyse",
         "format": "vendor/bin/pint",
         "format-test": "vendor/bin/pint --test",

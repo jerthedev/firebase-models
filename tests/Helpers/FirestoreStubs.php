@@ -4,7 +4,7 @@
 // This file should be loaded before any tests that use Firestore mocking
 
 namespace Google\Cloud\Firestore {
-    if (!class_exists('FirestoreClient')) {
+    if (!class_exists('Google\Cloud\Firestore\FirestoreClient')) {
         class FirestoreClient
         {
             public function collection(string $name)
@@ -39,7 +39,7 @@ namespace Google\Cloud\Firestore {
         }
     }
 
-    if (!class_exists('CollectionReference')) {
+    if (!class_exists('Google\Cloud\Firestore\CollectionReference')) {
         class CollectionReference
         {
             public function document(?string $documentId = null)
@@ -59,7 +59,7 @@ namespace Google\Cloud\Firestore {
         }
     }
 
-    if (!class_exists('DocumentReference')) {
+    if (!class_exists('Google\Cloud\Firestore\DocumentReference')) {
         class DocumentReference
         {
             public function snapshot(array $options = [])
