@@ -436,7 +436,7 @@ if (app()->environment('testing')) {
 
 ## 📚 Next Steps
 
-- [Query Builder Documentation](query-builder.md)
-- [Model Relationships](models.md)
+- [Query Builder Documentation](05-query-builder.md)
+- [Model Relationships](04-models.md)
 - [Authentication Setup](AUTH_SETUP.md)
 - [Performance Best Practices](PERFORMANCE.md)

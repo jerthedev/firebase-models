@@ -254,21 +254,21 @@ FIREBASE_DEBUG=true
 
 ### Documentation
 
-- 📖 [Model Usage Guide](models.md) - Learn how to use FirestoreModel
-- 🔍 [Query Builder](query-builder.md) - Advanced querying capabilities
-- ⚡ [Events System](events.md) - Model events and observers
-- 🧪 [Testing Guide](testing.md) - Testing with FirestoreMock
+- 📖 [Model Usage Guide](04-models.md) - Learn how to use FirestoreModel
+- 🔍 [Query Builder](05-query-builder.md) - Advanced querying capabilities
+- ⚡ [Events System](06-events.md) - Model events and observers
+- 🧪 [Testing Guide](11-testing.md) - Testing with FirestoreMock
 
 ### Configuration
 
-- ⚙️ [Configuration Reference](CONFIGURATION.md) - All configuration options
-- 🏗️ [Architecture Overview](ARCHITECTURE.md) - Package design and structure
+- ⚙️ [Configuration Reference](03-configuration.md) - All configuration options
+- 🏗️ [Architecture Overview](Planning/PROJECT_OVERVIEW.md) - Package design and structure
 
-### Advanced Features (Coming Soon)
+### Advanced Features
 
-- 🔐 [Firebase Auth Integration](AUTH.md) - Laravel Auth with Firebase
-- 💾 [Caching Strategy](caching.md) - Performance optimization
-- 🔄 [Sync Mode](sync.md) - Local database mirroring
+- 🔐 [Firebase Auth Integration](08-authentication.md) - Laravel Auth with Firebase
+- 💾 [Caching Strategy](09-caching.md) - Performance optimization
+- 🔄 [Sync Mode](10-sync-mode.md) - Local database mirroring
 
 ## Support
 

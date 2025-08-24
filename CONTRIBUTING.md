@@ -247,7 +247,7 @@ For new features:
 - **Documentation**: Check the [docs/](docs/) directory
 - **Issues**: Search existing GitHub issues
 - **Discussions**: Use GitHub Discussions for questions
-- **Testing**: Refer to [docs/testing.md](docs/testing.md)
+- **Testing**: Refer to [docs/11-testing.md](docs/11-testing.md)
 
 ## 📄 License
 

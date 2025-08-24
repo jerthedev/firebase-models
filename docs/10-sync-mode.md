@@ -543,5 +543,5 @@ tail -f storage/logs/firebase-sync.log
 
 For more advanced topics, see:
 - [Conflict Resolution Guide](conflict-resolution.md)
-- [Transactions Documentation](transactions.md)
+- [Transactions Documentation](12-transactions.md)
 - [Performance Optimization](performance.md)

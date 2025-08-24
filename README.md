@@ -14,24 +14,14 @@
 
 ## ✨ Features
 
-### 🎯 **Core Features (Sprint 1 Complete)**
-- ✅ **FirestoreModel**: Eloquent-like base class with full CRUD operations
-- ✅ **Query Builder**: Advanced querying with where clauses, ordering, pagination
-- ✅ **Events System**: Complete model events (creating, created, updating, updated, deleting, deleted, saved, retrieved)
-- ✅ **FirestoreDB Facade**: Laravel-style facade for Firestore operations
-- ✅ **Configuration**: Flexible Firebase configuration system
-- ✅ **Testing**: Comprehensive test harness with FirestoreMock
-
-### 🚀 **Advanced Features (Sprint 2 Complete)**
-- ✅ **Eloquent Accessors & Mutators**: Full Laravel-style attribute manipulation
-- ✅ **Query Scopes**: Local and global scopes for reusable query logic
-- ✅ **Firebase Auth**: Complete Laravel Auth integration with custom guards
-- ✅ **Intelligent Caching**: Two-tier caching system (request + persistent)
-
-### 🔄 **Coming Soon (Sprint 3-4)**
-- 🔄 **Relationships**: Eloquent-style model relationships
-- 🗑️ **Soft Deletes**: Soft delete functionality for models
+- 🎯 **FirestoreModel**: Eloquent-like base class with full CRUD operations
+- 🔍 **Query Builder**: Advanced querying with where clauses, ordering, pagination
+- ⚡ **Events System**: Complete model events (creating, created, updating, updated, deleting, deleted, saved, retrieved)
+- 🎭 **FirestoreDB Facade**: Laravel-style facade for Firestore operations
+- 🔐 **Firebase Auth**: Complete Laravel Auth integration with custom guards
+- ⚡ **Intelligent Caching**: Two-tier caching system (request + persistent)
 - 🔄 **Sync Mode**: Mirror Firestore to local database
+- 🧪 **Testing**: Comprehensive test harness with FirestoreMock
 
 ## 📦 Installation
 
@@ -47,7 +37,7 @@ FIREBASE_CREDENTIALS=path/to/service-account.json
 FIREBASE_PROJECT_ID=your-project-id
 ```
 
-👉 **See [docs/INSTALLATION.md](docs/INSTALLATION.md) for complete setup instructions**
+👉 **See [docs/02-installation.md](docs/02-installation.md) for complete setup instructions**
 
 ## 🚀 Quick Start
 
@@ -127,35 +117,22 @@ Post::creating(function ($post) {
 
 ## 📚 Documentation
 
-### **Getting Started**
-- 📖 [Installation Guide](docs/INSTALLATION.md) - Complete setup instructions
-- 🏗️ [Architecture Overview](docs/ARCHITECTURE.md) - Package design and structure
-- ⚙️ [Configuration Reference](docs/CONFIGURATION.md) - All configuration options
+**👉 [Complete Documentation](docs/README.md)** - Comprehensive documentation index
 
-### **Core Features**
-- 🎯 [FirestoreModel Guide](docs/models.md) - Complete model usage guide
-- 🔍 [Query Builder](docs/query-builder.md) - Advanced querying capabilities
-- ⚡ [Events System](docs/events.md) - Model events and observers
-- 🎭 [Facades](docs/facades.md) - FirestoreDB facade usage
+### **Quick Links**
+- 📖 [Installation Guide](docs/02-installation.md) - Complete setup instructions
+- 🎯 [Models Guide](docs/04-models.md) - FirestoreModel usage and features
+- 🔍 [Query Builder](docs/05-query-builder.md) - Advanced querying capabilities
+- 🔐 [Authentication](docs/08-authentication.md) - Firebase Auth integration
+- ⚡ [Caching](docs/09-caching.md) - Performance optimization
+- 🧪 [Testing](docs/11-testing.md) - Testing with FirestoreMock
 
-### **Authentication & Security**
-- 🔐 [Auth & Caching Complete Guide](docs/AUTH_AND_CACHING_GUIDE.md) - **Start here for auth & caching**
-- 🛠️ [Authentication Setup](docs/AUTH_SETUP.md) - Complete Firebase Auth configuration
-- 📖 [Authentication How-To](docs/AUTH_HOWTO.md) - Practical examples and scenarios
-- 🔑 [Auth API Reference](docs/AUTH.md) - Technical reference and troubleshooting
-
-### **Performance & Caching**
-- ⚡ [Caching Guide](docs/CACHING.md) - Complete caching system documentation
-- 🚀 [Performance Optimization](docs/PERFORMANCE.md) - Best practices and tuning
-
-### **Advanced Topics**
-- 🔄 [Sync Mode](docs/sync.md) - Local database mirroring
-- 🧪 [Testing Guide](docs/testing.md) - Testing with FirestoreMock
-
-### **Development**
-- 📋 [Project Overview](docs/PROJECT_OVERVIEW.md) - Package goals and vision
-- 🚀 [Sprint Plans](docs/Sprint1.md) - Development roadmap
-- 🎨 [Laravel Compatibility](docs/ELOQUENT_COMPATIBILITY.md) - Eloquent feature mapping
+### **Examples**
+- [Basic CRUD Operations](docs/Examples/basic-crud.md)
+- [Advanced Querying](docs/Examples/advanced-querying.md)
+- [Authentication Examples](docs/Examples/authentication-examples.md)
+- [Caching Examples](docs/Examples/caching-examples.md)
+- [Testing Examples](docs/Examples/testing-examples.md)
 
 ## 🧪 Testing
 

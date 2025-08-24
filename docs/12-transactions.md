@@ -622,6 +622,6 @@ class OrderProcessingTest extends TestCase
 ```
 
 For more information, see:
-- [Sync Mode Guide](sync-mode.md)
+- [Sync Mode Guide](10-sync-mode.md)
 - [Conflict Resolution Guide](conflict-resolution.md)
 - [Performance Optimization](performance.md)

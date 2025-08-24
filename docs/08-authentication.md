@@ -16,7 +16,7 @@ This comprehensive guide covers the authentication and caching systems in the JT
 
 | Document | Purpose | Audience |
 |----------|---------|----------|
-| **[CACHING.md](CACHING.md)** | Complete caching guide and optimization | All developers using the package |
+| **[09-caching.md](09-caching.md)** | Complete caching guide and optimization | All developers using the package |
 
 ## 🚀 Quick Start Guide
 
@@ -378,11 +378,11 @@ class CacheTest extends TestCase
 
 ## 📚 Additional Resources
 
-- **[Installation Guide](INSTALLATION.md)** - Package installation and setup
-- **[Configuration Reference](CONFIGURATION.md)** - Complete configuration options
-- **[Model Documentation](models.md)** - Firestore model usage
-- **[Query Builder](query-builder.md)** - Advanced querying
-- **[Testing Guide](testing.md)** - Testing strategies and examples
+- **[Installation Guide](02-installation.md)** - Package installation and setup
+- **[Configuration Reference](03-configuration.md)** - Complete configuration options
+- **[Model Documentation](04-models.md)** - Firestore model usage
+- **[Query Builder](05-query-builder.md)** - Advanced querying
+- **[Testing Guide](11-testing.md)** - Testing strategies and examples
 
 ## 🤝 Support
 
