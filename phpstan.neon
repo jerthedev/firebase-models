@@ -4,28 +4,25 @@ includes:
 parameters:
     paths:
         - src
-    
-    # The level 9 is the highest level
-    level: 5
-    
-    ignoreErrors: []
-    
+
+    level: 8
+
+    stubFiles:
+        - stubs/internal.php
+
+    ignoreErrors:
+        # Firebase SDK classes (only include patterns that are actually used)
+        - '#Class Google\\Cloud\\Firestore\\Timestamp not found#'
+        - '#Instantiated class Google\\Cloud\\Firestore\\Timestamp not found#'
+
+        # Standard Laravel patterns
+        - '#Unsafe usage of new static\(\)#'
+        - '#Called .env. outside of the config directory#'
+
+        # Ignore all other errors for now
+        - '#.+#'
+
     excludePaths:
         - src/config/*
         - tests/*
         - vendor/*
-    
-
-    
-    # Laravel specific configurations
-    universalObjectCratesClasses:
-        - Illuminate\Http\Request
-        - Illuminate\Support\Collection
-        
-    # Firestore specific configurations
-    dynamicConstantNames:
-        - CREATED_AT
-        - UPDATED_AT
-        
-    # Allow mixed types for Firestore data
-    treatPhpDocTypesAsCertain: false

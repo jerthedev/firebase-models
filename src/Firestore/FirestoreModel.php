@@ -1009,6 +1009,8 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
 
     /**
      * Throw a bad method call exception for the given method.
+     *
+     * @return never
      */
     protected static function throwBadMethodCallException(string $method): void
     {

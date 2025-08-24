@@ -189,6 +189,8 @@ trait HasEvents
         if (!is_null($result)) {
             return $result;
         }
+
+        return null;
     }
 
     /**
