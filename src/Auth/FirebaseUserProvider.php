@@ -9,6 +9,7 @@ use Kreait\Firebase\Contract\Auth as FirebaseAuth;
 use Kreait\Firebase\Exception\Auth\UserNotFound;
 use Kreait\Firebase\Exception\Auth\InvalidIdToken;
 use Kreait\Firebase\Exception\Auth\RevokedIdToken;
+use Kreait\Firebase\Exception\Auth\FailedToVerifyToken;
 
 /**
  * Firebase User Provider for Laravel Authentication.
@@ -151,7 +152,7 @@ class FirebaseUserProvider implements UserProvider
             
             // Check if the token UID matches the user's UID
             return $user->getAuthIdentifier() === $tokenUid;
-        } catch (InvalidIdToken | RevokedIdToken $e) {
+        } catch (InvalidIdToken | RevokedIdToken | FailedToVerifyToken $e) {
             return false;
         }
     }

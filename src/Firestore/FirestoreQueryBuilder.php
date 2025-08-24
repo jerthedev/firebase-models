@@ -38,7 +38,75 @@ class FirestoreQueryBuilder
     {
         $this->database = $database;
         $this->collection = $collection;
-        $this->query = $database->collection($collection);
+        $this->query = $database->collectionReference($collection);
+    }
+
+    /**
+     * Get the collection name.
+     */
+    public function getCollection(): string
+    {
+        return $this->collection;
+    }
+
+    /**
+     * Get the underlying Firestore query.
+     */
+    public function getQuery(): CollectionReference
+    {
+        return $this->query;
+    }
+
+    /**
+     * Get the where clauses for debugging.
+     */
+    public function getWheres(): array
+    {
+        return $this->wheres;
+    }
+
+    /**
+     * Get the order clauses for debugging.
+     */
+    public function getOrders(): array
+    {
+        return $this->orders;
+    }
+
+    /**
+     * Get the limit value for debugging.
+     */
+    public function getLimit(): ?int
+    {
+        return $this->limitValue;
+    }
+
+    /**
+     * Apply the callback if the given "value" is truthy.
+     */
+    public function when(mixed $value, callable $callback, ?callable $default = null): static
+    {
+        if ($value) {
+            return $callback($this, $value) ?: $this;
+        } elseif ($default) {
+            return $default($this, $value) ?: $this;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Apply the callback if the given "value" is falsy.
+     */
+    public function unless(mixed $value, callable $callback, ?callable $default = null): static
+    {
+        if (!$value) {
+            return $callback($this, $value) ?: $this;
+        } elseif ($default) {
+            return $default($this, $value) ?: $this;
+        }
+
+        return $this;
     }
 
     /**
@@ -497,7 +565,7 @@ class FirestoreQueryBuilder
                 $data = array_intersect_key($data, array_flip($this->selects));
             }
 
-            $results->push((object) $data);
+            $results->push($data);
         }
 
         // Apply distinct if needed
@@ -521,7 +589,7 @@ class FirestoreQueryBuilder
     /**
      * Get a single result from the query.
      */
-    public function first(array $columns = ['*']): ?object
+    public function first(array $columns = ['*']): mixed
     {
         return $this->getCached('first', [$columns]);
     }
@@ -529,7 +597,7 @@ class FirestoreQueryBuilder
     /**
      * Get a single result from the query without caching.
      */
-    protected function parentFirst(array $columns = ['*']): ?object
+    protected function parentFirst(array $columns = ['*']): mixed
     {
         // Clone the query to avoid mutating the original
         $query = clone $this;
@@ -540,7 +608,7 @@ class FirestoreQueryBuilder
     /**
      * Get a single result or throw an exception.
      */
-    public function firstOrFail(array $columns = ['*']): object
+    public function firstOrFail(array $columns = ['*']): mixed
     {
         $result = $this->first($columns);
         
@@ -557,7 +625,7 @@ class FirestoreQueryBuilder
     public function value(string $column): mixed
     {
         $result = $this->first([$column]);
-        return $result?->$column;
+        return $result[$column] ?? null;
     }
 
     /**
@@ -566,7 +634,7 @@ class FirestoreQueryBuilder
     public function valueOrFail(string $column): mixed
     {
         $result = $this->firstOrFail([$column]);
-        return $result->{$column};
+        return $result[$column];
     }
 
     /**
@@ -655,9 +723,9 @@ class FirestoreQueryBuilder
     /**
      * Find a document by its ID.
      */
-    public function find(string $id, array $columns = ['*']): ?object
+    public function find(string $id, array $columns = ['*']): mixed
     {
-        $document = $this->database->collection($this->collection)->document($id)->snapshot();
+        $document = $this->database->collectionReference($this->collection)->document($id)->snapshot();
         
         if (!$document->exists()) {
             return null;
@@ -671,7 +739,7 @@ class FirestoreQueryBuilder
             $data = array_intersect_key($data, array_flip($columns));
         }
         
-        return (object) $data;
+        return $data;
     }
 
     /**
@@ -713,7 +781,7 @@ class FirestoreQueryBuilder
         // Apply cursor pagination
         if ($this->cursorAfter !== null) {
             // Get the document to start after
-            $afterDoc = $this->database->collection($this->collection)->document($this->cursorAfter)->snapshot();
+            $afterDoc = $this->database->collectionReference($this->collection)->document($this->cursorAfter)->snapshot();
             if ($afterDoc->exists()) {
                 $query = $query->startAfter($afterDoc);
             }
@@ -721,7 +789,7 @@ class FirestoreQueryBuilder
 
         if ($this->cursorBefore !== null) {
             // Get the document to start before
-            $beforeDoc = $this->database->collection($this->collection)->document($this->cursorBefore)->snapshot();
+            $beforeDoc = $this->database->collectionReference($this->collection)->document($this->cursorBefore)->snapshot();
             if ($beforeDoc->exists()) {
                 $query = $query->startAt($beforeDoc);
             }
@@ -899,7 +967,7 @@ class FirestoreQueryBuilder
         }
 
         try {
-            $collection = $this->database->collection($this->collection);
+            $collection = $this->database->collectionReference($this->collection);
             $collection->add($values);
             return true;
         } catch (\Exception $e) {
@@ -917,7 +985,7 @@ class FirestoreQueryBuilder
         }
 
         try {
-            $collection = $this->database->collection($this->collection);
+            $collection = $this->database->collectionReference($this->collection);
             $docRef = $collection->add($values);
             return $docRef->id();
         } catch (\Exception $e) {
@@ -935,7 +1003,7 @@ class FirestoreQueryBuilder
         }
 
         try {
-            $collection = $this->database->collection($this->collection);
+            $collection = $this->database->collectionReference($this->collection);
             $docRef = $collection->document($id);
             $docRef->set($values);
             return true;
@@ -960,6 +1028,22 @@ class FirestoreQueryBuilder
         } catch (\Exception $e) {
             throw new \RuntimeException("Failed to update documents: " . $e->getMessage(), 0, $e);
         }
+    }
+
+    /**
+     * Get a document reference by ID.
+     */
+    public function document(string $documentId)
+    {
+        return $this->query->document($documentId);
+    }
+
+    /**
+     * Get all documents that match the query.
+     */
+    public function documents()
+    {
+        return $this->get();
     }
 
     /**

@@ -358,7 +358,7 @@ class RealtimeListenersTest extends UnitTestSuite
         }
     }
 
-    protected function createMockListener(string $type, string $collection, callable $callback = null): object
+    protected function createMockListener(string $type, string $collection, ?callable $callback = null): object
     {
         // Create a mock listener for testing
         return new class($type, $collection, $callback) {

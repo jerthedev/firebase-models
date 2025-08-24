@@ -17,7 +17,7 @@ class MakeFirestoreModelCommand extends GeneratorCommand
                            {--fillable= : Comma-separated list of fillable attributes}
                            {--casts= : Comma-separated list of cast attributes (field:type)}
                            {--relationships : Generate relationship methods}
-                           {--timestamps : Enable timestamps (default: true)}
+                           {--timestamps=true : Enable timestamps (default: true)}
                            {--force : Overwrite existing model}';
 
     /**
@@ -36,10 +36,10 @@ class MakeFirestoreModelCommand extends GeneratorCommand
     protected function getStub(): string
     {
         if ($this->option('relationships')) {
-            return $this->resolveStubPath('/stubs/firestore-model-with-relationships.stub');
+            return $this->resolveStubPath('/firestore-model-with-relationships.stub');
         }
 
-        return $this->resolveStubPath('/stubs/firestore-model.stub');
+        return $this->resolveStubPath('/firestore-model.stub');
     }
 
     /**
@@ -68,11 +68,11 @@ class MakeFirestoreModelCommand extends GeneratorCommand
         $stub = $this->files->get($this->getStub());
 
         return $this->replaceNamespace($stub, $name)
-                    ->replaceClass($stub, $name)
-                    ->replaceCollection($stub)
-                    ->replaceFillable($stub)
-                    ->replaceCasts($stub)
-                    ->replaceTimestamps($stub);
+            ->replaceCollection($stub)
+            ->replaceFillable($stub)
+            ->replaceCasts($stub)
+            ->replaceTimestamps($stub)
+            ->replaceClass($stub, $name);
     }
 
     /**
@@ -152,7 +152,9 @@ class MakeFirestoreModelCommand extends GeneratorCommand
      */
     protected function replaceTimestamps(string &$stub): static
     {
-        $timestamps = $this->option('timestamps') !== false ? 'true' : 'false';
+        // Default to true unless explicitly set to false
+        $timestampsOption = $this->option('timestamps');
+        $timestamps = ($timestampsOption === 'false' || $timestampsOption === false) ? 'false' : 'true';
         
         $stub = str_replace(
             ['{{ timestamps }}', '{{timestamps}}'],

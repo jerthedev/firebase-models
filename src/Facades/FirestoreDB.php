@@ -18,7 +18,8 @@ use JTD\FirebaseModels\Firestore\FirestoreDatabase;
  *
  * Direct Firestore Methods
  * @method static \Google\Cloud\Firestore\FirestoreClient getClient()
- * @method static \Google\Cloud\Firestore\CollectionReference collection(string $path)
+ * @method static \JTD\FirebaseModels\Firestore\FirestoreQueryBuilder collection(string $path)
+ * @method static \Google\Cloud\Firestore\CollectionReference collectionReference(string $path)
  * @method static \Google\Cloud\Firestore\DocumentReference document(string $path)
  * @method static \Google\Cloud\Firestore\DocumentReference doc(string $path)
  * @method static \Google\Cloud\Firestore\DocumentReference add(string $collection, array $data)

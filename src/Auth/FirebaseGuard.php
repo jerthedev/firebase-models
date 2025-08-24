@@ -283,10 +283,10 @@ class FirebaseGuard implements Guard
     /**
      * Set the current user.
      */
-    public function setUser(Authenticatable $user): static
+    public function setUser(?Authenticatable $user): static
     {
         $this->user = $user;
-        $this->loggedOut = false;
+        $this->loggedOut = $user === null;
 
         return $this;
     }

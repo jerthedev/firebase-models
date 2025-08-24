@@ -23,6 +23,9 @@ use JTD\FirebaseModels\Console\Commands\FirebaseSyncCommand;
 use JTD\FirebaseModels\Console\Commands\ScheduledSyncCommand;
 use JTD\FirebaseModels\Console\Commands\SyncStatusCommand;
 use JTD\FirebaseModels\Console\Commands\MakeSyncModelCommand;
+use JTD\FirebaseModels\Console\Commands\FirestoreDebugCommand;
+use JTD\FirebaseModels\Console\Commands\FirestoreOptimizeCommand;
+use JTD\FirebaseModels\Console\Commands\MakeFirestoreModelCommand;
 
 class JtdFirebaseModelsServiceProvider extends ServiceProvider
 {
@@ -97,6 +100,11 @@ class JtdFirebaseModelsServiceProvider extends ServiceProvider
             return $app[Firestore::class]->database();
         });
 
+        // Register cache manager
+        $this->app->singleton(CacheManager::class, function ($app) {
+            return new CacheManager();
+        });
+
         // Maintain backward compatibility aliases
         $this->app->alias(Firestore::class, 'firebase.firestore');
         $this->app->alias(FirebaseAuthContract::class, 'firebase.auth');
@@ -153,6 +161,9 @@ class JtdFirebaseModelsServiceProvider extends ServiceProvider
                 ScheduledSyncCommand::class,
                 SyncStatusCommand::class,
                 MakeSyncModelCommand::class,
+                FirestoreDebugCommand::class,
+                FirestoreOptimizeCommand::class,
+                MakeFirestoreModelCommand::class,
             ]);
         }
     }

@@ -27,13 +27,18 @@ class FirebaseAuthCoreTest extends UnitTestSuite
         parent::setUp();
         
         // Set up Firebase Auth mocking
+        FirebaseAuthMock::initialize();
         FirebaseAuthMock::clear();
         
         // Create mock request
         $this->request = new Request();
         
         // Create provider and guard instances
-        $this->provider = new FirebaseUserProvider(TestUser::class);
+        $this->provider = new FirebaseUserProvider(
+            app(\Kreait\Firebase\Contract\Auth::class),
+            TestUser::class,
+            app(\Illuminate\Contracts\Hashing\Hasher::class)
+        );
         $this->guard = new FirebaseGuard(
             $this->provider,
             $this->request,

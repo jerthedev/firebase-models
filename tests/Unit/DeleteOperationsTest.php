@@ -104,13 +104,15 @@ class DeleteOperationsTest extends UnitTestSuite
         expect($model->exists)->toBeTrue();
         expect($model->name)->toBe('Test User');
         
-        // Measure deletion performance
-        $executionTime = $this->benchmark(function () use ($model) {
-            return $model->delete();
+        // Measure deletion performance and capture result
+        $deleteResult = null;
+        $executionTime = $this->benchmark(function () use ($model, &$deleteResult) {
+            $deleteResult = $model->delete();
+            return $deleteResult;
         });
-        
+
         // Assert deletion was successful
-        expect($model->delete())->toBeTrue();
+        expect($deleteResult)->toBeTrue();
         expect($model->exists)->toBeFalse();
         $this->assertDocumentNotExists('delete_test_models', $model->id);
         

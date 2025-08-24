@@ -72,6 +72,14 @@ class FirestoreMock
                 [$collection, $id] = explode('/', $documentPath, 2);
                 return $this->createMockDocument($collection, $id);
             });
+
+        // Mock projectId() method for debug commands
+        $this->mockClient->shouldReceive('projectId')
+            ->andReturn('test-firebase-project');
+
+        // Mock databaseId() method for debug commands
+        $this->mockClient->shouldReceive('databaseId')
+            ->andReturn('(default)');
     }
 
     protected function createMockCollection(string $collectionName): CollectionReference
@@ -110,6 +118,47 @@ class FirestoreMock
                 ]);
             });
 
+        // Mock whereIn() method
+        $mockCollection->shouldReceive('whereIn')
+            ->andReturnUsing(function ($field, $values) use ($collectionName) {
+                return $this->createMockQuery($collectionName, [
+                    ['field' => $field, 'operator' => 'in', 'value' => $values]
+                ]);
+            });
+
+        // Mock when() method for conditional queries
+        $mockCollection->shouldReceive('when')
+            ->andReturnUsing(function ($condition, $callback) use ($collectionName, $mockCollection) {
+                if ($condition) {
+                    return $callback($mockCollection);
+                }
+                return $mockCollection;
+            });
+
+        // Mock get() method for retrieving documents
+        $mockCollection->shouldReceive('get')
+            ->andReturnUsing(function () use ($collectionName) {
+                return $this->createMockQuerySnapshot($collectionName);
+            });
+
+        // Mock sum() method for aggregation
+        $mockCollection->shouldReceive('sum')
+            ->andReturnUsing(function ($field) use ($collectionName) {
+                $documents = $this->getCollectionDocuments($collectionName);
+                $sum = 0;
+                foreach ($documents as $doc) {
+                    $data = $doc->data();
+                    if (isset($data[$field]) && is_numeric($data[$field])) {
+                        $sum += $data[$field];
+                    }
+                }
+                return $sum;
+            });
+
+        // Mock getCollection() method
+        $mockCollection->shouldReceive('getCollection')
+            ->andReturn($mockCollection);
+
         // Mock limit() method
         $mockCollection->shouldReceive('limit')
             ->andReturnUsing(function ($limit) use ($collectionName) {
@@ -125,7 +174,7 @@ class FirestoreMock
         // Mock documents() method for getting all documents
         $mockCollection->shouldReceive('documents')
             ->andReturnUsing(function () use ($collectionName) {
-                return $this->getCollectionDocuments($collectionName);
+                return $this->createMockQuerySnapshot($collectionName);
             });
 
         return $mockCollection;
@@ -201,6 +250,34 @@ class FirestoreMock
         return $mockSnapshot;
     }
 
+    protected function createMockQuerySnapshot(string $collection, array $wheres = [], array $orders = [], ?int $limit = null, ?int $offset = null): QuerySnapshot
+    {
+        // Get filtered documents based on query parameters
+        $documents = $this->executeQuery($collection, $wheres, $orders, $limit, $offset);
+
+
+
+        // Create a mock that properly implements iteration
+        $mockQuerySnapshot = Mockery::mock(QuerySnapshot::class, \IteratorAggregate::class, \Countable::class);
+
+        // Mock size() method
+        $mockQuerySnapshot->shouldReceive('size')->andReturn(count($documents));
+
+        // Mock isEmpty() method
+        $mockQuerySnapshot->shouldReceive('isEmpty')->andReturn(empty($documents));
+
+        // Mock getIterator() method for foreach loops - this is the key!
+        $mockQuerySnapshot->shouldReceive('getIterator')->andReturn(new \ArrayIterator($documents));
+
+        // Mock rows() method
+        $mockQuerySnapshot->shouldReceive('rows')->andReturn($documents);
+
+        // Mock count() method for countable interface
+        $mockQuerySnapshot->shouldReceive('count')->andReturn(count($documents));
+
+        return $mockQuerySnapshot;
+    }
+
     protected function createMockQuery(string $collection, array $wheres = [], array $orders = [], ?int $limit = null, ?int $offset = null): Query
     {
         $mockQuery = Mockery::mock(Query::class);
@@ -240,6 +317,13 @@ class FirestoreMock
             ->andReturnUsing(function () use ($collection, $wheres, $orders, $limit, $offset) {
                 $this->recordQuery($collection, $wheres, $orders, $limit, $offset);
                 return $this->executeQuery($collection, $wheres, $orders, $limit, $offset);
+            });
+
+        // Mock get() method for executing query (alias for documents)
+        $mockQuery->shouldReceive('get')
+            ->andReturnUsing(function () use ($collection, $wheres, $orders, $limit, $offset) {
+                $this->recordQuery($collection, $wheres, $orders, $limit, $offset);
+                return $this->createMockQuerySnapshot($collection, $wheres, $orders, $limit, $offset);
             });
 
         return $mockQuery;
@@ -317,6 +401,8 @@ class FirestoreMock
 
         $this->documents[$collection][$id] = $data;
     }
+
+
 
     public function updateDocument(string $collection, string $id, array $data): void
     {
@@ -710,6 +796,15 @@ class FirestoreMock
     public function clearCollection(string $collection): void
     {
         unset($this->documents[$collection]);
+    }
+
+    /**
+     * Reset the entire mock state (for test isolation).
+     */
+    public function reset(): void
+    {
+        $this->documents = [];
+        $this->queries = [];
     }
 
     /**

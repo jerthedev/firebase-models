@@ -251,6 +251,3 @@ PHP;
         return $issues;
     }
 }
-PHP;
-    }
-}

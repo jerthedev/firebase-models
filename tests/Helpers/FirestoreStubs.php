@@ -36,6 +36,18 @@ namespace Google\Cloud\Firestore {
                 // This is just a stub - should not be called directly
                 throw new \Exception('Stub FirestoreClient should not be used directly. Use mocks instead.');
             }
+
+            public function projectId()
+            {
+                // This is just a stub - should not be called directly
+                throw new \Exception('Stub FirestoreClient should not be used directly. Use mocks instead.');
+            }
+
+            public function databaseId()
+            {
+                // This is just a stub - should not be called directly
+                throw new \Exception('Stub FirestoreClient should not be used directly. Use mocks instead.');
+            }
         }
     }
 
@@ -80,6 +92,101 @@ namespace Google\Cloud\Firestore {
             public function delete(array $options = [])
             {
                 throw new \Exception('Stub DocumentReference should not be used directly. Use mocks instead.');
+            }
+        }
+    }
+
+    if (!class_exists('Google\Cloud\Firestore\Query')) {
+        class Query
+        {
+            public function where(string $field, string $operator, $value)
+            {
+                throw new \Exception('Stub Query should not be used directly. Use mocks instead.');
+            }
+
+            public function orderBy(string $field, string $direction = 'ASC')
+            {
+                throw new \Exception('Stub Query should not be used directly. Use mocks instead.');
+            }
+
+            public function limit(int $limit)
+            {
+                throw new \Exception('Stub Query should not be used directly. Use mocks instead.');
+            }
+
+            public function offset(int $offset)
+            {
+                throw new \Exception('Stub Query should not be used directly. Use mocks instead.');
+            }
+
+            public function documents(array $options = [])
+            {
+                throw new \Exception('Stub Query should not be used directly. Use mocks instead.');
+            }
+
+            public function get(array $options = [])
+            {
+                throw new \Exception('Stub Query should not be used directly. Use mocks instead.');
+            }
+        }
+    }
+
+    if (!class_exists('Google\Cloud\Firestore\QuerySnapshot')) {
+        class QuerySnapshot implements \IteratorAggregate, \Countable
+        {
+            public function size(): int
+            {
+                throw new \Exception('Stub QuerySnapshot should not be used directly. Use mocks instead.');
+            }
+
+            public function isEmpty(): bool
+            {
+                throw new \Exception('Stub QuerySnapshot should not be used directly. Use mocks instead.');
+            }
+
+            public function getIterator(): \Iterator
+            {
+                throw new \Exception('Stub QuerySnapshot should not be used directly. Use mocks instead.');
+            }
+
+            public function rows(): array
+            {
+                throw new \Exception('Stub QuerySnapshot should not be used directly. Use mocks instead.');
+            }
+
+            public function count(): int
+            {
+                throw new \Exception('Stub QuerySnapshot should not be used directly. Use mocks instead.');
+            }
+        }
+    }
+
+    if (!class_exists('Google\Cloud\Firestore\DocumentSnapshot')) {
+        class DocumentSnapshot
+        {
+            public function exists(): bool
+            {
+                throw new \Exception('Stub DocumentSnapshot should not be used directly. Use mocks instead.');
+            }
+
+            public function id(): string
+            {
+                throw new \Exception('Stub DocumentSnapshot should not be used directly. Use mocks instead.');
+            }
+
+            public function data(): ?array
+            {
+                throw new \Exception('Stub DocumentSnapshot should not be used directly. Use mocks instead.');
+            }
+
+            public function get(string $field)
+            {
+                throw new \Exception('Stub DocumentSnapshot should not be used directly. Use mocks instead.');
+            }
+
+            public function reference()
+            {
+                throw new \Exception('Stub DocumentSnapshot should not be used directly. Use mocks instead.');
             }
         }
     }

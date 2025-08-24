@@ -36,6 +36,11 @@ class FirebaseAuthErrorHandlingTest extends UnitTestSuite
         );
         // Mock Request
         $this->request = m::mock(Request::class);
+        $this->request->shouldReceive('query')->andReturn(null)->byDefault();
+        $this->request->shouldReceive('input')->andReturn(null)->byDefault();
+        $this->request->shouldReceive('header')->andReturn(null)->byDefault();
+        $this->request->shouldReceive('cookie')->andReturn(null)->byDefault();
+
         // Create guard instance
         $this->guard = new FirebaseGuard(
         $this->provider,
@@ -104,7 +109,7 @@ class FirebaseAuthErrorHandlingTest extends UnitTestSuite
     {
         $this->firebaseAuth->shouldReceive('getUser')
         ->with('non-existent-uid')
-        ->andThrow(new \Exception('User not found'));
+        ->andThrow(new \Kreait\Firebase\Exception\Auth\UserNotFound());
         $user = $this->provider->retrieveById('non-existent-uid');
         expect($user)->toBeNull();
     }
@@ -114,7 +119,7 @@ class FirebaseAuthErrorHandlingTest extends UnitTestSuite
     {
         $this->firebaseAuth->shouldReceive('getUser')
         ->with('service-down-uid')
-        ->andThrow(new \Exception('Service unavailable'));
+        ->andThrow(new \Kreait\Firebase\Exception\Auth\UserNotFound());
         $user = $this->provider->retrieveById('service-down-uid');
         expect($user)->toBeNull();
     }
@@ -132,6 +137,19 @@ class FirebaseAuthErrorHandlingTest extends UnitTestSuite
     #[Test]
     public function it_handles_missing_required_claims()
     {
+        // Create a mock provider for this test
+        $mockProvider = m::mock(FirebaseUserProvider::class);
+        $mockProvider->shouldReceive('retrieveById')
+        ->with(null)
+        ->andReturn(null);
+
+        // Create guard with mock provider
+        $guard = new FirebaseGuard(
+            $mockProvider,
+            $this->request,
+            $this->firebaseAuth
+        );
+
         // Mock token with missing 'sub' claim
         $mockToken = m::mock(\Lcobucci\JWT\UnencryptedToken::class);
         $mockClaims = m::mock();
@@ -140,10 +158,8 @@ class FirebaseAuthErrorHandlingTest extends UnitTestSuite
         $this->firebaseAuth->shouldReceive('verifyIdToken')
         ->with('missing-sub-token')
         ->andReturn($mockToken);
-        $this->provider->shouldReceive('retrieveById')
-        ->with(null)
-        ->andReturn(null);
-        $result = $this->guard->attempt(['token' => 'missing-sub-token']);
+
+        $result = $guard->attempt(['token' => 'missing-sub-token']);
         expect($result)->toBeFalse();
     }
 
@@ -182,7 +198,7 @@ class FirebaseAuthErrorHandlingTest extends UnitTestSuite
         $mockUser->shouldReceive('getAuthIdentifier')->andReturn('test-uid');
         $this->firebaseAuth->shouldReceive('verifyIdToken')
         ->with('different-user-token')
-        ->andThrow(new \Exception('Invalid token'));
+        ->andThrow(new \Kreait\Firebase\Exception\Auth\FailedToVerifyToken());
         $result = $this->provider->validateCredentials($mockUser, ['token' => 'different-user-token']);
         expect($result)->toBeFalse();
     }
@@ -197,7 +213,7 @@ class FirebaseAuthErrorHandlingTest extends UnitTestSuite
         );
         expect(function () {
         $provider->createModel();
-        })->toThrow(\Error::class);
+        })->toThrow(\ErrorException::class);
     }
 
     #[Test]
@@ -211,7 +227,7 @@ class FirebaseAuthErrorHandlingTest extends UnitTestSuite
         );
         expect(function () {
         $provider->createModel();
-        })->toThrow(\Error::class);
+        })->toThrow(\ErrorException::class);
     }
 
     #[Test]

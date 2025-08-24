@@ -52,9 +52,17 @@ class FirestoreDatabase
     }
 
     /**
-     * Get a collection reference.
+     * Get a collection reference as a query builder (Laravel-style).
      */
-    public function collection(string $path): CollectionReference
+    public function collection(string $path): FirestoreQueryBuilder
+    {
+        return new FirestoreQueryBuilder($this, $path);
+    }
+
+    /**
+     * Get a raw collection reference.
+     */
+    public function collectionReference(string $path): CollectionReference
     {
         return $this->client->collection($path);
     }
@@ -83,7 +91,7 @@ class FirestoreDatabase
         $startTime = microtime(true);
 
         try {
-            $query = $this->collection($collection);
+            $query = $this->collectionReference($collection);
 
             foreach ($constraints as $constraint) {
                 $query = $query->where($constraint['field'], $constraint['operator'], $constraint['value']);
@@ -119,13 +127,13 @@ class FirestoreDatabase
                 // Multiple records
                 $batch = $this->client->batch();
                 foreach ($data as $record) {
-                    $docRef = $this->collection($collection)->newDocument();
+                    $docRef = $this->collectionReference($collection)->newDocument();
                     $batch->set($docRef, $record);
                 }
                 $batch->commit();
             } else {
                 // Single record
-                $this->collection($collection)->add($data);
+                $this->collectionReference($collection)->add($data);
             }
 
             $this->logQuery('insert', $collection, $data, microtime(true) - $startTime);
@@ -144,7 +152,7 @@ class FirestoreDatabase
         $startTime = microtime(true);
 
         try {
-            $docRef = $this->collection($collection)->add($data);
+            $docRef = $this->collectionReference($collection)->add($data);
             $id = $docRef->id();
 
             $this->logQuery('insertGetId', $collection, $data, microtime(true) - $startTime);
@@ -160,7 +168,7 @@ class FirestoreDatabase
      */
     public function add(string $collection, array $data): DocumentReference
     {
-        return $this->collection($collection)->add($data);
+        return $this->collectionReference($collection)->add($data);
     }
 
     /**
@@ -362,7 +370,7 @@ class FirestoreDatabase
      */
     public function query(string $collection): Query
     {
-        return $this->collection($collection);
+        return $this->collectionReference($collection);
     }
 
     /**
@@ -378,7 +386,7 @@ class FirestoreDatabase
      */
     public function getCollection(string $path): \Google\Cloud\Firestore\QuerySnapshot
     {
-        return $this->collection($path)->documents();
+        return $this->collectionReference($path)->documents();
     }
 
     /**
@@ -386,7 +394,7 @@ class FirestoreDatabase
      */
     public function where(string $collection, string $field, string $operator, mixed $value): Query
     {
-        return $this->collection($collection)->where($field, $operator, $value);
+        return $this->collectionReference($collection)->where($field, $operator, $value);
     }
 
     /**
@@ -394,7 +402,7 @@ class FirestoreDatabase
      */
     public function orderBy(string $collection, string $field, string $direction = 'ASC'): Query
     {
-        return $this->collection($collection)->orderBy($field, $direction);
+        return $this->collectionReference($collection)->orderBy($field, $direction);
     }
 
     /**
@@ -402,7 +410,7 @@ class FirestoreDatabase
      */
     public function limit(string $collection, int $limit): Query
     {
-        return $this->collection($collection)->limit($limit);
+        return $this->collectionReference($collection)->limit($limit);
     }
 
     /**

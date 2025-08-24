@@ -17,7 +17,10 @@ abstract class TestCase extends Orchestra
 
         // Set up Firestore mocking
         FirestoreMock::initialize();
-        
+
+        // Reset the Firestore mock for test isolation
+        $this->getFirestoreMock()->reset();
+
         // Set up test database if needed
         $this->setUpDatabase();
     }
@@ -199,6 +202,9 @@ abstract class TestCase extends Orchestra
     protected function mockFirestoreQuery(string $collection, array $documents): void
     {
         $mock = $this->getFirestoreMock();
+
+        // Clear the collection first to ensure clean state
+        $mock->clearCollection($collection);
 
         // Store each document
         foreach ($documents as $document) {

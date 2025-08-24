@@ -62,7 +62,7 @@ class FirestoreModelTest extends UnitTestSuite
         // Test basic model creation
         $user = new TestUser();
         
-        expect($user)->toBeFirestoreModel();
+        expect($user)->toBeInstanceOf(FirestoreModel::class);
         expect($user->exists)->toBeFalse();
         expect($user->wasRecentlyCreated)->toBeFalse();
         
@@ -105,17 +105,17 @@ class FirestoreModelTest extends UnitTestSuite
         // Test boolean casting
         $user = new TestUser(['active' => '1']);
         expect($user->active)->toBe(true);
-        expect($user)->toHaveCast('active', 'boolean');
+        expect($user->hasCast('active', 'boolean'))->toBeTrue();
         
         // Test integer casting
         $user = new TestUser(['age' => '30']);
         expect($user->age)->toBe(30);
-        expect($user)->toHaveCast('age', 'integer');
+        expect($user->hasCast('age', 'integer'))->toBeTrue();
         
         // Test array casting
         $user = new TestUser(['metadata' => '{"key": "value"}']);
         expect($user->metadata)->toBe(['key' => 'value']);
-        expect($user)->toHaveCast('metadata', 'array');
+        expect($user->hasCast('metadata', 'array'))->toBeTrue();
         
         // Test datetime casting
         $date = '2023-01-01 12:00:00';
@@ -149,11 +149,11 @@ class FirestoreModelTest extends UnitTestSuite
         $user->syncOriginal();
         
         // Test clean state
-        expect($user)->toBeClean();
+        expect($user->isClean())->toBeTrue();
         
         // Test dirty tracking
         $user->name = 'Jane Doe';
-        expect($user)->toBeDirty(['name']);
+        expect($user->isDirty(['name']))->toBeTrue();
         expect($user->isDirty('name'))->toBeTrue();
         expect($user->isClean('email'))->toBeTrue();
         

@@ -262,6 +262,26 @@ class CacheManager
     }
 
     /**
+     * Get detailed cache statistics (alias for getStats with additional metrics).
+     */
+    public static function getStatistics(): array
+    {
+        $stats = static::getStats();
+        $combined = $stats['combined'];
+
+        return [
+            'hit_rate' => $combined['hit_rate'] / 100, // Convert to decimal
+            'total_requests' => $combined['hits'] + $combined['misses'],
+            'hits' => $combined['hits'],
+            'misses' => $combined['misses'],
+            'cache_size_bytes' => static::estimateCacheSize(),
+            'eviction_rate' => 0.0, // Placeholder for now
+            'request_cache' => $stats['request_cache'],
+            'persistent_cache' => $stats['persistent_cache'],
+        ];
+    }
+
+    /**
      * Calculate combined hit rate.
      */
     protected static function getCombinedHitRate(array $requestStats, array $persistentStats): float
@@ -359,5 +379,21 @@ class CacheManager
     public static function disableAutoPromotion(): void
     {
         static::$config['auto_promote'] = false;
+    }
+
+    /**
+     * Estimate the total cache size in bytes.
+     */
+    protected static function estimateCacheSize(): int
+    {
+        // Estimate request cache size (rough calculation)
+        $requestCacheSize = RequestCache::getStats()['size'] ?? 0;
+        $estimatedRequestBytes = $requestCacheSize * 1024; // Rough estimate: 1KB per item
+
+        // For persistent cache, we can't easily get size without Laravel cache store access
+        // So we'll provide a conservative estimate
+        $estimatedPersistentBytes = 0;
+
+        return $estimatedRequestBytes + $estimatedPersistentBytes;
     }
 }

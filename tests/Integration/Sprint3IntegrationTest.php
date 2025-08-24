@@ -425,16 +425,16 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
     /**
      * Helper method to create test models.
      */
-    protected function createTestModels(): void
+    protected function createTestModels(string $modelClass = 'TestUser', int $count = 5, array $baseData = []): array
     {
         // Test models are created dynamically for testing
         if (!class_exists('TestUser')) {
             eval('
                 class TestUser extends JTD\FirebaseModels\Firestore\FirestoreModel
                 {
-                    protected $collection = "users";
-                    protected $fillable = ["name", "email", "balance", "status", "version"];
-                    protected $syncEnabled = true;
+                    protected ?string $collection = "users";
+                    protected array $fillable = ["name", "email", "balance", "status", "version"];
+                    protected bool $syncEnabled = true;
                     
                     public function posts()
                     {
@@ -444,9 +444,9 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
                 
                 class TestPost extends JTD\FirebaseModels\Firestore\FirestoreModel
                 {
-                    protected $collection = "posts";
-                    protected $fillable = ["title", "content", "user_id", "category_id", "status", "views", "likes"];
-                    protected $syncEnabled = true;
+                    protected ?string $collection = "posts";
+                    protected array $fillable = ["title", "content", "user_id", "category_id", "status", "views", "likes"];
+                    protected bool $syncEnabled = true;
                     
                     public function user()
                     {
@@ -461,9 +461,9 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
                 
                 class TestCategory extends JTD\FirebaseModels\Firestore\FirestoreModel
                 {
-                    protected $collection = "categories";
-                    protected $fillable = ["name", "description"];
-                    protected $syncEnabled = true;
+                    protected ?string $collection = "categories";
+                    protected array $fillable = ["name", "description"];
+                    protected bool $syncEnabled = true;
                     
                     public function posts()
                     {
@@ -472,6 +472,23 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
                 }
             ');
         }
+
+        // Create and return test models based on the parameters
+        $models = [];
+        for ($i = 0; $i < $count; $i++) {
+            $data = array_merge($baseData, [
+                'name' => "Test User {$i}",
+                'email' => "test{$i}@example.com",
+                'balance' => rand(100, 1000),
+                'status' => 'active',
+                'version' => 1
+            ]);
+
+            $model = new $modelClass($data);
+            $models[] = $model;
+        }
+
+        return $models;
     }
 
     /**

@@ -134,34 +134,50 @@ class PerformanceTuner
      */
     public static function benchmark(array $operations = []): array
     {
-        $defaultOperations = [
-            'simple_query' => fn() => static::benchmarkSimpleQuery(),
-            'complex_query' => fn() => static::benchmarkComplexQuery(),
-            'batch_operation' => fn() => static::benchmarkBatchOperation(),
-            'cache_operation' => fn() => static::benchmarkCacheOperation(),
-            'memory_operation' => fn() => static::benchmarkMemoryOperation(),
-        ];
+        try {
+            $defaultOperations = [
+                'simple_query' => fn() => static::benchmarkSimpleQuery(),
+                'complex_query' => fn() => static::benchmarkComplexQuery(),
+                'batch_operation' => fn() => static::benchmarkBatchOperation(),
+                'cache_operation' => fn() => static::benchmarkCacheOperation(),
+                'memory_operation' => fn() => static::benchmarkMemoryOperation(),
+            ];
 
-        $operations = array_merge($defaultOperations, $operations);
-        $results = [];
+            $operations = array_merge($defaultOperations, $operations);
+            $results = [];
 
-        foreach ($operations as $name => $operation) {
-            $results[$name] = static::benchmarkOperation($name, $operation);
+            foreach ($operations as $name => $operation) {
+                $results[$name] = static::benchmarkOperation($name, $operation);
+            }
+
+            $benchmark = [
+                'timestamp' => now()->toISOString(),
+                'operations' => $results,
+                'summary' => static::summarizeBenchmark($results),
+                'system_info' => static::getSystemInfo(),
+            ];
+
+            Log::info('Performance benchmark completed', [
+                'operations_tested' => count($results),
+                'average_performance' => $benchmark['summary']['average_time_ms'],
+            ]);
+
+            return $benchmark;
+        } catch (\Throwable $e) {
+            // Return a safe default benchmark result
+            return [
+                'timestamp' => now()->toISOString(),
+                'operations' => [],
+                'summary' => [
+                    'average_time_ms' => 0,
+                    'fastest_operation' => null,
+                    'slowest_operation' => null,
+                    'overall_success_rate' => 0,
+                ],
+                'system_info' => static::getSystemInfo(),
+                'error' => $e->getMessage(),
+            ];
         }
-
-        $benchmark = [
-            'timestamp' => now()->toISOString(),
-            'operations' => $results,
-            'summary' => static::summarizeBenchmark($results),
-            'system_info' => static::getSystemInfo(),
-        ];
-
-        Log::info('Performance benchmark completed', [
-            'operations_tested' => count($results),
-            'average_performance' => $benchmark['summary']['average_time_ms'],
-        ]);
-
-        return $benchmark;
     }
 
     /**
@@ -223,8 +239,17 @@ class PerformanceTuner
 
     protected static function analyzeQueryPerformance(): array
     {
-        $queryStats = QueryOptimizer::getQueryStats();
-        
+        try {
+            $queryStats = QueryOptimizer::getQueryStats();
+
+            // Ensure $queryStats is an array
+            if (!is_array($queryStats)) {
+                $queryStats = [];
+            }
+        } catch (\Exception $e) {
+            $queryStats = [];
+        }
+
         return [
             'total_queries' => $queryStats['total_executions'] ?? 0,
             'avg_time_ms' => $queryStats['avg_execution_time_ms'] ?? 0,
@@ -237,23 +262,42 @@ class PerformanceTuner
 
     protected static function analyzeMemoryPerformance(): array
     {
-        $memoryStats = MemoryManager::getMemoryStats();
-        
+        try {
+            $memoryStats = MemoryManager::getMemoryStats();
+
+            // Ensure $memoryStats is an array
+            if (!is_array($memoryStats)) {
+                $memoryStats = [];
+            }
+        } catch (\Exception $e) {
+            $memoryStats = [];
+        }
+
         return [
-            'current_usage_mb' => $memoryStats['current_usage_mb'],
-            'peak_usage_mb' => $memoryStats['peak_usage_mb'],
-            'usage_percent' => $memoryStats['usage_percentage'],
+            'current_usage_mb' => $memoryStats['current_usage_mb'] ?? 0,
+            'peak_usage_mb' => $memoryStats['peak_usage_mb'] ?? 0,
+            'usage_percent' => $memoryStats['usage_percentage'] ?? 0,
             'efficiency_percent' => static::calculateMemoryEfficiency($memoryStats),
-            'active_allocations' => $memoryStats['active_allocations'],
+            'active_allocations' => $memoryStats['active_allocations'] ?? 0,
             'score' => static::calculateMemoryScore($memoryStats),
         ];
     }
 
     protected static function analyzeCachePerformance(): array
     {
-        $cacheManager = app(CacheManager::class);
-        $cacheStats = $cacheManager->getStatistics();
-        
+        try {
+            $cacheManager = app(CacheManager::class);
+            $cacheStats = $cacheManager->getStatistics();
+
+            // Ensure $cacheStats is an array
+            if (!is_array($cacheStats)) {
+                $cacheStats = [];
+            }
+        } catch (\Exception $e) {
+            // If cache manager is not available, use default stats
+            $cacheStats = [];
+        }
+
         return [
             'hit_rate_percent' => ($cacheStats['hit_rate'] ?? 0) * 100,
             'total_requests' => $cacheStats['total_requests'] ?? 0,
@@ -530,22 +574,44 @@ class PerformanceTuner
     {
         $times = array_column($results, 'avg_time_ms');
         $successRates = array_column($results, 'success_rate');
-        
+
+        $fastestOperation = null;
+        $slowestOperation = null;
+
+        if (!empty($times)) {
+            $minIndex = array_search(min($times), $times);
+            $maxIndex = array_search(max($times), $times);
+
+            if ($minIndex !== false) {
+                $fastestOperation = array_keys($results)[$minIndex] ?? null;
+            }
+
+            if ($maxIndex !== false) {
+                $slowestOperation = array_keys($results)[$maxIndex] ?? null;
+            }
+        }
+
         return [
             'average_time_ms' => empty($times) ? 0 : array_sum($times) / count($times),
-            'fastest_operation' => array_keys($results)[array_search(min($times), $times)] ?? null,
-            'slowest_operation' => array_keys($results)[array_search(max($times), $times)] ?? null,
+            'fastest_operation' => $fastestOperation,
+            'slowest_operation' => $slowestOperation,
             'overall_success_rate' => empty($successRates) ? 0 : array_sum($successRates) / count($successRates),
         ];
     }
 
     protected static function getSystemInfo(): array
     {
+        $opcacheEnabled = false;
+        if (function_exists('opcache_get_status')) {
+            $opcacheStatus = opcache_get_status();
+            $opcacheEnabled = is_array($opcacheStatus) && ($opcacheStatus['opcache_enabled'] ?? false);
+        }
+
         return [
             'php_version' => PHP_VERSION,
             'memory_limit' => ini_get('memory_limit'),
             'max_execution_time' => ini_get('max_execution_time'),
-            'opcache_enabled' => function_exists('opcache_get_status') && opcache_get_status()['opcache_enabled'] ?? false,
+            'opcache_enabled' => $opcacheEnabled,
         ];
     }
 

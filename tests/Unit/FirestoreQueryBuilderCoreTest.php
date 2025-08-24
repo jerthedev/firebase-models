@@ -321,10 +321,10 @@ class FirestoreQueryBuilderCoreTest extends UnitTestSuite
     #[Test]
     public function it_handles_empty_result_sets()
     {
-        // Mock empty result set
-        $this->mockFirestoreQuery('posts', []);
+        // Mock empty result set using a unique collection name
+        $this->mockFirestoreQuery('empty_posts', []);
 
-        $query = FirestoreDB::collection('posts');
+        $query = FirestoreDB::collection('empty_posts');
 
         // Test empty results
         $results = $query->get();

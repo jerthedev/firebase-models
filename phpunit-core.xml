@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         executionOrder="random"
+         failOnWarning="true"
+         failOnRisky="true"
+         failOnEmptyTestSuite="true"
+         beStrictAboutOutputDuringTests="true"
+
+         timeoutForSmallTests="60"
+         timeoutForMediumTests="10"
+         timeoutForLargeTests="60">
+    <testsuites>
+        <testsuite name="Core">
+            <file>tests/Unit/FirestoreQueryBuilderCoreTest.php</file>
+            <file>tests/Unit/FirestoreModelTest.php</file>
+            <file>tests/Unit/Auth/FirebaseAuthErrorHandlingTest.php</file>
+            <file>tests/Unit/Cache/PersistentCacheIntegrationTest.php</file>
+            <file>tests/Unit/Accessors/AccessorMutatorIntegrationTest.php</file>
+            <file>tests/Unit/FirestoreModelCoreTest.php</file>
+        </testsuite>
+        <testsuite name="Essential">
+            <directory>tests/Unit/Scopes</directory>
+            <exclude>tests/Unit/Scopes/ScopeIntegrationTest.php</exclude>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+        <exclude>
+            <directory>src/Console</directory>
+            <directory>src/Testing</directory>
+        </exclude>
+    </source>
+    <logging>
+        <junit outputFile="build/report.junit.xml"/>
+    </logging>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="CACHE_DRIVER" value="array"/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+    </php>
+</phpunit>

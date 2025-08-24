@@ -248,14 +248,27 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
      */
     public function update(array $values): int
     {
+        // Check if this is a single document update (from model save)
+        // by looking for a primary key where clause
+        $keyName = $this->model->getKeyName();
+
+        $hasKeyWhere = collect($this->wheres)->contains(function ($where) use ($keyName) {
+            return $where['column'] === $keyName && $where['operator'] === '==';
+        });
+
+        if ($hasKeyWhere) {
+            // This is a single document update, use the parent query builder's update method
+            return parent::update($values);
+        }
+
+        // This is a bulk update, iterate through models
         $updated = 0;
-        
         foreach ($this->get() as $model) {
-            if ($model->update($values)) {
+            if ($model->fill($values)->save()) {
                 $updated++;
             }
         }
-        
+
         return $updated;
     }
 
@@ -280,14 +293,27 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
      */
     public function delete(): int
     {
+        // Check if this is a single document delete (from model delete)
+        // by looking for a primary key where clause
+        $keyName = $this->model->getKeyName();
+
+        $hasKeyWhere = collect($this->wheres)->contains(function ($where) use ($keyName) {
+            return $where['column'] === $keyName && $where['operator'] === '==';
+        });
+
+        if ($hasKeyWhere) {
+            // This is a single document delete, use the parent query builder's delete method
+            return parent::delete();
+        }
+
+        // This is a bulk delete, iterate through models
         $deleted = 0;
-        
         foreach ($this->get() as $model) {
             if ($model->delete()) {
                 $deleted++;
             }
         }
-        
+
         return $deleted;
     }
 

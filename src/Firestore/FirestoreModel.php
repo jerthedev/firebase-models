@@ -653,6 +653,91 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     }
 
     /**
+     * Update the model in the database.
+     */
+    public function update(array $attributes = [], array $options = []): bool
+    {
+        if (!$this->exists) {
+            return false;
+        }
+
+        return $this->fill($attributes)->save($options);
+    }
+
+    /**
+     * Determine if the model has a cast for the given attribute.
+     */
+    public function hasCast(string $key, $types = null): bool
+    {
+        if (!array_key_exists($key, $this->getCasts())) {
+            return false;
+        }
+
+        if ($types === null) {
+            return true;
+        }
+
+        $castType = $this->getCasts()[$key];
+
+        if (is_array($types)) {
+            return in_array($castType, $types);
+        }
+
+        return $castType === $types;
+    }
+
+    /**
+     * Determine if the model or any of the given attribute(s) have been modified.
+     */
+    public function isDirty($attributes = null): bool
+    {
+        return $this->hasChanges(
+            $this->getDirty(), is_array($attributes) ? $attributes : func_get_args()
+        );
+    }
+
+    /**
+     * Determine if the model and all the given attribute(s) are unchanged.
+     */
+    public function isClean($attributes = null): bool
+    {
+        return !$this->isDirty(...func_get_args());
+    }
+
+    /**
+     * Determine if an attribute exists on the model.
+     */
+    public function hasAttribute(string $key): bool
+    {
+        return array_key_exists($key, $this->attributes);
+    }
+
+    /**
+     * Determine if the given attributes were changed.
+     */
+    protected function hasChanges(array $changes, $attributes = null): bool
+    {
+        // If no specific attributes are given, check if any changes exist
+        if (empty($attributes)) {
+            return count($changes) > 0;
+        }
+
+        // If attributes is a string, convert to array
+        if (is_string($attributes)) {
+            $attributes = [$attributes];
+        }
+
+        // Check if any of the specified attributes have changes
+        foreach ($attributes as $attribute) {
+            if (array_key_exists($attribute, $changes)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Perform the actual delete query on this model instance.
      */
     protected function performDeleteOnModel(): void

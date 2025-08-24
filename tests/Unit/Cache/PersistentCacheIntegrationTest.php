@@ -119,7 +119,7 @@ class PersistentCacheIntegrationTest extends UnitTestSuite
         // Second call should hit persistent cache and auto-promote
         $result2 = $this->builder->get();
         expect($result2->count())->toBe($result1->count());
-        expect($result2->first()->name)->toBe('Test 1');
+        expect($result2->first()['name'])->toBe('Test 1');
         // Should have promoted to request cache (check if get is cached)
         expect($this->builder->isCached('get'))->toBeTrue();
         $persistentStats = PersistentCache::getStats();

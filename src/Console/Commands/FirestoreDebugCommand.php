@@ -163,13 +163,18 @@ class FirestoreDebugCommand extends Command
         $this->info('⚙️  Configuration');
         $this->line('------------------');
 
-        $config = config('firebase');
-        $firestoreConfig = config('firestore');
+        $config = config('firebase', []);
+        $firestoreConfig = config('firestore', []);
 
-        $this->line("Firebase Project: <comment>{$config['project_id'] ?? 'Not set'}</comment>");
-        $this->line("Credentials: <comment>" . ($config['credentials']['file'] ?? 'Environment variables') . "</comment>");
-        $this->line("Cache Enabled: <comment>" . ($firestoreConfig['cache']['enabled'] ? 'Yes' : 'No') . "</comment>");
-        $this->line("Default TTL: <comment>{$firestoreConfig['cache']['default_ttl']}s</comment>");
+        $projectId = isset($config['project_id']) ? $config['project_id'] : 'Not set';
+        $credentialsFile = isset($config['credentials']['file']) ? $config['credentials']['file'] : 'Environment variables';
+        $cacheEnabled = (isset($firestoreConfig['cache']['enabled']) && $firestoreConfig['cache']['enabled']) ? 'Yes' : 'No';
+        $defaultTtl = isset($firestoreConfig['cache']['default_ttl']) ? $firestoreConfig['cache']['default_ttl'] : 3600;
+
+        $this->line("Firebase Project: <comment>{$projectId}</comment>");
+        $this->line("Credentials: <comment>{$credentialsFile}</comment>");
+        $this->line("Cache Enabled: <comment>{$cacheEnabled}</comment>");
+        $this->line("Default TTL: <comment>{$defaultTtl}s</comment>");
         $this->line("Query Optimization: <comment>" . (QueryOptimizer::class . ' available') . "</comment>");
         $this->line("Memory Management: <comment>" . (MemoryManager::class . ' available') . "</comment>");
 
@@ -263,12 +268,19 @@ class FirestoreDebugCommand extends Command
             $cacheManager = app(CacheManager::class);
             $stats = $cacheManager->getStatistics();
 
-            $this->line("Hit Rate: <comment>" . (($stats['hit_rate'] ?? 0) * 100) . "%</comment>");
-            $this->line("Total Requests: <comment>{$stats['total_requests'] ?? 0}</comment>");
-            $this->line("Cache Hits: <comment>{$stats['hits'] ?? 0}</comment>");
-            $this->line("Cache Misses: <comment>{$stats['misses'] ?? 0}</comment>");
-            $this->line("Cache Size: <comment>" . (($stats['cache_size_bytes'] ?? 0) / 1024 / 1024) . "MB</comment>");
-            $this->line("Eviction Rate: <comment>" . (($stats['eviction_rate'] ?? 0) * 100) . "%</comment>");
+            $hitRate = (isset($stats['hit_rate']) ? $stats['hit_rate'] : 0) * 100;
+            $totalRequests = isset($stats['total_requests']) ? $stats['total_requests'] : 0;
+            $hits = isset($stats['hits']) ? $stats['hits'] : 0;
+            $misses = isset($stats['misses']) ? $stats['misses'] : 0;
+            $cacheSize = (isset($stats['cache_size_bytes']) ? $stats['cache_size_bytes'] : 0) / 1024 / 1024;
+            $evictionRate = (isset($stats['eviction_rate']) ? $stats['eviction_rate'] : 0) * 100;
+
+            $this->line("Hit Rate: <comment>{$hitRate}%</comment>");
+            $this->line("Total Requests: <comment>{$totalRequests}</comment>");
+            $this->line("Cache Hits: <comment>{$hits}</comment>");
+            $this->line("Cache Misses: <comment>{$misses}</comment>");
+            $this->line("Cache Size: <comment>{$cacheSize}MB</comment>");
+            $this->line("Eviction Rate: <comment>{$evictionRate}%</comment>");
 
         } catch (\Exception $e) {
             $this->line("Cache statistics not available: <comment>{$e->getMessage()}</comment>");

@@ -9,9 +9,8 @@ use Illuminate\Support\Carbon;
 /**
  * Test User model for unit testing.
  */
-class TestUser extends FirestoreModel
+class TestUser extends FirebaseAuthenticatable
 {
-    use FirebaseAuthenticatable;
 
     protected ?string $collection = 'users';
 
@@ -268,9 +267,9 @@ class TestUser extends FirestoreModel
     /**
      * Get the password for the user (not used with Firebase).
      */
-    public function getAuthPassword(): ?string
+    public function getAuthPassword(): string
     {
-        return null;
+        return '';
     }
 
     /**
@@ -295,5 +294,13 @@ class TestUser extends FirestoreModel
     public function getRememberTokenName(): ?string
     {
         return null;
+    }
+
+    /**
+     * Check if the user has a Firebase token.
+     */
+    public function hasFirebaseToken(): bool
+    {
+        return !empty($this->firebase_token);
     }
 }
