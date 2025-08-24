@@ -12,10 +12,18 @@ use JTD\FirebaseModels\Sync\SyncManager;
 trait HasSyncMode
 {
     /**
-     * Check if sync mode is enabled globally.
+     * Check if sync mode is enabled for this model.
+     *
+     * Checks model-level configuration first, then falls back to global configuration.
      */
     public function isSyncModeEnabled(): bool
     {
+        // Check model-level override first
+        if (property_exists($this, 'syncEnabled') && $this->syncEnabled !== null) {
+            return $this->syncEnabled;
+        }
+
+        // Fall back to global configuration
         return config('firebase-models.mode') === 'sync';
     }
 

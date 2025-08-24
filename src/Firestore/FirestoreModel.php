@@ -47,6 +47,15 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     protected ?string $collection = null;
 
     /**
+     * Whether sync mode is enabled for this specific model.
+     *
+     * - null: Use global configuration (default)
+     * - true: Force enable sync for this model
+     * - false: Force disable sync for this model
+     */
+    protected ?bool $syncEnabled = null;
+
+    /**
      * The primary key for the model.
      */
     protected string $primaryKey = 'id';

@@ -431,7 +431,7 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
                 {
                     protected ?string $collection = "users";
                     protected array $fillable = ["name", "email", "balance", "status", "version"];
-                    protected bool $syncEnabled = true;
+                    protected ?bool $syncEnabled = true;
                     
                     public function posts()
                     {
@@ -443,7 +443,7 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
                 {
                     protected ?string $collection = "posts";
                     protected array $fillable = ["title", "content", "user_id", "category_id", "status", "views", "likes"];
-                    protected bool $syncEnabled = true;
+                    protected ?bool $syncEnabled = true;
                     
                     public function user()
                     {
@@ -460,7 +460,7 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
                 {
                     protected ?string $collection = "categories";
                     protected array $fillable = ["name", "description"];
-                    protected bool $syncEnabled = true;
+                    protected ?bool $syncEnabled = true;
                     
                     public function posts()
                     {

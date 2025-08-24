@@ -224,6 +224,72 @@ Best for collaborative applications with multiple data sources:
 
 ## Model Configuration
 
+### Per-Model Sync Configuration
+
+You can control sync behavior at the model level using the `$syncEnabled` property. This allows you to enable sync globally while disabling it for specific models, or vice versa.
+
+```php
+<?php
+
+class Post extends FirestoreModel
+{
+    protected $collection = 'posts';
+
+    // Per-model sync configuration
+    protected ?bool $syncEnabled = true;  // Force enable sync for this model
+    // protected ?bool $syncEnabled = false; // Force disable sync for this model
+    // protected ?bool $syncEnabled = null;  // Use global configuration (default)
+
+    protected $fillable = [
+        'title', 'content', 'author_id', 'status'
+    ];
+}
+```
+
+**Sync Configuration Options:**
+
+- `null` (default): Use the global sync configuration from `config('firebase-models.mode')`
+- `true`: Force enable sync for this model, even if global sync is disabled
+- `false`: Force disable sync for this model, even if global sync is enabled
+
+### Use Cases for Per-Model Sync
+
+**Disable Sync for Temporary Data:**
+```php
+class TempUpload extends FirestoreModel
+{
+    protected $collection = 'temp_uploads';
+    protected ?bool $syncEnabled = false; // Don't sync temporary files
+}
+```
+
+**Enable Sync for Critical Data in Cloud Mode:**
+```php
+class AuditLog extends FirestoreModel
+{
+    protected $collection = 'audit_logs';
+    protected ?bool $syncEnabled = true; // Always sync audit logs for compliance
+}
+```
+
+**Model Inheritance:**
+```php
+class BaseModel extends FirestoreModel
+{
+    protected ?bool $syncEnabled = true; // Parent enables sync
+}
+
+class CachedModel extends BaseModel
+{
+    // Inherits $syncEnabled = true from parent
+}
+
+class VolatileModel extends BaseModel
+{
+    protected ?bool $syncEnabled = false; // Child overrides parent
+}
+```
+
 ### Basic Sync Model
 
 ```php
@@ -232,12 +298,12 @@ Best for collaborative applications with multiple data sources:
 class Post extends FirestoreModel
 {
     protected $collection = 'posts';
-    protected $syncEnabled = true;
-    
+    protected ?bool $syncEnabled = true;
+
     protected $fillable = [
         'title', 'content', 'author_id', 'status'
     ];
-    
+
     protected $syncFields = [
         'title', 'content', 'author_id', 'status', 'created_at', 'updated_at'
     ];
@@ -540,6 +606,77 @@ php artisan firebase:sync:reset --collection=users
 // Check sync logs
 tail -f storage/logs/firebase-sync.log
 ```
+
+## Best Practices for Per-Model Sync
+
+### When to Disable Sync
+
+**Temporary or Cache Data:**
+```php
+class SessionCache extends FirestoreModel
+{
+    protected ?bool $syncEnabled = false; // Don't sync session data
+}
+```
+
+**High-Volume Analytics:**
+```php
+class PageView extends FirestoreModel
+{
+    protected ?bool $syncEnabled = false; // Don't sync analytics events
+}
+```
+
+**File Metadata:**
+```php
+class FileUpload extends FirestoreModel
+{
+    protected ?bool $syncEnabled = false; // Don't sync file metadata
+}
+```
+
+### When to Force Enable Sync
+
+**Audit and Compliance:**
+```php
+class AuditLog extends FirestoreModel
+{
+    protected ?bool $syncEnabled = true; // Always sync for compliance
+}
+```
+
+**Critical Business Data:**
+```php
+class Order extends FirestoreModel
+{
+    protected ?bool $syncEnabled = true; // Always sync orders
+}
+```
+
+**User Preferences:**
+```php
+class UserSetting extends FirestoreModel
+{
+    protected ?bool $syncEnabled = true; // Always sync user settings
+}
+```
+
+### Performance Considerations
+
+1. **Selective Syncing**: Only sync models that need local database access
+2. **Inheritance Planning**: Use base classes to set default sync behavior
+3. **Testing**: Test both sync-enabled and sync-disabled models thoroughly
+4. **Monitoring**: Monitor sync performance for enabled models
+
+### Migration Strategy
+
+When adding per-model sync to existing applications:
+
+1. **Start with Global Configuration**: Keep existing global sync settings
+2. **Identify Candidates**: Find models that don't need sync
+3. **Gradual Migration**: Disable sync for non-critical models first
+4. **Monitor Impact**: Watch for performance improvements
+5. **Document Decisions**: Record why each model has its sync setting
 
 For more advanced topics, see:
 - [Conflict Resolution Guide](conflict-resolution.md)
