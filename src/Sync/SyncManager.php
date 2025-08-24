@@ -4,16 +4,14 @@ namespace JTD\FirebaseModels\Sync;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use JTD\FirebaseModels\Contracts\Sync\SyncStrategyInterface;
 use JTD\FirebaseModels\Contracts\Sync\ConflictResolverInterface;
 use JTD\FirebaseModels\Contracts\Sync\SchemaMapperInterface;
 use JTD\FirebaseModels\Contracts\Sync\SyncResultInterface;
-use JTD\FirebaseModels\Sync\Results\SyncResult;
-use JTD\FirebaseModels\Sync\Strategies\OneWayStrategy;
+use JTD\FirebaseModels\Contracts\Sync\SyncStrategyInterface;
 use JTD\FirebaseModels\Sync\Conflicts\LastWriteWinsResolver;
 use JTD\FirebaseModels\Sync\Conflicts\VersionBasedResolver;
 use JTD\FirebaseModels\Sync\Schema\DefaultSchemaMapper;
+use JTD\FirebaseModels\Sync\Strategies\OneWayStrategy;
 
 /**
  * Core SyncManager class that orchestrates data synchronization
@@ -56,9 +54,9 @@ class SyncManager
     public function syncCollection(string $collection, array $options = []): SyncResultInterface
     {
         $strategy = $this->getStrategy($options['strategy'] ?? $this->config['strategy']);
-        
+
         if (!$strategy) {
-            throw new \InvalidArgumentException("Sync strategy not found: " . ($options['strategy'] ?? $this->config['strategy']));
+            throw new \InvalidArgumentException('Sync strategy not found: '.($options['strategy'] ?? $this->config['strategy']));
         }
 
         // Set up strategy dependencies
@@ -67,24 +65,24 @@ class SyncManager
 
         Log::info("Starting sync for collection: {$collection}", [
             'strategy' => $strategy->getName(),
-            'options' => $options
+            'options' => $options,
         ]);
 
         try {
             $result = $strategy->sync($collection, $options);
-            
+
             Log::info("Sync completed for collection: {$collection}", [
                 'processed' => $result->getProcessedCount(),
                 'synced' => $result->getSyncedCount(),
                 'conflicts' => $result->getConflictCount(),
-                'errors' => $result->getErrorCount()
+                'errors' => $result->getErrorCount(),
             ]);
 
             return $result;
         } catch (\Exception $e) {
             Log::error("Sync failed for collection: {$collection}", [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
             throw $e;
         }
@@ -96,9 +94,9 @@ class SyncManager
     public function syncDocument(string $collection, string $documentId, array $options = []): SyncResultInterface
     {
         $strategy = $this->getStrategy($options['strategy'] ?? $this->config['strategy']);
-        
+
         if (!$strategy) {
-            throw new \InvalidArgumentException("Sync strategy not found: " . ($options['strategy'] ?? $this->config['strategy']));
+            throw new \InvalidArgumentException('Sync strategy not found: '.($options['strategy'] ?? $this->config['strategy']));
         }
 
         $strategy->setConflictResolver($this->getConflictResolver());
@@ -159,7 +157,7 @@ class SyncManager
     public function getConflictResolver(): ConflictResolverInterface
     {
         $resolverName = $this->config['conflict_policy'] ?? 'last_write_wins';
-        
+
         if (!isset($this->conflictResolvers[$resolverName])) {
             throw new \InvalidArgumentException("Conflict resolver not found: {$resolverName}");
         }

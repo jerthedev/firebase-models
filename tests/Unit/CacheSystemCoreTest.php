@@ -2,16 +2,16 @@
 
 namespace JTD\FirebaseModels\Tests\Unit;
 
-use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
-use JTD\FirebaseModels\Tests\Utilities\TestDataFactory;
-use JTD\FirebaseModels\Tests\Models\TestPost;
+use Illuminate\Support\Facades\Cache;
 use JTD\FirebaseModels\Cache\CacheManager;
-use JTD\FirebaseModels\Cache\RequestCache;
 use JTD\FirebaseModels\Cache\PersistentCache;
 use JTD\FirebaseModels\Cache\QueryCacheKey;
-use PHPUnit\Framework\Attributes\Test;
+use JTD\FirebaseModels\Cache\RequestCache;
+use JTD\FirebaseModels\Tests\Models\TestPost;
+use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
+use JTD\FirebaseModels\Tests\Utilities\TestDataFactory;
 use PHPUnit\Framework\Attributes\Group;
-use Illuminate\Support\Facades\Cache;
+use PHPUnit\Framework\Attributes\Test;
 
 #[Group('unit')]
 #[Group('core')]
@@ -19,17 +19,19 @@ use Illuminate\Support\Facades\Cache;
 class CacheSystemCoreTest extends UnitTestSuite
 {
     protected CacheManager $cacheManager;
+
     protected RequestCache $requestCache;
+
     protected PersistentCache $persistentCache;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->cacheManager = app(CacheManager::class);
         $this->requestCache = app(RequestCache::class);
         $this->persistentCache = app(PersistentCache::class);
-        
+
         // Clear all caches
         $this->requestCache->clear();
         $this->persistentCache->clear();
@@ -61,7 +63,7 @@ class CacheSystemCoreTest extends UnitTestSuite
         // Test put and get
         $this->requestCache->put($key, $value);
         $retrieved = $this->requestCache->get($key);
-        
+
         expect($retrieved)->toEqual($value);
 
         // Test has
@@ -84,7 +86,7 @@ class CacheSystemCoreTest extends UnitTestSuite
         // Test put with TTL
         $this->persistentCache->put($key, $value, $ttl);
         $retrieved = $this->persistentCache->get($key);
-        
+
         expect($retrieved)->toEqual($value);
 
         // Test remember functionality
@@ -110,19 +112,19 @@ class CacheSystemCoreTest extends UnitTestSuite
         $collection = 'posts';
         $wheres = [
             ['field' => 'published', 'operator' => '=', 'value' => true],
-            ['field' => 'views', 'operator' => '>', 'value' => 100]
+            ['field' => 'views', 'operator' => '>', 'value' => 100],
         ];
         $orders = [
-            ['field' => 'created_at', 'direction' => 'desc']
+            ['field' => 'created_at', 'direction' => 'desc'],
         ];
         $limit = 10;
         $offset = 0;
 
         $cacheKey = QueryCacheKey::generate($collection, $wheres, $orders, $limit, $offset);
-        
+
         expect($cacheKey)->toBeString();
         expect($cacheKey)->toContain('posts');
-        
+
         // Same parameters should generate same key
         $sameKey = QueryCacheKey::generate($collection, $wheres, $orders, $limit, $offset);
         expect($sameKey)->toBe($cacheKey);
@@ -137,14 +139,14 @@ class CacheSystemCoreTest extends UnitTestSuite
     {
         $testData = [
             TestDataFactory::createPost(['id' => '1', 'title' => 'Cached Post 1']),
-            TestDataFactory::createPost(['id' => '2', 'title' => 'Cached Post 2'])
+            TestDataFactory::createPost(['id' => '2', 'title' => 'Cached Post 2']),
         ];
 
         $this->mockFirestoreQuery('posts', $testData);
 
         // Enable caching for the query
         $query = TestPost::query()->enableCache();
-        
+
         // First query should hit the database and cache the result
         $results1 = $query->where('published', true)->get();
         expect($results1)->toHaveCount(2);
@@ -211,8 +213,8 @@ class CacheSystemCoreTest extends UnitTestSuite
             'datetime' => now(),
             'nested' => [
                 'array' => ['a', 'b', 'c'],
-                'object' => (object) ['prop' => 'value']
-            ]
+                'object' => (object) ['prop' => 'value'],
+            ],
         ];
 
         $key = 'serialization-test';
@@ -239,7 +241,7 @@ class CacheSystemCoreTest extends UnitTestSuite
             $largeData["key-{$i}"] = [
                 'id' => $i,
                 'data' => str_repeat('x', 100), // 100 chars per item
-                'timestamp' => time()
+                'timestamp' => time(),
             ];
         }
 
@@ -322,7 +324,7 @@ class CacheSystemCoreTest extends UnitTestSuite
 
         // Get statistics (if implemented)
         $stats = $this->requestCache->getStats();
-        
+
         if ($stats !== null) {
             expect($stats)->toBeArray();
             expect($stats)->toHaveKey('hits');

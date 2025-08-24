@@ -54,13 +54,13 @@ abstract class UnitTestSuite extends BaseTestSuite
     protected function createTestModel(string $modelClass, array $data = []): object
     {
         $defaultData = [
-            'id' => 'test_' . uniqid(),
+            'id' => 'test_'.uniqid(),
             'name' => 'Test Model',
             'created_at' => now(),
         ];
 
         $modelData = array_merge($defaultData, $data);
-        
+
         // Store in mock database
         $tempModel = new $modelClass();
         $this->getFirestoreMock()->storeDocument(
@@ -82,16 +82,16 @@ abstract class UnitTestSuite extends BaseTestSuite
     protected function createTestModels(string $modelClass, int $count = 5, array $baseData = []): array
     {
         $models = [];
-        
+
         for ($i = 0; $i < $count; $i++) {
             $data = array_merge($baseData, [
-                'id' => 'test_' . $i . '_' . uniqid(),
+                'id' => 'test_'.$i.'_'.uniqid(),
                 'sequence' => $i,
             ]);
-            
+
             $models[] = $this->createTestModel($modelClass, $data);
         }
-        
+
         return $models;
     }
 
@@ -152,7 +152,7 @@ abstract class UnitTestSuite extends BaseTestSuite
     protected function assertOperationPerformed(string $type, string $collection, string $id): void
     {
         $operations = $this->getOperationsByType($type);
-        
+
         $found = false;
         foreach ($operations as $operation) {
             if ($operation['collection'] === $collection && $operation['id'] === $id) {
@@ -160,7 +160,7 @@ abstract class UnitTestSuite extends BaseTestSuite
                 break;
             }
         }
-        
+
         $this->assertTrue(
             $found,
             "Operation {$type} should have been performed on {$collection}/{$id}"
@@ -189,7 +189,7 @@ abstract class UnitTestSuite extends BaseTestSuite
     protected function assertMemoryUsageWithinThreshold(int $maxBytes): void
     {
         $currentUsage = memory_get_usage();
-        
+
         $this->assertLessThanOrEqual(
             $maxBytes,
             $currentUsage,
@@ -204,6 +204,7 @@ abstract class UnitTestSuite extends BaseTestSuite
     {
         $startTime = microtime(true);
         $callback();
+
         return microtime(true) - $startTime;
     }
 
@@ -213,7 +214,7 @@ abstract class UnitTestSuite extends BaseTestSuite
     protected function assertExecutionTimeWithinThreshold(callable $callback, float $maxSeconds): void
     {
         $executionTime = $this->benchmark($callback);
-        
+
         $this->assertLessThanOrEqual(
             $maxSeconds,
             $executionTime,

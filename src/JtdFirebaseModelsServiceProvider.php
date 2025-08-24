@@ -2,30 +2,30 @@
 
 namespace JTD\FirebaseModels;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Auth;
-use Kreait\Firebase\Factory;
-use Kreait\Firebase\Contract\Firestore;
-use Kreait\Firebase\Contract\Auth as FirebaseAuthContract;
 use Google\Cloud\Firestore\FirestoreClient;
-use JTD\FirebaseModels\Firestore\FirestoreDatabase;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\ServiceProvider;
 use JTD\FirebaseModels\Auth\FirebaseGuard;
 use JTD\FirebaseModels\Auth\FirebaseUserProvider;
+use JTD\FirebaseModels\Auth\Middleware\EnsureEmailIsVerified;
 use JTD\FirebaseModels\Auth\Middleware\FirebaseAuth;
 use JTD\FirebaseModels\Auth\Middleware\VerifyFirebaseToken;
-use JTD\FirebaseModels\Auth\Middleware\EnsureEmailIsVerified;
-use JTD\FirebaseModels\Cache\Middleware\ClearRequestCache;
-use JTD\FirebaseModels\Cache\RequestCache;
-use JTD\FirebaseModels\Cache\PersistentCache;
 use JTD\FirebaseModels\Cache\CacheManager;
-use JTD\FirebaseModels\Sync\SyncManager;
+use JTD\FirebaseModels\Cache\Middleware\ClearRequestCache;
+use JTD\FirebaseModels\Cache\PersistentCache;
+use JTD\FirebaseModels\Cache\RequestCache;
 use JTD\FirebaseModels\Console\Commands\FirebaseSyncCommand;
-use JTD\FirebaseModels\Console\Commands\ScheduledSyncCommand;
-use JTD\FirebaseModels\Console\Commands\SyncStatusCommand;
-use JTD\FirebaseModels\Console\Commands\MakeSyncModelCommand;
 use JTD\FirebaseModels\Console\Commands\FirestoreDebugCommand;
 use JTD\FirebaseModels\Console\Commands\FirestoreOptimizeCommand;
 use JTD\FirebaseModels\Console\Commands\MakeFirestoreModelCommand;
+use JTD\FirebaseModels\Console\Commands\MakeSyncModelCommand;
+use JTD\FirebaseModels\Console\Commands\ScheduledSyncCommand;
+use JTD\FirebaseModels\Console\Commands\SyncStatusCommand;
+use JTD\FirebaseModels\Firestore\FirestoreDatabase;
+use JTD\FirebaseModels\Sync\SyncManager;
+use Kreait\Firebase\Contract\Auth as FirebaseAuthContract;
+use Kreait\Firebase\Contract\Firestore;
+use Kreait\Firebase\Factory;
 
 class JtdFirebaseModelsServiceProvider extends ServiceProvider
 {
@@ -143,6 +143,7 @@ class JtdFirebaseModelsServiceProvider extends ServiceProvider
         // Register the SyncManager
         $this->app->singleton(SyncManager::class, function ($app) {
             $config = $app['config']['firebase-models.sync'] ?? [];
+
             return new SyncManager($config);
         });
 

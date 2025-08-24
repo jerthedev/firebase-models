@@ -33,7 +33,7 @@ class E2ETestConfig
         }
 
         $credentials = json_decode(file_get_contents(self::getCredentialsPath()), true);
-        
+
         if (!$credentials || !isset($credentials['project_id'])) {
             return null;
         }
@@ -47,6 +47,7 @@ class E2ETestConfig
     public static function getProjectId(): ?string
     {
         $credentials = self::getCredentials();
+
         return $credentials['project_id'] ?? null;
     }
 

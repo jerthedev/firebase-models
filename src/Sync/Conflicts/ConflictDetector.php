@@ -24,7 +24,7 @@ class ConflictDetector
         'created_at',
         'updated_at',
         '_last_synced_at',
-        '_sync_metadata'
+        '_sync_metadata',
     ];
 
     /**
@@ -41,7 +41,7 @@ class ConflictDetector
     public function addResolver(ConflictResolverInterface $resolver): void
     {
         $this->resolvers->push($resolver);
-        
+
         // Sort by priority (highest first)
         $this->resolvers = $this->resolvers->sortByDesc(function ($resolver) {
             return $resolver->getPriority();
@@ -62,7 +62,7 @@ class ConflictDetector
                     'resolver' => $resolver->getName(),
                     'priority' => $resolver->getPriority(),
                     'detected_at' => now()->toISOString(),
-                    'metadata' => $metadata
+                    'metadata' => $metadata,
                 ];
             }
         }
@@ -79,7 +79,7 @@ class ConflictDetector
             'added' => [],
             'removed' => [],
             'modified' => [],
-            'type_changes' => []
+            'type_changes' => [],
         ];
 
         // Prepare data for comparison
@@ -104,17 +104,17 @@ class ConflictDetector
         foreach ($firestoreFiltered as $key => $firestoreValue) {
             if (array_key_exists($key, $localFiltered)) {
                 $localValue = $localFiltered[$key];
-                
+
                 // Check for type changes
                 if (gettype($firestoreValue) !== gettype($localValue)) {
                     $differences['type_changes'][$key] = [
                         'firestore' => ['type' => gettype($firestoreValue), 'value' => $firestoreValue],
-                        'local' => ['type' => gettype($localValue), 'value' => $localValue]
+                        'local' => ['type' => gettype($localValue), 'value' => $localValue],
                     ];
                 } elseif ($this->valuesAreDifferent($firestoreValue, $localValue)) {
                     $differences['modified'][$key] = [
                         'firestore' => $firestoreValue,
-                        'local' => $localValue
+                        'local' => $localValue,
                     ];
                 }
             }
@@ -166,6 +166,7 @@ class ConflictDetector
 
         if (!empty($differences['modified'])) {
             $modifiedCount = count($differences['modified']);
+
             return $modifiedCount > 5 ? 'medium' : 'low';
         }
 
@@ -194,7 +195,7 @@ class ConflictDetector
             'best_resolver' => $bestResolver ? $bestResolver->getName() : null,
             'resolver_count' => $this->resolvers->count(),
             'generated_at' => now()->toISOString(),
-            'metadata' => $metadata
+            'metadata' => $metadata,
         ];
     }
 

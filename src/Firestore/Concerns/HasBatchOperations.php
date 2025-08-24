@@ -16,7 +16,8 @@ trait HasBatchOperations
      */
     public static function createManyInBatch(array $records, array $options = []): BatchResult
     {
-        $collection = (new static)->getCollection();
+        $collection = (new static())->getCollection();
+
         return BatchManager::bulkInsert($collection, $records, $options);
     }
 
@@ -25,7 +26,8 @@ trait HasBatchOperations
      */
     public static function updateManyInBatch(array $updates, array $options = []): BatchResult
     {
-        $collection = (new static)->getCollection();
+        $collection = (new static())->getCollection();
+
         return BatchManager::bulkUpdate($collection, $updates, $options);
     }
 
@@ -34,7 +36,8 @@ trait HasBatchOperations
      */
     public static function deleteManyInBatch(array $ids, array $options = []): BatchResult
     {
-        $collection = (new static)->getCollection();
+        $collection = (new static())->getCollection();
+
         return BatchManager::bulkDelete($collection, $ids, $options);
     }
 
@@ -43,7 +46,8 @@ trait HasBatchOperations
      */
     public static function upsertManyInBatch(array $documents, array $options = []): BatchResult
     {
-        $collection = (new static)->getCollection();
+        $collection = (new static())->getCollection();
+
         return BatchManager::bulkUpsert($collection, $documents, $options);
     }
 
@@ -61,7 +65,7 @@ trait HasBatchOperations
     public function addToBatch(BatchOperation $batch): BatchOperation
     {
         $collection = $this->getCollection();
-        
+
         if ($this->exists) {
             // Update existing model
             $dirty = $this->getDirtyForUpdate();
@@ -73,9 +77,9 @@ trait HasBatchOperations
             if ($this->usesTimestamps()) {
                 $this->updateTimestamps();
             }
-            
+
             $attributes = $this->getAttributesForInsert();
-            
+
             if ($this->getKey()) {
                 $batch->set($collection, $this->getKey(), $attributes);
             } else {
@@ -94,6 +98,7 @@ trait HasBatchOperations
         if ($this->exists) {
             $batch->delete($this->getCollection(), $this->getKey());
         }
+
         return $batch;
     }
 
@@ -103,7 +108,7 @@ trait HasBatchOperations
     public static function saveManyInBatch(array $models, array $options = []): BatchResult
     {
         $batch = static::batch($options);
-        
+
         foreach ($models as $model) {
             if ($model instanceof static) {
                 $model->addToBatch($batch);
@@ -119,7 +124,7 @@ trait HasBatchOperations
     public static function deleteManyInstancesInBatch(array $models, array $options = []): BatchResult
     {
         $batch = static::batch($options);
-        
+
         foreach ($models as $model) {
             if ($model instanceof static) {
                 $model->addDeleteToBatch($batch);
@@ -136,6 +141,7 @@ trait HasBatchOperations
     {
         $batch = static::batch($options);
         $callback($batch);
+
         return $batch->execute();
     }
 
@@ -145,7 +151,7 @@ trait HasBatchOperations
     public static function createFromArray(array $data, array $options = []): BatchResult
     {
         $models = [];
-        
+
         foreach ($data as $record) {
             $model = new static($record);
             $models[] = $model;
@@ -160,15 +166,15 @@ trait HasBatchOperations
     public static function syncWithBatch(array $data, string $keyField = 'id', array $options = []): BatchResult
     {
         $batch = static::batch($options);
-        $collection = (new static)->getCollection();
-        
+        $collection = (new static())->getCollection();
+
         // Get existing models
         $existingKeys = array_column($data, $keyField);
         $existingModels = static::whereIn($keyField, $existingKeys)->get()->keyBy($keyField);
-        
+
         foreach ($data as $record) {
             $key = $record[$keyField] ?? null;
-            
+
             if ($key && $existingModels->has($key)) {
                 // Update existing
                 $model = $existingModels->get($key);
@@ -189,7 +195,7 @@ trait HasBatchOperations
     public static function getBatchStats(): array
     {
         return [
-            'collection' => (new static)->getCollection(),
+            'collection' => (new static())->getCollection(),
             'batch_limits' => BatchManager::getDefaultOptions(),
             'model_class' => static::class,
         ];
@@ -201,14 +207,14 @@ trait HasBatchOperations
     public static function validateForBatch(array $data): array
     {
         $errors = [];
-        
+
         foreach ($data as $index => $record) {
             try {
                 $model = new static($record);
                 // You could add custom validation here
                 // $model->validate(); // if you have validation
             } catch (\Exception $e) {
-                $errors[] = "Record {$index}: " . $e->getMessage();
+                $errors[] = "Record {$index}: ".$e->getMessage();
             }
         }
 
@@ -222,7 +228,7 @@ trait HasBatchOperations
     {
         $results = [];
         $chunks = array_chunk($data, $chunkSize, true);
-        
+
         foreach ($chunks as $index => $chunk) {
             $results[$index] = $processor($chunk, $index);
         }

@@ -3,9 +3,8 @@
 namespace JTD\FirebaseModels\Sync\Conflicts;
 
 use Illuminate\Support\Carbon;
-use JTD\FirebaseModels\Contracts\Sync\ConflictResolverInterface;
 use JTD\FirebaseModels\Contracts\Sync\ConflictResolutionInterface;
-use JTD\FirebaseModels\Sync\Conflicts\ConflictResolution;
+use JTD\FirebaseModels\Contracts\Sync\ConflictResolverInterface;
 
 /**
  * Last-write-wins conflict resolver that uses timestamps to determine
@@ -155,8 +154,9 @@ class LastWriteWinsResolver implements ConflictResolverInterface
         } catch (\Exception $e) {
             \Log::warning("Failed to parse timestamp: {$timestamp}", [
                 'error' => $e->getMessage(),
-                'resolver' => $this->getName()
+                'resolver' => $this->getName(),
             ]);
+
             return null;
         }
     }
@@ -176,7 +176,7 @@ class LastWriteWinsResolver implements ConflictResolverInterface
             'deleted_at',
             '_firestore_id',
             '_sync_version',
-            '_last_synced_at'
+            '_last_synced_at',
         ];
 
         foreach ($excludeFields as $field) {

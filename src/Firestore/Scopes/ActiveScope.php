@@ -2,12 +2,12 @@
 
 namespace JTD\FirebaseModels\Firestore\Scopes;
 
-use JTD\FirebaseModels\Firestore\FirestoreModelQueryBuilder;
 use JTD\FirebaseModels\Firestore\FirestoreModel;
+use JTD\FirebaseModels\Firestore\FirestoreModelQueryBuilder;
 
 /**
  * Global scope to filter only active records.
- * 
+ *
  * This scope automatically adds a where clause to filter records
  * where the 'active' field is true. Useful for models that have
  * an active/inactive status.

@@ -2,8 +2,8 @@
 
 namespace JTD\FirebaseModels\Firestore\Concerns;
 
-use Illuminate\Support\Carbon;
 use Google\Cloud\Firestore\Timestamp;
+use Illuminate\Support\Carbon;
 
 /**
  * Trait for handling model timestamps (created_at, updated_at).
@@ -132,6 +132,4 @@ trait HasTimestamps
     {
         return $this->qualifyColumn($this->getUpdatedAtColumn());
     }
-
-
 }

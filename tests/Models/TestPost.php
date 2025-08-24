@@ -2,8 +2,8 @@
 
 namespace JTD\FirebaseModels\Tests\Models;
 
-use JTD\FirebaseModels\Firestore\FirestoreModel;
 use Illuminate\Support\Carbon;
+use JTD\FirebaseModels\Firestore\FirestoreModel;
 
 /**
  * Test Post model for unit testing.
@@ -61,6 +61,7 @@ class TestPost extends FirestoreModel
     public function setCollection(string $collection): static
     {
         $this->collection = $collection;
+
         return $this;
     }
 
@@ -109,7 +110,7 @@ class TestPost extends FirestoreModel
      */
     public function getComputedFieldAttribute(): string
     {
-        return 'computed_' . ($this->id ?? 'unknown');
+        return 'computed_'.($this->id ?? 'unknown');
     }
 
     /**
@@ -130,7 +131,8 @@ class TestPost extends FirestoreModel
         }
 
         $content = $this->content ?? '';
-        return strlen($content) > 100 ? substr($content, 0, 100) . '...' : $content;
+
+        return strlen($content) > 100 ? substr($content, 0, 100).'...' : $content;
     }
 
     /**
@@ -174,6 +176,7 @@ class TestPost extends FirestoreModel
     public function hasTag(string $tag): bool
     {
         $tags = $this->tags ?? [];
+
         return in_array($tag, $tags);
     }
 
@@ -187,6 +190,7 @@ class TestPost extends FirestoreModel
             $tags[] = $tag;
             $this->tags = $tags;
         }
+
         return $this;
     }
 
@@ -196,7 +200,8 @@ class TestPost extends FirestoreModel
     public function removeTag(string $tag): static
     {
         $tags = $this->tags ?? [];
-        $this->tags = array_values(array_filter($tags, fn($t) => $t !== $tag));
+        $this->tags = array_values(array_filter($tags, fn ($t) => $t !== $tag));
+
         return $this;
     }
 
@@ -206,6 +211,7 @@ class TestPost extends FirestoreModel
     public function incrementViews(int $count = 1): static
     {
         $this->views = ($this->views ?? 0) + $count;
+
         return $this;
     }
 
@@ -215,6 +221,7 @@ class TestPost extends FirestoreModel
     public function incrementLikes(int $count = 1): static
     {
         $this->likes = ($this->likes ?? 0) + $count;
+
         return $this;
     }
 
@@ -224,6 +231,7 @@ class TestPost extends FirestoreModel
     public function getReadingTimeAttribute(): int
     {
         $wordCount = str_word_count($this->content ?? '');
+
         return max(1, ceil($wordCount / 200)); // Assume 200 words per minute
     }
 

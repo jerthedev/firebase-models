@@ -132,7 +132,7 @@ namespace Google\Cloud\Firestore {
     }
 
     if (!class_exists('Google\Cloud\Firestore\QuerySnapshot')) {
-        class QuerySnapshot implements \IteratorAggregate, \Countable
+        class QuerySnapshot implements \Countable, \IteratorAggregate
         {
             public function size(): int
             {

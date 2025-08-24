@@ -3,9 +3,7 @@
 namespace JTD\FirebaseModels\Firestore\Batch;
 
 use Google\Cloud\Firestore\WriteBatch;
-use Illuminate\Support\Collection;
 use JTD\FirebaseModels\Facades\FirestoreDB;
-use JTD\FirebaseModels\Firestore\Batch\BatchResult;
 use JTD\FirebaseModels\Firestore\Batch\Exceptions\BatchException;
 
 /**
@@ -14,7 +12,9 @@ use JTD\FirebaseModels\Firestore\Batch\Exceptions\BatchException;
 class BatchOperation
 {
     protected array $operations = [];
+
     protected array $options;
+
     protected int $operationCount = 0;
 
     /**
@@ -40,6 +40,7 @@ class BatchOperation
         ];
 
         $this->operationCount++;
+
         return $this;
     }
 
@@ -58,6 +59,7 @@ class BatchOperation
         ];
 
         $this->operationCount++;
+
         return $this;
     }
 
@@ -75,6 +77,7 @@ class BatchOperation
         ];
 
         $this->operationCount++;
+
         return $this;
     }
 
@@ -94,6 +97,7 @@ class BatchOperation
         ];
 
         $this->operationCount++;
+
         return $this;
     }
 
@@ -105,6 +109,7 @@ class BatchOperation
         foreach ($documents as $document) {
             $this->create($collection, $document);
         }
+
         return $this;
     }
 
@@ -116,6 +121,7 @@ class BatchOperation
         foreach ($updates as $id => $data) {
             $this->update($collection, $id, $data);
         }
+
         return $this;
     }
 
@@ -127,6 +133,7 @@ class BatchOperation
         foreach ($ids as $id) {
             $this->delete($collection, $id);
         }
+
         return $this;
     }
 
@@ -151,7 +158,7 @@ class BatchOperation
             }
         } catch (\Exception $e) {
             return BatchResult::failure(
-                'Batch execution failed: ' . $e->getMessage(),
+                'Batch execution failed: '.$e->getMessage(),
                 $e,
                 microtime(true) - $startTime
             );
@@ -179,7 +186,7 @@ class BatchOperation
         return BatchResult::success([
             'operation_count' => $this->operationCount,
             'results' => $results,
-            'batch_type' => 'single'
+            'batch_type' => 'single',
         ])->setDuration(microtime(true) - $startTime);
     }
 
@@ -215,7 +222,7 @@ class BatchOperation
             'results' => $allResults,
             'batch_type' => 'chunked',
             'batch_count' => $batchCount,
-            'chunk_size' => $chunkSize
+            'chunk_size' => $chunkSize,
         ])->setDuration(microtime(true) - $startTime);
     }
 
@@ -227,19 +234,22 @@ class BatchOperation
         switch ($operation['type']) {
             case 'create':
                 return $this->executeCreate($batch, $operation);
-                
+
             case 'update':
                 $this->executeUpdate($batch, $operation);
+
                 return $operation['id'];
-                
+
             case 'delete':
                 $this->executeDelete($batch, $operation);
+
                 return $operation['id'];
-                
+
             case 'set':
                 $this->executeSet($batch, $operation);
+
                 return $operation['id'];
-                
+
             default:
                 throw new BatchException("Unknown operation type: {$operation['type']}");
         }
@@ -251,14 +261,16 @@ class BatchOperation
     protected function executeCreate(WriteBatch $batch, array $operation): string
     {
         $collection = FirestoreDB::collection($operation['collection']);
-        
+
         if ($operation['id']) {
             $docRef = $collection->document($operation['id']);
             $batch->set($docRef, $operation['data']);
+
             return $operation['id'];
         } else {
             $docRef = $collection->newDocument();
             $batch->set($docRef, $operation['data']);
+
             return $docRef->id();
         }
     }
@@ -296,7 +308,7 @@ class BatchOperation
     protected function validateOperationLimit(): void
     {
         $maxOperations = $this->options['max_operations'] ?? 500;
-        
+
         if ($this->operationCount >= $maxOperations) {
             throw new BatchException("Maximum operations limit ({$maxOperations}) exceeded");
         }
@@ -325,6 +337,7 @@ class BatchOperation
     {
         $this->operations = [];
         $this->operationCount = 0;
+
         return $this;
     }
 
@@ -342,7 +355,7 @@ class BatchOperation
     public function getSummary(): array
     {
         $operationTypes = array_count_values(array_column($this->operations, 'type'));
-        
+
         return [
             'total_operations' => $this->operationCount,
             'operation_types' => $operationTypes,

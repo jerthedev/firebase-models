@@ -8,10 +8,15 @@ namespace JTD\FirebaseModels\Firestore\Batch;
 class BatchResult
 {
     protected bool $success = false;
+
     protected mixed $data = null;
+
     protected ?string $error = null;
+
     protected ?\Exception $exception = null;
+
     protected float $duration = 0.0;
+
     protected array $metadata = [];
 
     /**
@@ -20,6 +25,7 @@ class BatchResult
     public function setSuccess(bool $success): static
     {
         $this->success = $success;
+
         return $this;
     }
 
@@ -37,6 +43,7 @@ class BatchResult
     public function setData(mixed $data): static
     {
         $this->data = $data;
+
         return $this;
     }
 
@@ -54,6 +61,7 @@ class BatchResult
     public function setError(?string $error): static
     {
         $this->error = $error;
+
         return $this;
     }
 
@@ -71,6 +79,7 @@ class BatchResult
     public function setException(?\Exception $exception): static
     {
         $this->exception = $exception;
+
         return $this;
     }
 
@@ -88,6 +97,7 @@ class BatchResult
     public function setDuration(float $duration): static
     {
         $this->duration = $duration;
+
         return $this;
     }
 
@@ -113,6 +123,7 @@ class BatchResult
     public function setMetadata(array $metadata): static
     {
         $this->metadata = $metadata;
+
         return $this;
     }
 
@@ -122,6 +133,7 @@ class BatchResult
     public function addMetadata(string $key, mixed $value): static
     {
         $this->metadata[$key] = $value;
+
         return $this;
     }
 
@@ -157,6 +169,7 @@ class BatchResult
         if (is_array($this->data)) {
             return $this->data['operation_count'] ?? 0;
         }
+
         return 0;
     }
 
@@ -168,6 +181,7 @@ class BatchResult
         if (is_array($this->data)) {
             return $this->data['batch_type'] ?? null;
         }
+
         return null;
     }
 
@@ -179,6 +193,7 @@ class BatchResult
         if (is_array($this->data)) {
             return $this->data['batch_count'] ?? 1;
         }
+
         return 1;
     }
 

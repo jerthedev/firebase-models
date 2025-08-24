@@ -2,15 +2,12 @@
 
 namespace JTD\FirebaseModels\Tests\Integration;
 
-use JTD\FirebaseModels\Tests\TestSuites\IntegrationTestSuite;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Collection;
-use JTD\FirebaseModels\Firestore\FirestoreModel;
 use JTD\FirebaseModels\Firestore\Batch\BatchManager;
 use JTD\FirebaseModels\Firestore\Transactions\TransactionManager;
 use JTD\FirebaseModels\Sync\SyncManager;
 use JTD\FirebaseModels\Testing\BatchTestHelper;
-use JTD\FirebaseModels\Testing\RelationshipTestHelper;
+use JTD\FirebaseModels\Tests\TestSuites\IntegrationTestSuite;
 
 /**
  * Comprehensive integration tests for Sprint 3 features.
@@ -23,11 +20,11 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Set up test environment
         config(['firebase-models.sync.enabled' => true]);
         config(['firebase-models.sync.mode' => 'two_way']);
-        
+
         // Create test models
         $this->createTestModels();
     }
@@ -74,7 +71,7 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
         // Test sync operation
         $syncManager = app(SyncManager::class);
         $syncResult = $syncManager->syncCollection('users');
-        
+
         $this->assertTrue($syncResult->isSuccess());
         $this->assertGreaterThan(0, $syncResult->getSyncedCount());
 
@@ -107,7 +104,7 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
         foreach ($userIds as $index => $userId) {
             for ($i = 1; $i <= 3; $i++) {
                 $postData[] = [
-                    'title' => "Post {$i} by User " . ($index + 1),
+                    'title' => "Post {$i} by User ".($index + 1),
                     'content' => 'Test content',
                     'user_id' => $userId,
                     'status' => 'published',
@@ -123,7 +120,7 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
         // Test relationship loading
         $users = TestUser::with('posts')->get();
         $this->assertCount(5, $users);
-        
+
         foreach ($users as $user) {
             $this->assertTrue($user->relationLoaded('posts'));
             $this->assertCount(3, $user->posts);
@@ -145,12 +142,12 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
 
         // Simulate concurrent transactions
         $results = [];
-        
+
         // Transaction 1: Deduct 100
         $results[] = TransactionManager::executeWithResult(function ($transaction) use ($user) {
             $userRef = $this->firestore->collection('users')->document($user->getKey());
             $userSnapshot = $transaction->snapshot($userRef);
-            
+
             if ($userSnapshot->exists()) {
                 $userData = $userSnapshot->data();
                 $transaction->update($userRef, [
@@ -159,7 +156,7 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
                     'updated_at' => now(),
                 ]);
             }
-            
+
             return 'deduct_100';
         });
 
@@ -167,7 +164,7 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
         $results[] = TransactionManager::executeWithResult(function ($transaction) use ($user) {
             $userRef = $this->firestore->collection('users')->document($user->getKey());
             $userSnapshot = $transaction->snapshot($userRef);
-            
+
             if ($userSnapshot->exists()) {
                 $userData = $userSnapshot->data();
                 $transaction->update($userRef, [
@@ -176,12 +173,12 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
                     'updated_at' => now(),
                 ]);
             }
-            
+
             return 'deduct_200';
         });
 
         // At least one transaction should succeed
-        $successCount = collect($results)->filter(fn($r) => $r->isSuccess())->count();
+        $successCount = collect($results)->filter(fn ($r) => $r->isSuccess())->count();
         $this->assertGreaterThan(0, $successCount);
 
         // Verify final balance is consistent
@@ -282,10 +279,10 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
 
         // 3. Sync all data to local database
         $syncManager = app(SyncManager::class);
-        
+
         $userSyncResult = $syncManager->syncCollection('users');
         $this->assertTrue($userSyncResult->isSuccess());
-        
+
         $postSyncResult = $syncManager->syncCollection('posts');
         $this->assertTrue($postSyncResult->isSuccess());
 
@@ -294,7 +291,7 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
         $this->assertNotNull($user);
         $this->assertTrue($user->relationLoaded('posts'));
         $this->assertCount(10, $user->posts);
-        
+
         foreach ($user->posts as $post) {
             $this->assertTrue($post->relationLoaded('category'));
             $this->assertEquals('Technology', $post->category->name);
@@ -353,7 +350,7 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
 
         // Test sync performance
         $syncStartTime = microtime(true);
-        
+
         $syncManager = app(SyncManager::class);
         $syncResult = $syncManager->syncCollection('users', [
             'batch_size' => 100,
@@ -384,7 +381,7 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
                 // Simulate error
                 throw new \Exception('Simulated error');
             });
-            
+
             $this->fail('Expected exception was not thrown');
         } catch (\Exception $e) {
             $this->assertEquals('Simulated error', $e->getMessage());
@@ -410,10 +407,10 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
 
         // Test sync error recovery
         $syncManager = app(SyncManager::class);
-        
+
         // Create valid data first
         TestUser::create(['name' => 'Valid User', 'email' => 'valid@example.com']);
-        
+
         $syncResult = $syncManager->syncCollection('users', [
             'retry_on_failure' => true,
             'max_retries' => 3,
@@ -481,7 +478,7 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
                 'email' => "test{$i}@example.com",
                 'balance' => rand(100, 1000),
                 'status' => 'active',
-                'version' => 1
+                'version' => 1,
             ]);
 
             $model = new $modelClass($data);
@@ -498,16 +495,16 @@ class Sprint3IntegrationTest extends IntegrationTestSuite
     {
         // Clean up Firestore collections
         $collections = ['users', 'posts', 'categories', 'orders'];
-        
+
         foreach ($collections as $collection) {
             try {
                 $documents = $this->firestore->collection($collection)->documents();
                 $documentIds = [];
-                
+
                 foreach ($documents as $document) {
                     $documentIds[] = $document->id();
                 }
-                
+
                 if (!empty($documentIds)) {
                     BatchManager::bulkDelete($collection, $documentIds, [
                         'log_operations' => false,

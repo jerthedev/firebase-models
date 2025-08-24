@@ -7,7 +7,7 @@ use JTD\FirebaseModels\Firestore\Scopes\ScopeInterface;
 
 /**
  * Provides query scope functionality for Firestore models.
- * 
+ *
  * Supports both local scopes (scopeXxx methods) and global scopes
  * for reusable query logic, following Laravel Eloquent patterns.
  */
@@ -109,7 +109,8 @@ trait HasScopes
      */
     public function hasLocalScope(string $scope): bool
     {
-        $method = 'scope' . Str::studly($scope);
+        $method = 'scope'.Str::studly($scope);
+
         return method_exists($this, $method);
     }
 
@@ -118,10 +119,10 @@ trait HasScopes
      */
     public function callScope(string $scope, array $parameters = []): mixed
     {
-        $method = 'scope' . Str::studly($scope);
-        
+        $method = 'scope'.Str::studly($scope);
+
         if (!method_exists($this, $method)) {
-            throw new \BadMethodCallException("Scope [{$scope}] does not exist on model [" . static::class . "]");
+            throw new \BadMethodCallException("Scope [{$scope}] does not exist on model [".static::class.']');
         }
 
         return $this->$method(...$parameters);
@@ -168,7 +169,7 @@ trait HasScopes
     public function newQueryWithoutScope(ScopeInterface|string $scope): mixed
     {
         $builder = $this->newQuery();
-        
+
         if ($scope instanceof ScopeInterface) {
             $scope->remove($builder, $this);
         } elseif (is_string($scope) && $this->hasGlobalScope($scope)) {
@@ -238,7 +239,7 @@ trait HasScopes
             return $this->callScope($method, $parameters);
         }
 
-        throw new \BadMethodCallException("Scope [{$method}] does not exist on model [" . static::class . "]");
+        throw new \BadMethodCallException("Scope [{$method}] does not exist on model [".static::class.']');
     }
 
     /**

@@ -2,14 +2,14 @@
 
 namespace JTD\FirebaseModels\Firestore;
 
-use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
 use JTD\FirebaseModels\Firestore\Relations\EagerLoader;
 
 /**
  * Firestore query builder for models.
- * 
+ *
  * Extends the base FirestoreQueryBuilder with model-specific functionality
  * like hydrating results into model instances.
  */
@@ -31,9 +31,9 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
     public function __construct(FirestoreQueryBuilder $query, FirestoreModel $model)
     {
         parent::__construct($query->database, $query->collection);
-        
+
         $this->model = $model;
-        
+
         // Copy the state from the base query builder
         $this->wheres = $query->wheres;
         $this->orders = $query->orders;
@@ -49,6 +49,7 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
     public function setModel(FirestoreModel $model): static
     {
         $this->model = $model;
+
         return $this;
     }
 
@@ -94,11 +95,11 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
     public function firstOrFail(array $columns = ['*']): FirestoreModel
     {
         $result = $this->first($columns);
-        
+
         if ($result === null) {
             throw new \Illuminate\Database\RecordNotFoundException('No query results for model ['.get_class($this->model).'].');
         }
-        
+
         return $result;
     }
 
@@ -331,14 +332,14 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
     public function paginate(int $perPage = 15, array $columns = ['*'], string $pageName = 'page', ?int $page = null): LengthAwarePaginator
     {
         $page = $page ?: Paginator::resolveCurrentPage($pageName);
-        
+
         // Get total count
         $total = $this->toBase()->count();
-        
+
         // Get the items for current page
         $offset = ($page - 1) * $perPage;
         $items = $this->offset($offset)->limit($perPage)->get($columns);
-        
+
         return new LengthAwarePaginator(
             $items,
             $total,
@@ -357,16 +358,16 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
     public function simplePaginate(int $perPage = 15, array $columns = ['*'], string $pageName = 'page', ?int $page = null): Paginator
     {
         $page = $page ?: Paginator::resolveCurrentPage($pageName);
-        
+
         // Get one extra item to determine if there are more pages
         $offset = ($page - 1) * $perPage;
         $items = $this->offset($offset)->limit($perPage + 1)->get($columns);
-        
+
         $hasMorePages = $items->count() > $perPage;
         if ($hasMorePages) {
             $items = $items->slice(0, $perPage);
         }
-        
+
         return new Paginator(
             $items,
             $perPage,
@@ -433,21 +434,21 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
     public function chunk(int $count, callable $callback): bool
     {
         $page = 1;
-        
+
         do {
             $results = $this->offset(($page - 1) * $count)->limit($count)->get();
-            
+
             if ($results->isEmpty()) {
                 break;
             }
-            
+
             if ($callback($results, $page) === false) {
                 return false;
             }
-            
+
             $page++;
         } while ($results->count() === $count);
-        
+
         return true;
     }
 
@@ -462,7 +463,7 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
                     return false;
                 }
             }
-            
+
             return true;
         });
     }
@@ -474,14 +475,14 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
     {
         return \Illuminate\Support\LazyCollection::make(function () use ($chunkSize) {
             $page = 1;
-            
+
             do {
                 $results = $this->offset(($page - 1) * $chunkSize)->limit($chunkSize)->get();
-                
+
                 foreach ($results as $result) {
                     yield $result;
                 }
-                
+
                 $page++;
             } while ($results->count() === $chunkSize);
         });
@@ -682,6 +683,7 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
             foreach ($whereSlice as $where) {
                 $query->wheres[] = $where;
             }
+
             return;
         }
 
@@ -740,7 +742,7 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
 
         // For now, we'll store these to be processed during eager loading
         foreach ($relations as $relation) {
-            $this->eagerLoad[$relation . '_count'] = function ($query) {
+            $this->eagerLoad[$relation.'_count'] = function ($query) {
                 // This will be handled by the EagerLoader
             };
         }
@@ -850,7 +852,9 @@ class FirestoreModelQueryBuilder extends FirestoreQueryBuilder
         }
 
         throw new \BadMethodCallException(sprintf(
-            'Call to undefined method %s::%s()', static::class, $method
+            'Call to undefined method %s::%s()',
+            static::class,
+            $method
         ));
     }
 }

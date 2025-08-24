@@ -2,14 +2,11 @@
 
 namespace JTD\FirebaseModels\Tests\Unit;
 
-use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
-use JTD\FirebaseModels\Console\Commands\MakeFirestoreModelCommand;
-use JTD\FirebaseModels\Console\Commands\FirestoreDebugCommand;
-use JTD\FirebaseModels\Console\Commands\FirestoreOptimizeCommand;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\Group;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
+use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
 #[Group('unit')]
 #[Group('developer-tools')]
@@ -19,7 +16,7 @@ class DeveloperToolsTest extends UnitTestSuite
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Ensure test model directory exists
         if (!File::exists(app_path('Models'))) {
             File::makeDirectory(app_path('Models'), 0755, true);
@@ -48,7 +45,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_creates_basic_firestore_model()
     {
         $exitCode = Artisan::call('make:firestore-model', [
-            'name' => 'TestGeneratedModel'
+            'name' => 'TestGeneratedModel',
         ]);
 
         expect($exitCode)->toBe(0);
@@ -67,7 +64,7 @@ class DeveloperToolsTest extends UnitTestSuite
     {
         $exitCode = Artisan::call('make:firestore-model', [
             'name' => 'BlogPost',
-            '--collection' => 'blog_posts'
+            '--collection' => 'blog_posts',
         ]);
 
         expect($exitCode)->toBe(0);
@@ -82,7 +79,7 @@ class DeveloperToolsTest extends UnitTestSuite
     {
         $exitCode = Artisan::call('make:firestore-model', [
             'name' => 'UserProfile',
-            '--fillable' => 'name,email,bio,avatar_url'
+            '--fillable' => 'name,email,bio,avatar_url',
         ]);
 
         expect($exitCode)->toBe(0);
@@ -100,7 +97,7 @@ class DeveloperToolsTest extends UnitTestSuite
     {
         $exitCode = Artisan::call('make:firestore-model', [
             'name' => 'TestGeneratedModel',
-            '--casts' => 'published:boolean,published_at:datetime,tags:array'
+            '--casts' => 'published:boolean,published_at:datetime,tags:array',
         ]);
 
         expect($exitCode)->toBe(0);
@@ -117,7 +114,7 @@ class DeveloperToolsTest extends UnitTestSuite
     {
         $exitCode = Artisan::call('make:firestore-model', [
             'name' => 'TestGeneratedModel',
-            '--timestamps' => false
+            '--timestamps' => false,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -131,7 +128,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_runs_firestore_debug_command()
     {
         $exitCode = Artisan::call('firestore:debug', [
-            '--config' => true
+            '--config' => true,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -145,7 +142,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_runs_debug_with_connection_test()
     {
         $exitCode = Artisan::call('firestore:debug', [
-            '--connection' => true
+            '--connection' => true,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -159,7 +156,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_runs_debug_with_performance_stats()
     {
         $exitCode = Artisan::call('firestore:debug', [
-            '--performance' => true
+            '--performance' => true,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -173,7 +170,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_runs_debug_with_memory_stats()
     {
         $exitCode = Artisan::call('firestore:debug', [
-            '--memory' => true
+            '--memory' => true,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -187,7 +184,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_runs_debug_with_health_check()
     {
         $exitCode = Artisan::call('firestore:debug', [
-            '--health' => true
+            '--health' => true,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -200,7 +197,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_runs_debug_with_all_options()
     {
         $exitCode = Artisan::call('firestore:debug', [
-            '--all' => true
+            '--all' => true,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -230,7 +227,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_runs_optimize_with_analysis()
     {
         $exitCode = Artisan::call('firestore:optimize', [
-            '--analyze' => true
+            '--analyze' => true,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -244,7 +241,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_runs_optimize_with_suggestions()
     {
         $exitCode = Artisan::call('firestore:optimize', [
-            '--suggestions' => true
+            '--suggestions' => true,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -257,7 +254,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_runs_optimize_with_benchmarks()
     {
         $exitCode = Artisan::call('firestore:optimize', [
-            '--benchmark' => true
+            '--benchmark' => true,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -271,7 +268,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_runs_optimize_with_auto_optimization()
     {
         $exitCode = Artisan::call('firestore:optimize', [
-            '--auto' => true
+            '--auto' => true,
         ]);
 
         // May return failure if auto-optimization is disabled, which is expected
@@ -285,7 +282,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_runs_optimize_with_query_optimization()
     {
         $exitCode = Artisan::call('firestore:optimize', [
-            '--queries' => true
+            '--queries' => true,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -299,7 +296,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_runs_optimize_with_memory_optimization()
     {
         $exitCode = Artisan::call('firestore:optimize', [
-            '--memory' => true
+            '--memory' => true,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -313,7 +310,7 @@ class DeveloperToolsTest extends UnitTestSuite
     public function it_runs_optimize_with_cache_optimization()
     {
         $exitCode = Artisan::call('firestore:optimize', [
-            '--cache' => true
+            '--cache' => true,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -331,7 +328,7 @@ class DeveloperToolsTest extends UnitTestSuite
             '--collection' => 'custom_collection',
             '--fillable' => 'title,content,published,author_id',
             '--casts' => 'published:boolean,published_at:datetime,metadata:array',
-            '--timestamps' => true
+            '--timestamps' => true,
         ]);
 
         expect($exitCode)->toBe(0);
@@ -340,24 +337,24 @@ class DeveloperToolsTest extends UnitTestSuite
         expect(File::exists($modelPath))->toBeTrue();
 
         $content = File::get($modelPath);
-        
+
         // Check collection
         expect($content)->toContain("protected ?string \$collection = 'custom_collection'");
-        
+
         // Check fillable
         expect($content)->toContain("'title'");
         expect($content)->toContain("'content'");
         expect($content)->toContain("'published'");
         expect($content)->toContain("'author_id'");
-        
+
         // Check casts
         expect($content)->toContain("'published' => 'boolean'");
         expect($content)->toContain("'published_at' => 'datetime'");
         expect($content)->toContain("'metadata' => 'array'");
-        
+
         // Check timestamps
         expect($content)->toContain('public bool $timestamps = true');
-        
+
         // Check class structure
         expect($content)->toContain('use JTD\FirebaseModels\Firestore\FirestoreModel');
         expect($content)->toContain('class TestGeneratedModel extends FirestoreModel');
@@ -369,7 +366,7 @@ class DeveloperToolsTest extends UnitTestSuite
     {
         // Try to create model with invalid name
         $exitCode = Artisan::call('make:firestore-model', [
-            'name' => '' // Empty name should cause error
+            'name' => '', // Empty name should cause error
         ]);
 
         // Should handle error gracefully (may return non-zero exit code)
@@ -381,7 +378,7 @@ class DeveloperToolsTest extends UnitTestSuite
     {
         $exitCode = Artisan::call('make:firestore-model', [
             'name' => 'TestGeneratedModel',
-            '--fillable' => 'title,content'
+            '--fillable' => 'title,content',
         ]);
 
         expect($exitCode)->toBe(0);
@@ -435,7 +432,7 @@ class DeveloperToolsTest extends UnitTestSuite
         $exitCode = Artisan::call('firestore:debug', ['--performance' => true]);
         expect($exitCode)->toBeIn([0, 1]); // May fail gracefully
 
-        // Test optimize command with potentially missing dependencies  
+        // Test optimize command with potentially missing dependencies
         $exitCode = Artisan::call('firestore:optimize', ['--analyze' => true]);
         expect($exitCode)->toBeIn([0, 1]); // May fail gracefully
 

@@ -13,7 +13,7 @@ use PHPUnit\Framework\Attributes\Test;
 class TestModelWithGlobalScopes extends FirestoreModel
 {
     protected ?string $collection = 'test_models';
-    
+
     protected array $fillable = ['name', 'active', 'published', 'published_at', 'status'];
 
     protected static function booted(): void
@@ -33,7 +33,7 @@ class TestModelWithGlobalScopes extends FirestoreModel
 class TestModelWithCustomScope extends FirestoreModel
 {
     protected ?string $collection = 'custom_models';
-    
+
     protected array $fillable = ['name', 'status', 'priority'];
 
     protected static function booted(): void
@@ -47,7 +47,7 @@ class TestModelWithCustomScope extends FirestoreModel
 class TestModelWithoutScopes extends FirestoreModel
 {
     protected ?string $collection = 'no_scope_models';
-    
+
     protected array $fillable = ['name', 'active', 'published'];
 }
 

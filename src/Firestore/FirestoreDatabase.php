@@ -2,20 +2,17 @@
 
 namespace JTD\FirebaseModels\Firestore;
 
-use Google\Cloud\Firestore\FirestoreClient;
+use Closure;
 use Google\Cloud\Firestore\CollectionReference;
 use Google\Cloud\Firestore\DocumentReference;
+use Google\Cloud\Firestore\FirestoreClient;
 use Google\Cloud\Firestore\Query;
 use Google\Cloud\Firestore\Transaction;
 use Google\Cloud\Firestore\WriteBatch;
-use Kreait\Firebase\Contract\Firestore;
-use Illuminate\Support\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
-use Closure;
+use Kreait\Firebase\Contract\Firestore;
 
 /**
  * Laravel-style wrapper around the Kreait Firebase Firestore client.
@@ -26,8 +23,11 @@ use Closure;
 class FirestoreDatabase
 {
     protected FirestoreClient $client;
+
     protected array $queryListeners = [];
+
     protected ?Closure $queryCallback = null;
+
     protected int $queryTimeThreshold = 0;
 
     public function __construct(Firestore $firestore)
@@ -137,6 +137,7 @@ class FirestoreDatabase
             }
 
             $this->logQuery('insert', $collection, $data, microtime(true) - $startTime);
+
             return true;
         } catch (\Exception $e) {
             $this->logQuery('insert', $collection, $data, microtime(true) - $startTime, $e);
@@ -156,6 +157,7 @@ class FirestoreDatabase
             $id = $docRef->id();
 
             $this->logQuery('insertGetId', $collection, $data, microtime(true) - $startTime);
+
             return $id;
         } catch (\Exception $e) {
             $this->logQuery('insertGetId', $collection, $data, microtime(true) - $startTime, $e);
@@ -211,6 +213,7 @@ class FirestoreDatabase
     public function get(string $path): ?\Google\Cloud\Firestore\DocumentSnapshot
     {
         $snapshot = $this->document($path)->snapshot();
+
         return $snapshot->exists() ? $snapshot : null;
     }
 
@@ -235,6 +238,7 @@ class FirestoreDatabase
             });
 
             $this->logQuery('transaction', 'multiple', [], microtime(true) - $startTime);
+
             return $result;
         } catch (\Exception $e) {
             $this->logQuery('transaction', 'multiple', [], microtime(true) - $startTime, $e);
@@ -245,6 +249,7 @@ class FirestoreDatabase
                 if ($delay > 0) {
                     usleep($delay * 1000);
                 }
+
                 return $this->transaction($callback, $attempts - 1);
             }
 
@@ -515,9 +520,9 @@ class FirestoreDatabase
             case 'delete':
                 return "DELETE FROM {$collection}";
             case 'transaction':
-                return "TRANSACTION";
+                return 'TRANSACTION';
             default:
-                return strtoupper($type) . " {$collection}";
+                return strtoupper($type)." {$collection}";
         }
     }
 }

@@ -2,12 +2,12 @@
 
 namespace JTD\FirebaseModels\Firestore\Concerns;
 
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Str;
 
 /**
  * Complete Eloquent-style accessors and mutators for Firestore models.
- * 
+ *
  * This trait provides full Laravel Eloquent compatibility for attribute
  * manipulation, supporting both legacy and modern accessor/mutator patterns.
  */
@@ -135,6 +135,7 @@ trait HasEloquentAccessors
 
         if ($this->isClassCastable($key)) {
             $this->setClassCastableAttribute($key, $value);
+
             return $this;
         }
 
@@ -171,14 +172,16 @@ trait HasEloquentAccessors
         );
 
         $attributes = $this->addMutatedAttributesToArray(
-            $attributes, $mutatedAttributes = $this->getMutatedAttributesForArray()
+            $attributes,
+            $mutatedAttributes = $this->getMutatedAttributesForArray()
         );
 
         // Next we will handle any casts that have been setup for this model and cast
         // the values to their appropriate type. If the attribute has a mutator we
         // will not perform the cast on those attributes to avoid any confusion.
         $attributes = $this->addCastAttributesToArray(
-            $attributes, $mutatedAttributes
+            $attributes,
+            $mutatedAttributes
         );
 
         // Here we will grab all of the appended, calculated attributes to this model
@@ -229,6 +232,7 @@ trait HasEloquentAccessors
     public function setVisible(array $visible): static
     {
         $this->visible = $visible;
+
         return $this;
     }
 
@@ -246,6 +250,7 @@ trait HasEloquentAccessors
     public function setHidden(array $hidden): static
     {
         $this->hidden = $hidden;
+
         return $this;
     }
 
@@ -263,6 +268,7 @@ trait HasEloquentAccessors
     public function setAppends(array $appends): static
     {
         $this->appends = $appends;
+
         return $this;
     }
 
@@ -326,7 +332,8 @@ trait HasEloquentAccessors
             // Here we will cast the attribute. We will also type-hint the return value
             // if the cast is a custom class cast.
             $attributes[$key] = $this->castAttribute(
-                $key, $attributes[$key]
+                $key,
+                $attributes[$key]
             );
 
             // If the attribute cast was a date or datetime cast then we will serialize

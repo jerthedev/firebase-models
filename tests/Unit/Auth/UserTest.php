@@ -49,7 +49,7 @@ class UserTest extends UnitTestSuite
             'last_name' => 'Doe',
             'timezone' => 'America/New_York',
             'locale' => 'en_US',
-            'preferences' => ['theme' => 'dark']
+            'preferences' => ['theme' => 'dark'],
         ]);
 
         expect($user->uid)->toBe('test-uid');
@@ -70,7 +70,7 @@ class UserTest extends UnitTestSuite
     {
         $user = new User([
             'first_name' => 'John',
-            'last_name' => 'Doe'
+            'last_name' => 'Doe',
         ]);
 
         expect($user->full_name)->toBe('John Doe');
@@ -80,7 +80,7 @@ class UserTest extends UnitTestSuite
     public function it_falls_back_to_name_when_no_first_last_name()
     {
         $user = new User([
-            'name' => 'John Doe'
+            'name' => 'John Doe',
         ]);
 
         expect($user->full_name)->toBe('John Doe');
@@ -91,7 +91,7 @@ class UserTest extends UnitTestSuite
     {
         $user = new User([
             'first_name' => 'John',
-            'last_name' => 'Doe'
+            'last_name' => 'Doe',
         ]);
 
         expect($user->initials)->toBe('JD');
@@ -101,7 +101,7 @@ class UserTest extends UnitTestSuite
     public function it_generates_initials_from_email_when_no_name()
     {
         $user = new User([
-            'email' => 'john.doe@example.com'
+            'email' => 'john.doe@example.com',
         ]);
 
         expect($user->initials)->toBe('JO');
@@ -111,7 +111,7 @@ class UserTest extends UnitTestSuite
     public function it_generates_avatar_url_from_photo_url()
     {
         $user = new User([
-            'photo_url' => 'https://example.com/photo.jpg'
+            'photo_url' => 'https://example.com/photo.jpg',
         ]);
 
         expect($user->avatar_url)->toBe('https://example.com/photo.jpg');
@@ -121,7 +121,7 @@ class UserTest extends UnitTestSuite
     public function it_generates_gravatar_url_when_no_photo_url()
     {
         $user = new User([
-            'email' => 'test@example.com'
+            'email' => 'test@example.com',
         ]);
 
         $expectedHash = md5('test@example.com');
@@ -147,11 +147,11 @@ class UserTest extends UnitTestSuite
     public function it_can_check_if_user_is_admin()
     {
         $adminUser = new User([
-            'custom_claims' => ['roles' => ['admin']]
+            'custom_claims' => ['roles' => ['admin']],
         ]);
 
         $regularUser = new User([
-            'custom_claims' => ['roles' => ['user']]
+            'custom_claims' => ['roles' => ['user']],
         ]);
 
         expect($adminUser->isAdmin())->toBeTrue();
@@ -167,7 +167,7 @@ class UserTest extends UnitTestSuite
             'first_name' => 'John',
             'last_name' => 'Doe',
             'email_verified_at' => now(),
-            'custom_claims' => ['roles' => ['admin']]
+            'custom_claims' => ['roles' => ['admin']],
         ]);
 
         $array = $user->toArray();

@@ -2,11 +2,11 @@
 
 namespace JTD\FirebaseModels\Tests\Helpers;
 
-use Mockery;
-use Kreait\Firebase\Contract\Auth;
-use Kreait\Firebase\Auth\UserRecord;
 use Kreait\Firebase\Auth\CreateRequest;
 use Kreait\Firebase\Auth\UpdateRequest;
+use Kreait\Firebase\Auth\UserRecord;
+use Kreait\Firebase\Contract\Auth;
+use Mockery;
 
 /**
  * FirebaseAuthMock provides comprehensive mocking capabilities for Firebase Auth operations
@@ -15,9 +15,13 @@ use Kreait\Firebase\Auth\UpdateRequest;
 class FirebaseAuthMock
 {
     protected static ?self $instance = null;
+
     protected array $users = [];
+
     protected array $tokens = [];
+
     protected array $operations = [];
+
     protected ?Auth $mockAuth = null;
 
     public static function initialize(): void
@@ -136,6 +140,7 @@ class FirebaseAuthMock
         }
 
         $this->recordOperation('getUser', $uid);
+
         return $this->createMockUserRecord($this->users[$uid]);
     }
 
@@ -144,6 +149,7 @@ class FirebaseAuthMock
         foreach ($this->users as $userData) {
             if ($userData['email'] === $email) {
                 $this->recordOperation('getUserByEmail', $userData['uid']);
+
                 return $this->createMockUserRecord($userData);
             }
         }
@@ -164,7 +170,7 @@ class FirebaseAuthMock
             'disabled' => $request->isDisabled(),
         ] : $request;
 
-        $this->users[$uid] = array_merge($this->users[$uid], array_filter($updates, fn($v) => $v !== null));
+        $this->users[$uid] = array_merge($this->users[$uid], array_filter($updates, fn ($v) => $v !== null));
         $this->recordOperation('updateUser', $uid);
 
         return $this->createMockUserRecord($this->users[$uid]);
@@ -183,24 +189,25 @@ class FirebaseAuthMock
     protected function verifyIdToken(string $token): array
     {
         if (!isset($this->tokens[$token])) {
-            throw new \Kreait\Firebase\Exception\Auth\InvalidIdToken("Invalid ID token");
+            throw new \Kreait\Firebase\Exception\Auth\InvalidIdToken('Invalid ID token');
         }
 
         $tokenData = $this->tokens[$token];
-        
+
         // Check if token is expired
         if ($tokenData['exp'] < time()) {
-            throw new \Kreait\Firebase\Exception\Auth\ExpiredIdToken("ID token has expired");
+            throw new \Kreait\Firebase\Exception\Auth\ExpiredIdToken('ID token has expired');
         }
 
         $this->recordOperation('verifyIdToken', $tokenData['uid']);
+
         return $tokenData;
     }
 
     protected function createCustomToken(string $uid, array $claims = []): string
     {
-        $token = 'mock_custom_token_' . uniqid() . '_' . $uid;
-        
+        $token = 'mock_custom_token_'.uniqid().'_'.$uid;
+
         $this->tokens[$token] = [
             'uid' => $uid,
             'iss' => 'firebase-adminsdk-test@test-project.iam.gserviceaccount.com',
@@ -212,6 +219,7 @@ class FirebaseAuthMock
         ];
 
         $this->recordOperation('createCustomToken', $uid);
+
         return $token;
     }
 
@@ -220,7 +228,7 @@ class FirebaseAuthMock
         $users = array_values($this->users);
         $start = $pageToken ? (int) $pageToken : 0;
         $end = min($start + $maxResults, count($users));
-        
+
         $pageUsers = array_slice($users, $start, $maxResults);
         $userRecords = array_map([$this, 'createMockUserRecord'], $pageUsers);
 
@@ -261,7 +269,7 @@ class FirebaseAuthMock
 
     protected function generateUserId(): string
     {
-        return 'mock_user_' . uniqid() . '_' . random_int(1000, 9999);
+        return 'mock_user_'.uniqid().'_'.random_int(1000, 9999);
     }
 
     protected function recordOperation(string $operation, ?string $uid): void
@@ -279,7 +287,7 @@ class FirebaseAuthMock
     {
         $instance = static::getInstance();
         $uid = $instance->generateUserId();
-        
+
         $defaultData = [
             'uid' => $uid,
             'email' => 'test@example.com',
@@ -304,29 +312,30 @@ class FirebaseAuthMock
     public static function createTestToken(string $uid, array $claims = []): string
     {
         $instance = static::getInstance();
+
         return $instance->createCustomToken($uid, $claims);
     }
 
     public static function assertOperationCalled(string $operation, ?string $uid = null): void
     {
         $instance = static::getInstance();
-        
+
         $found = false;
         foreach ($instance->operations as $op) {
-            if ($op['operation'] === $operation && 
+            if ($op['operation'] === $operation &&
                 ($uid === null || $op['uid'] === $uid)) {
                 $found = true;
                 break;
             }
         }
-        
+
         if (!$found) {
             $message = "Expected Firebase Auth operation '{$operation}'";
             if ($uid) {
                 $message .= " for user '{$uid}'";
             }
-            $message .= " was not called.";
-            
+            $message .= ' was not called.';
+
             throw new \PHPUnit\Framework\AssertionFailedError($message);
         }
     }

@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * Verify Firebase Token Middleware.
- * 
+ *
  * This middleware verifies Firebase ID tokens without requiring full authentication.
  * Useful for optional authentication or token validation scenarios.
  */
@@ -32,33 +32,32 @@ class VerifyFirebaseToken
     /**
      * Handle an incoming request.
      */
-    public function handle(Request $request, Closure $next, string $optional = null): SymfonyResponse
+    public function handle(Request $request, Closure $next, ?string $optional = null): SymfonyResponse
     {
         $token = $this->getTokenFromRequest($request);
-        
+
         if ($token) {
             try {
                 // Verify the Firebase ID token
                 $verifiedIdToken = $this->firebaseAuth->verifyIdToken($token);
-                
+
                 // Add the verified token to the request for later use
                 $request->attributes->set('firebase_token', $verifiedIdToken);
                 $request->attributes->set('firebase_uid', $verifiedIdToken->claims()->get('sub'));
-                
+
                 // Add token claims to request attributes
                 $claims = $verifiedIdToken->claims()->all();
                 $request->attributes->set('firebase_claims', $claims);
-                
             } catch (\Throwable $e) {
                 // If optional parameter is set, continue without authentication
                 if ($optional === 'optional') {
                     return $next($request);
                 }
-                
+
                 // Otherwise, return unauthorized response
                 return response()->json([
                     'error' => 'Invalid Firebase token',
-                    'message' => 'The provided Firebase ID token is invalid or expired.'
+                    'message' => 'The provided Firebase ID token is invalid or expired.',
                 ], Response::HTTP_UNAUTHORIZED);
             }
         } else {
@@ -66,10 +65,10 @@ class VerifyFirebaseToken
             if ($optional === 'optional') {
                 return $next($request);
             }
-            
+
             return response()->json([
                 'error' => 'Missing Firebase token',
-                'message' => 'Firebase ID token is required. Please provide it in the Authorization header, query parameter, or request body.'
+                'message' => 'Firebase ID token is required. Please provide it in the Authorization header, query parameter, or request body.',
             ], Response::HTTP_UNAUTHORIZED);
         }
 

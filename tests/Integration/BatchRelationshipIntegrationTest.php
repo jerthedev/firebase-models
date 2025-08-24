@@ -2,12 +2,11 @@
 
 namespace JTD\FirebaseModels\Tests\Integration;
 
-use JTD\FirebaseModels\Tests\TestSuites\IntegrationTestSuite;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Collection;
 use JTD\FirebaseModels\Firestore\Batch\BatchManager;
 use JTD\FirebaseModels\Testing\BatchTestHelper;
 use JTD\FirebaseModels\Testing\RelationshipTestHelper;
+use JTD\FirebaseModels\Tests\TestSuites\IntegrationTestSuite;
 
 /**
  * Integration tests for batch operations with relationship functionality.
@@ -55,7 +54,7 @@ class BatchRelationshipIntegrationTest extends IntegrationTestSuite
             for ($i = 1; $i <= 3; $i++) {
                 $categoryId = $categoryIds[($userIndex + $i - 1) % count($categoryIds)];
                 $postData[] = [
-                    'title' => "Post {$i} by Author " . ($userIndex + 1),
+                    'title' => "Post {$i} by Author ".($userIndex + 1),
                     'content' => 'Content for the post',
                     'user_id' => $userId,
                     'category_id' => $categoryId,
@@ -257,23 +256,23 @@ class BatchRelationshipIntegrationTest extends IntegrationTestSuite
 
         // Test eager loading performance
         $startTime = microtime(true);
-        
+
         // Without eager loading (should be slower)
         $usersWithoutEager = TestUser::all();
         foreach ($usersWithoutEager as $user) {
             $postCount = $user->posts->count(); // This triggers individual queries
         }
-        
+
         $withoutEagerTime = microtime(true) - $startTime;
 
         $startTime = microtime(true);
-        
+
         // With eager loading (should be faster)
         $usersWithEager = TestUser::with('posts')->get();
         foreach ($usersWithEager as $user) {
             $postCount = $user->posts->count(); // This uses preloaded data
         }
-        
+
         $withEagerTime = microtime(true) - $startTime;
 
         // Eager loading should be significantly faster
@@ -335,7 +334,7 @@ class BatchRelationshipIntegrationTest extends IntegrationTestSuite
         foreach ($remainingUsers as $user) {
             $userPosts = $user->posts;
             $this->assertCount(3, $userPosts);
-            
+
             foreach ($userPosts as $post) {
                 $this->assertEquals($user->getKey(), $post->user_id);
             }
@@ -388,11 +387,10 @@ class BatchRelationshipIntegrationTest extends IntegrationTestSuite
             $postResult = BatchManager::bulkInsert('posts', $postData, [
                 'validate_relationships' => true,
             ]);
-            
+
             // If validation is implemented, it might succeed with warnings
             // or fail entirely depending on implementation
             $this->assertTrue($postResult->isSuccess() || $postResult->isFailed());
-            
         } catch (\Exception $e) {
             // Validation caught the invalid reference
             $this->assertStringContains('user', strtolower($e->getMessage()));
@@ -402,7 +400,7 @@ class BatchRelationshipIntegrationTest extends IntegrationTestSuite
         $createdPosts = TestPost::all();
         foreach ($createdPosts as $post) {
             $this->assertContains($post->user_id, $userIds);
-            
+
             // Verify relationship works
             $user = $post->user;
             $this->assertNotNull($user);

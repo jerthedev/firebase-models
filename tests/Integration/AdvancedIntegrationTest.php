@@ -2,18 +2,18 @@
 
 namespace JTD\FirebaseModels\Tests\Integration;
 
-use JTD\FirebaseModels\Tests\TestSuites\IntegrationTestSuite;
-use JTD\FirebaseModels\Tests\Models\TestPost;
-use JTD\FirebaseModels\Tests\Models\TestUser;
-use JTD\FirebaseModels\Firestore\Transactions\TransactionManager;
-use JTD\FirebaseModels\Firestore\Batch\BatchManager;
-use JTD\FirebaseModels\Firestore\Listeners\RealtimeListenerManager;
-use JTD\FirebaseModels\Cache\CacheManager;
-use JTD\FirebaseModels\Facades\FirestoreDB;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\Group;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
+use JTD\FirebaseModels\Cache\CacheManager;
+use JTD\FirebaseModels\Facades\FirestoreDB;
+use JTD\FirebaseModels\Firestore\Batch\BatchManager;
+use JTD\FirebaseModels\Firestore\Listeners\RealtimeListenerManager;
+use JTD\FirebaseModels\Firestore\Transactions\TransactionManager;
+use JTD\FirebaseModels\Tests\Models\TestPost;
+use JTD\FirebaseModels\Tests\Models\TestUser;
+use JTD\FirebaseModels\Tests\TestSuites\IntegrationTestSuite;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
 #[Group('integration')]
 #[Group('advanced')]
@@ -33,7 +33,7 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
         $author = new TestUser([
             'name' => 'John Doe',
             'email' => 'john@example.com',
-            'role' => 'author'
+            'role' => 'author',
         ]);
 
         $posts = [
@@ -46,7 +46,7 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
         $result = TransactionManager::executeWithResult(function ($transaction) use ($author, $posts) {
             // Save author first
             $author->save();
-            
+
             // Save posts and link to author
             $savedPosts = [];
             foreach ($posts as $post) {
@@ -65,14 +65,14 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
             return [
                 'author' => $author,
                 'posts' => $savedPosts,
-                'total_posts' => count($savedPosts)
+                'total_posts' => count($savedPosts),
             ];
         });
 
         expect($result->isSuccess())->toBeTrue();
         expect($result->getData()['total_posts'])->toBe(3);
         expect($result->getData()['author']->post_count)->toBe(3);
-        
+
         // Verify all posts have author_id
         foreach ($result->getData()['posts'] as $post) {
             expect($post->author_id)->toBe($author->getKey());
@@ -100,7 +100,7 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
                 'content' => "Content for post {$i}",
                 'views' => rand(1, 1000),
                 'published' => $i % 2 === 0,
-                'created_at' => now()->subDays(rand(1, 30))
+                'created_at' => now()->subDays(rand(1, 30)),
             ];
         }
 
@@ -108,7 +108,7 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
         $batchResult = BatchManager::bulkInsert('posts', $documents, [
             'chunk_size' => 10,
             'enable_cache' => true,
-            'cache_ttl' => 3600
+            'cache_ttl' => 3600,
         ]);
 
         expect($batchResult->isSuccess())->toBeTrue();
@@ -160,7 +160,7 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
                 $eventsReceived[] = [
                     'type' => $type,
                     'data' => $snapshot->exists() ? $snapshot->data() : null,
-                    'timestamp' => now()->toISOString()
+                    'timestamp' => now()->toISOString(),
                 ];
             }
         );
@@ -171,7 +171,7 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
         $post = new TestPost([
             'id' => 'realtime-test-post',
             'title' => 'Realtime Test Post',
-            'content' => 'Testing realtime functionality'
+            'content' => 'Testing realtime functionality',
         ]);
         $post->save();
 
@@ -206,7 +206,7 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
         $post = new TestPost([
             'title' => 'Post with Comments',
             'content' => 'This post has comments',
-            'published' => true
+            'published' => true,
         ]);
         $post->save();
 
@@ -264,9 +264,9 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
                     'stats' => [
                         'views' => rand(1, 10000),
                         'likes' => rand(1, 1000),
-                        'shares' => rand(1, 100)
-                    ]
-                ]
+                        'shares' => rand(1, 100),
+                    ],
+                ],
             ];
         }
 
@@ -275,7 +275,7 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
         $result = BatchManager::bulkInsert('posts', $documents, [
             'chunk_size' => 50,
             'monitor_performance' => true,
-            'memory_efficient' => true
+            'memory_efficient' => true,
         ]);
         $insertTime = (microtime(true) - $startTime) * 1000;
 
@@ -317,7 +317,7 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
         // Test transaction retry with intermittent failures
         $result = TransactionManager::executeWithResult(function ($transaction) use (&$attempts, &$errors) {
             $attempts++;
-            
+
             // Simulate intermittent failures
             if ($attempts < 3) {
                 $error = new \Exception("Simulated failure attempt {$attempts}");
@@ -329,12 +329,12 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
             return [
                 'success' => true,
                 'attempts' => $attempts,
-                'data' => 'recovered_data'
+                'data' => 'recovered_data',
             ];
         }, [
             'max_attempts' => 5,
             'retry_delay_ms' => 100,
-            'exponential_backoff' => true
+            'exponential_backoff' => true,
         ]);
 
         expect($result->isSuccess())->toBeTrue();
@@ -357,8 +357,8 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
             'validate' => true,
             'validation_rules' => [
                 'title' => 'required|min:1',
-                'content' => 'required'
-            ]
+                'content' => 'required',
+            ],
         ]);
 
         expect($batchResult->hasErrors())->toBeTrue();
@@ -381,7 +381,7 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
             'id' => 'concurrent-counter',
             'title' => 'Concurrent Counter',
             'views' => 0,
-            'likes' => 0
+            'likes' => 0,
         ]);
         $counter->save();
 
@@ -393,17 +393,17 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
                     $docRef = FirestoreDB::collection('posts')->document($counter->getKey());
                     $snapshot = $transaction->snapshot($docRef);
                     $data = $snapshot->data();
-                    
+
                     // Increment counters
                     $newViews = ($data['views'] ?? 0) + 1;
                     $newLikes = ($data['likes'] ?? 0) + 1;
-                    
+
                     $transaction->update($docRef, [
                         'views' => $newViews,
                         'likes' => $newLikes,
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]);
-                    
+
                     return ['views' => $newViews, 'likes' => $newLikes];
                 });
             };
@@ -444,7 +444,7 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
                 'name' => "User {$i}",
                 'email' => "user{$i}@example.com",
                 'role' => $i <= 3 ? 'admin' : 'user',
-                'active' => true
+                'active' => true,
             ];
         }
 
@@ -460,11 +460,12 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
                     'content' => "Content for integration post {$i}",
                     'published' => $i % 2 === 0,
                     'views' => rand(1, 1000),
-                    'author_id' => 'user-' . rand(1, 10)
+                    'author_id' => 'user-'.rand(1, 10),
                 ]);
                 $post->save();
                 $posts[] = $post;
             }
+
             return $posts;
         });
 
@@ -496,7 +497,7 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
             $updateData[$post->getKey()] = [
                 'views' => FirestoreDB::increment(100),
                 'featured' => true,
-                'updated_at' => FirestoreDB::serverTimestamp()
+                'updated_at' => FirestoreDB::serverTimestamp(),
             ];
         }
 
@@ -510,7 +511,7 @@ class AdvancedIntegrationTest extends IntegrationTestSuite
                 'total_views' => 'sum:views',
                 'avg_views' => 'avg:views',
                 'max_views' => 'max:views',
-                'post_count' => 'count'
+                'post_count' => 'count',
             ]);
 
         $integrationResults['aggregation_stats'] = $stats;

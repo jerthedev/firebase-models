@@ -5,10 +5,8 @@ namespace JTD\FirebaseModels\Firestore\Transactions;
 use Google\Cloud\Firestore\Transaction;
 use Illuminate\Support\Facades\Log;
 use JTD\FirebaseModels\Facades\FirestoreDB;
-use JTD\FirebaseModels\Firestore\Transactions\TransactionResult;
 use JTD\FirebaseModels\Firestore\Transactions\Exceptions\TransactionException;
 use JTD\FirebaseModels\Firestore\Transactions\Exceptions\TransactionRetryException;
-use JTD\FirebaseModels\Firestore\Transactions\TransactionBuilder;
 
 /**
  * Enhanced transaction manager with retry logic and error handling.
@@ -40,24 +38,23 @@ class TransactionManager
 
             if ($options['log_attempts']) {
                 Log::info('Transaction completed successfully', [
-                    'duration' => round((microtime(true) - $startTime) * 1000, 2) . 'ms',
-                    'options' => $options
+                    'duration' => round((microtime(true) - $startTime) * 1000, 2).'ms',
+                    'options' => $options,
                 ]);
             }
 
             return $result;
-
         } catch (\Exception $e) {
             if ($options['log_attempts']) {
                 Log::error('Transaction failed', [
                     'error' => $e->getMessage(),
-                    'duration' => round((microtime(true) - $startTime) * 1000, 2) . 'ms',
-                    'options' => $options
+                    'duration' => round((microtime(true) - $startTime) * 1000, 2).'ms',
+                    'options' => $options,
                 ]);
             }
 
             throw new TransactionException(
-                'Transaction failed: ' . $e->getMessage(),
+                'Transaction failed: '.$e->getMessage(),
                 $e->getCode(),
                 $e
             );
@@ -83,12 +80,11 @@ class TransactionManager
                     Log::info('Transaction succeeded after retry', [
                         'attempt' => $attempt,
                         'max_attempts' => $maxAttempts,
-                        'duration' => round((microtime(true) - $startTime) * 1000, 2) . 'ms'
+                        'duration' => round((microtime(true) - $startTime) * 1000, 2).'ms',
                     ]);
                 }
 
                 return $result;
-
             } catch (TransactionException $e) {
                 $lastException = $e;
 
@@ -101,7 +97,7 @@ class TransactionManager
                         'attempt' => $attempt,
                         'max_attempts' => $maxAttempts,
                         'error' => $e->getMessage(),
-                        'next_retry_in' => $options['retry_delay'] . 'ms'
+                        'next_retry_in' => $options['retry_delay'].'ms',
                     ]);
                 }
 
@@ -115,7 +111,7 @@ class TransactionManager
         }
 
         throw new TransactionRetryException(
-            "Transaction failed after {$maxAttempts} attempts. Last error: " . $lastException->getMessage(),
+            "Transaction failed after {$maxAttempts} attempts. Last error: ".$lastException->getMessage(),
             $lastException->getCode(),
             $lastException
         );
@@ -131,25 +127,23 @@ class TransactionManager
 
         try {
             $data = static::execute($callback, $options);
-            
-            $result->setSuccess(true)
-                   ->setData($data)
-                   ->setDuration(microtime(true) - $startTime)
-                   ->setAttempts(1);
 
+            $result->setSuccess(true)
+                ->setData($data)
+                ->setDuration(microtime(true) - $startTime)
+                ->setAttempts(1);
         } catch (TransactionRetryException $e) {
             $result->setSuccess(false)
-                   ->setError($e->getMessage())
-                   ->setException($e)
-                   ->setDuration(microtime(true) - $startTime)
-                   ->setAttempts($options['max_attempts'] ?? static::$defaultOptions['max_attempts']);
-
+                ->setError($e->getMessage())
+                ->setException($e)
+                ->setDuration(microtime(true) - $startTime)
+                ->setAttempts($options['max_attempts'] ?? static::$defaultOptions['max_attempts']);
         } catch (TransactionException $e) {
             $result->setSuccess(false)
-                   ->setError($e->getMessage())
-                   ->setException($e)
-                   ->setDuration(microtime(true) - $startTime)
-                   ->setAttempts(1);
+                ->setError($e->getMessage())
+                ->setException($e)
+                ->setDuration(microtime(true) - $startTime)
+                ->setAttempts(1);
         }
 
         return $result;
@@ -183,16 +177,16 @@ class TransactionManager
     public static function executeWithTimeout(callable $callback, int $timeoutSeconds, array $options = []): mixed
     {
         $options = array_merge($options, ['timeout' => $timeoutSeconds]);
-        
+
         // Set up timeout handling
         $startTime = time();
-        
+
         return static::execute(function (Transaction $transaction) use ($callback, $timeoutSeconds, $startTime) {
             // Check timeout before executing
             if (time() - $startTime >= $timeoutSeconds) {
                 throw new TransactionException('Transaction timeout exceeded');
             }
-            
+
             return $callback($transaction);
         }, $options);
     }

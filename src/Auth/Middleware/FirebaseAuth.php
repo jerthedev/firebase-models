@@ -2,14 +2,13 @@
 
 namespace JTD\FirebaseModels\Auth\Middleware;
 
-use Closure;
-use Illuminate\Http\Request;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\Authenticate;
+use Illuminate\Http\Request;
 
 /**
  * Firebase Authentication Middleware.
- * 
+ *
  * This middleware extends Laravel's built-in Authenticate middleware to provide
  * Firebase-specific authentication handling while maintaining full compatibility
  * with Laravel's auth system.
@@ -36,7 +35,7 @@ class FirebaseAuth extends Authenticate
     protected function unauthenticated($request, array $guards)
     {
         // Check if this is a Firebase guard request
-        $isFirebaseGuard = in_array('firebase', $guards) || 
+        $isFirebaseGuard = in_array('firebase', $guards) ||
                           (empty($guards) && config('auth.defaults.guard') === 'firebase');
 
         if ($isFirebaseGuard && $request->expectsJson()) {
@@ -64,10 +63,10 @@ class FirebaseAuth extends Authenticate
         foreach ($guards as $guard) {
             if ($this->auth->guard($guard)->check()) {
                 $user = $this->auth->guard($guard)->user();
-                
+
                 // Set the authenticated user for the request
                 $this->auth->shouldUse($guard);
-                
+
                 return $user;
             }
         }

@@ -3,10 +3,10 @@
 namespace JTD\FirebaseModels\Facades;
 
 use Illuminate\Support\Facades\Facade;
-use JTD\FirebaseModels\Firestore\FirestoreDatabase;
 
 /**
  * Laravel DB Facade Compatible Methods
+ *
  * @method static \JTD\FirebaseModels\Firestore\FirestoreQueryBuilder table(string $collection)
  * @method static \Illuminate\Support\Collection select(string $collection, array $constraints = [])
  * @method static bool insert(string $collection, array $data)

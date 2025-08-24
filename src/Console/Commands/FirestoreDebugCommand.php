@@ -3,11 +3,11 @@
 namespace JTD\FirebaseModels\Console\Commands;
 
 use Illuminate\Console\Command;
+use JTD\FirebaseModels\Cache\CacheManager;
 use JTD\FirebaseModels\Facades\FirestoreDB;
-use JTD\FirebaseModels\Optimization\QueryOptimizer;
 use JTD\FirebaseModels\Optimization\MemoryManager;
 use JTD\FirebaseModels\Optimization\PerformanceTuner;
-use JTD\FirebaseModels\Cache\CacheManager;
+use JTD\FirebaseModels\Optimization\QueryOptimizer;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 #[AsCommand(name: 'firestore:debug')]
@@ -129,26 +129,25 @@ class FirestoreDebugCommand extends Command
         try {
             $projectId = FirestoreDB::getProjectId();
             $databaseId = FirestoreDB::getDatabaseId();
-            
+
             $this->line("Project ID: <comment>{$projectId}</comment>");
             $this->line("Database ID: <comment>{$databaseId}</comment>");
-            
+
             // Test basic operation
             $testCollection = FirestoreDB::collection('_debug_test');
             $testDoc = $testCollection->document('connection_test');
-            
+
             $testDoc->set(['timestamp' => now()->toISOString(), 'test' => true]);
             $snapshot = $testDoc->snapshot();
-            
+
             if ($snapshot->exists()) {
-                $this->line("Status: <info>✓ Connected</info>");
+                $this->line('Status: <info>✓ Connected</info>');
                 $testDoc->delete(); // Cleanup
             } else {
-                $this->line("Status: <error>✗ Connection failed</error>");
+                $this->line('Status: <error>✗ Connection failed</error>');
             }
-            
         } catch (\Exception $e) {
-            $this->line("Status: <error>✗ Connection failed</error>");
+            $this->line('Status: <error>✗ Connection failed</error>');
             $this->line("Error: <error>{$e->getMessage()}</error>");
         }
 
@@ -175,8 +174,8 @@ class FirestoreDebugCommand extends Command
         $this->line("Credentials: <comment>{$credentialsFile}</comment>");
         $this->line("Cache Enabled: <comment>{$cacheEnabled}</comment>");
         $this->line("Default TTL: <comment>{$defaultTtl}s</comment>");
-        $this->line("Query Optimization: <comment>" . (QueryOptimizer::class . ' available') . "</comment>");
-        $this->line("Memory Management: <comment>" . (MemoryManager::class . ' available') . "</comment>");
+        $this->line('Query Optimization: <comment>'.(QueryOptimizer::class.' available').'</comment>');
+        $this->line('Memory Management: <comment>'.(MemoryManager::class.' available').'</comment>');
 
         $this->newLine();
     }
@@ -191,9 +190,9 @@ class FirestoreDebugCommand extends Command
 
         try {
             $analysis = PerformanceTuner::analyzePerformance();
-            
+
             $this->line("Overall Score: <comment>{$analysis['overall_score']}/100</comment>");
-            
+
             if (isset($analysis['components']['queries'])) {
                 $queries = $analysis['components']['queries'];
                 $this->line("Query Performance: <comment>{$queries['score']}/100</comment>");
@@ -215,7 +214,6 @@ class FirestoreDebugCommand extends Command
                 $this->line("  - Hit Rate: <comment>{$cache['hit_rate_percent']}%</comment>");
                 $this->line("  - Total Requests: <comment>{$cache['total_requests']}</comment>");
             }
-
         } catch (\Exception $e) {
             $this->line("Error: <error>{$e->getMessage()}</error>");
         }
@@ -248,7 +246,6 @@ class FirestoreDebugCommand extends Command
                     $this->line("  - {$context}: <comment>{$data['count']} ({$data['total_mb']}MB)</comment>");
                 }
             }
-
         } catch (\Exception $e) {
             $this->line("Error: <error>{$e->getMessage()}</error>");
         }
@@ -281,7 +278,6 @@ class FirestoreDebugCommand extends Command
             $this->line("Cache Misses: <comment>{$misses}</comment>");
             $this->line("Cache Size: <comment>{$cacheSize}MB</comment>");
             $this->line("Eviction Rate: <comment>{$evictionRate}%</comment>");
-
         } catch (\Exception $e) {
             $this->line("Cache statistics not available: <comment>{$e->getMessage()}</comment>");
         }
@@ -303,7 +299,7 @@ class FirestoreDebugCommand extends Command
             $this->line("Queries Tracked: <comment>{$stats['total_queries_tracked']}</comment>");
             $this->line("Total Executions: <comment>{$stats['total_executions']}</comment>");
             $this->line("Average Time: <comment>{$stats['avg_execution_time_ms']}ms</comment>");
-            $this->line("Cache Hit Rate: <comment>" . ($stats['cache_hit_rate'] * 100) . "%</comment>");
+            $this->line('Cache Hit Rate: <comment>'.($stats['cache_hit_rate'] * 100).'%</comment>');
 
             if (!empty($stats['slow_queries'])) {
                 $this->line("\nSlow Queries:");
@@ -313,7 +309,6 @@ class FirestoreDebugCommand extends Command
                     $this->line("    Executions: <comment>{$query['executions']}</comment>");
                 }
             }
-
         } catch (\Exception $e) {
             $this->line("Error: <error>{$e->getMessage()}</error>");
         }
@@ -333,21 +328,20 @@ class FirestoreDebugCommand extends Command
             $suggestions = QueryOptimizer::getIndexSuggestions();
 
             if (empty($suggestions)) {
-                $this->line("No index suggestions available.");
+                $this->line('No index suggestions available.');
             } else {
                 foreach ($suggestions as $suggestion) {
                     $this->line("Collection: <comment>{$suggestion['collection']}</comment>");
                     $this->line("Priority: <comment>{$suggestion['priority']}</comment>");
                     $this->line("Benefit: <comment>{$suggestion['estimated_benefit']}</comment>");
-                    $this->line("Fields:");
+                    $this->line('Fields:');
                     foreach ($suggestion['fields'] as $field) {
                         $this->line("  - {$field['field']} ({$field['order']})");
                     }
                     $this->line("Firebase URL: <comment>{$suggestion['firebase_url']}</comment>");
-                    $this->line("");
+                    $this->line('');
                 }
             }
-
         } catch (\Exception $e) {
             $this->line("Error: <error>{$e->getMessage()}</error>");
         }
@@ -369,7 +363,7 @@ class FirestoreDebugCommand extends Command
         // Check connection
         try {
             FirestoreDB::getProjectId();
-            $this->line("✓ Firestore connection: <info>OK</info>");
+            $this->line('✓ Firestore connection: <info>OK</info>');
         } catch (\Exception $e) {
             $issues[] = "Firestore connection failed: {$e->getMessage()}";
         }

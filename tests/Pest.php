@@ -64,64 +64,64 @@ expect()->extend('toBeFirestoreModel', function () {
 
 expect()->extend('toHaveAttribute', function (string $attribute, mixed $value = null) {
     $model = $this->value;
-    
+
     if (!$model instanceof \JTD\FirebaseModels\Firestore\FirestoreModel) {
         throw new InvalidArgumentException('Expected a FirestoreModel instance');
     }
-    
+
     if ($value === null) {
         return expect($model->hasAttribute($attribute))->toBeTrue();
     }
-    
+
     return expect($model->getAttribute($attribute))->toBe($value);
 });
 
 expect()->extend('toHaveCast', function (string $attribute, string $castType) {
     $model = $this->value;
-    
+
     if (!$model instanceof \JTD\FirebaseModels\Firestore\FirestoreModel) {
         throw new InvalidArgumentException('Expected a FirestoreModel instance');
     }
-    
+
     return expect($model->hasCast($attribute, $castType))->toBeTrue();
 });
 
 expect()->extend('toBeDirty', function (array|string|null $attributes = null) {
     $model = $this->value;
-    
+
     if (!$model instanceof \JTD\FirebaseModels\Firestore\FirestoreModel) {
         throw new InvalidArgumentException('Expected a FirestoreModel instance');
     }
-    
+
     return expect($model->isDirty($attributes))->toBeTrue();
 });
 
 expect()->extend('toBeClean', function (array|string|null $attributes = null) {
     $model = $this->value;
-    
+
     if (!$model instanceof \JTD\FirebaseModels\Firestore\FirestoreModel) {
         throw new InvalidArgumentException('Expected a FirestoreModel instance');
     }
-    
+
     return expect($model->isClean($attributes))->toBeTrue();
 });
 
 expect()->extend('toExistInFirestore', function () {
     $model = $this->value;
-    
+
     if (!$model instanceof \JTD\FirebaseModels\Firestore\FirestoreModel) {
         throw new InvalidArgumentException('Expected a FirestoreModel instance');
     }
-    
+
     return expect($model->exists)->toBeTrue();
 });
 
 expect()->extend('toBeRecentlyCreated', function () {
     $model = $this->value;
-    
+
     if (!$model instanceof \JTD\FirebaseModels\Firestore\FirestoreModel) {
         throw new InvalidArgumentException('Expected a FirestoreModel instance');
     }
-    
+
     return expect($model->wasRecentlyCreated)->toBeTrue();
 });

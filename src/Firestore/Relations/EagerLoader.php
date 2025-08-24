@@ -4,7 +4,6 @@ namespace JTD\FirebaseModels\Firestore\Relations;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use JTD\FirebaseModels\Firestore\FirestoreModel;
 
 /**
  * Eager loader for Firestore model relationships.
@@ -106,7 +105,7 @@ class EagerLoader
             try {
                 return $model->getRelationValue($name);
             } catch (\BadMethodCallException $e) {
-                throw new \InvalidArgumentException("Relation [{$name}] does not exist on model [" . get_class($model) . "].");
+                throw new \InvalidArgumentException("Relation [{$name}] does not exist on model [".get_class($model).'].');
             }
         });
 
@@ -144,7 +143,7 @@ class EagerLoader
      */
     protected function isNestedUnder(string $relation, string $name): bool
     {
-        return Str::contains($name, '.') && Str::startsWith($name, $relation . '.');
+        return Str::contains($name, '.') && Str::startsWith($name, $relation.'.');
     }
 
     /**
@@ -193,7 +192,7 @@ class EagerLoader
 
         foreach ($models as $model) {
             $key = $model->getAttribute($relationInstance->getLocalKeyName());
-            $model->setAttribute($relation . '_count', $counts[$key] ?? 0);
+            $model->setAttribute($relation.'_count', $counts[$key] ?? 0);
         }
 
         return $models;
@@ -209,7 +208,7 @@ class EagerLoader
         // For HasMany relationships
         if ($relation instanceof HasMany) {
             $results = $relation->getQuery()->get();
-            
+
             foreach ($results as $result) {
                 $key = $result->getAttribute($relation->getForeignKeyName());
                 $counts[$key] = ($counts[$key] ?? 0) + 1;

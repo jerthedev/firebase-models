@@ -2,12 +2,12 @@
 
 namespace JTD\FirebaseModels\Firestore\Scopes;
 
-use JTD\FirebaseModels\Firestore\FirestoreModelQueryBuilder;
 use JTD\FirebaseModels\Firestore\FirestoreModel;
+use JTD\FirebaseModels\Firestore\FirestoreModelQueryBuilder;
 
 /**
  * Global scope to filter only published records.
- * 
+ *
  * This scope automatically adds constraints to filter records
  * that are published and not scheduled for future publication.
  */

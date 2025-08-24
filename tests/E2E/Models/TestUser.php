@@ -13,7 +13,7 @@ class TestUser extends FirestoreModel
 
     protected array $fillable = [
         'name',
-        'email', 
+        'email',
         'active',
         'role',
         'permissions',
@@ -43,6 +43,7 @@ class TestUser extends FirestoreModel
     public function setCollection(string $collection): static
     {
         $this->collection = $collection;
+
         return $this;
     }
 
@@ -84,6 +85,7 @@ class TestUser extends FirestoreModel
     public function hasPermission(string $permission): bool
     {
         $permissions = $this->permissions ?? [];
+
         return in_array($permission, $permissions);
     }
 
@@ -97,6 +99,7 @@ class TestUser extends FirestoreModel
             $permissions[] = $permission;
             $this->permissions = $permissions;
         }
+
         return $this;
     }
 
@@ -106,7 +109,8 @@ class TestUser extends FirestoreModel
     public function removePermission(string $permission): static
     {
         $permissions = $this->permissions ?? [];
-        $this->permissions = array_values(array_filter($permissions, fn($p) => $p !== $permission));
+        $this->permissions = array_values(array_filter($permissions, fn ($p) => $p !== $permission));
+
         return $this;
     }
 }

@@ -3,9 +3,9 @@
 namespace JTD\FirebaseModels\Console\Commands;
 
 use Illuminate\Console\Command;
-use JTD\FirebaseModels\Optimization\QueryOptimizer;
 use JTD\FirebaseModels\Optimization\MemoryManager;
 use JTD\FirebaseModels\Optimization\PerformanceTuner;
+use JTD\FirebaseModels\Optimization\QueryOptimizer;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 #[AsCommand(name: 'firestore:optimize')]
@@ -91,11 +91,12 @@ class FirestoreOptimizeCommand extends Command
 
             if ($result['status'] === 'disabled') {
                 $this->warn('Auto-optimization is disabled. Enable it in configuration.');
+
                 return Command::FAILURE;
             }
 
             $this->line("Status: <info>{$result['status']}</info>");
-            $this->line("Optimizations applied: <comment>" . count($result['optimizations']) . "</comment>");
+            $this->line('Optimizations applied: <comment>'.count($result['optimizations']).'</comment>');
 
             if (!empty($result['optimizations'])) {
                 $this->newLine();
@@ -110,9 +111,9 @@ class FirestoreOptimizeCommand extends Command
 
             $this->newLine();
             $this->info('✓ Auto-optimization completed successfully!');
-
         } catch (\Exception $e) {
             $this->error("Optimization failed: {$e->getMessage()}");
+
             return Command::FAILURE;
         }
 
@@ -133,9 +134,9 @@ class FirestoreOptimizeCommand extends Command
             $this->displayPerformanceScore($analysis['overall_score']);
             $this->displayComponentAnalysis($analysis['components']);
             $this->displayRecommendations($analysis['recommendations']);
-
         } catch (\Exception $e) {
             $this->error("Analysis failed: {$e->getMessage()}");
+
             return Command::FAILURE;
         }
 
@@ -160,7 +161,7 @@ class FirestoreOptimizeCommand extends Command
             foreach ($benchmark['operations'] as $name => $result) {
                 $this->line("  <comment>{$name}:</comment>");
                 $this->line("    Average Time: {$result['avg_time_ms']}ms");
-                $this->line("    Success Rate: " . ($result['success_rate'] * 100) . "%");
+                $this->line('    Success Rate: '.($result['success_rate'] * 100).'%');
                 $this->line("    Iterations: {$result['iterations']}");
             }
 
@@ -170,10 +171,10 @@ class FirestoreOptimizeCommand extends Command
             $this->line("  Average Performance: <comment>{$summary['average_time_ms']}ms</comment>");
             $this->line("  Fastest Operation: <comment>{$summary['fastest_operation']}</comment>");
             $this->line("  Slowest Operation: <comment>{$summary['slowest_operation']}</comment>");
-            $this->line("  Overall Success Rate: <comment>" . ($summary['overall_success_rate'] * 100) . "%</comment>");
-
+            $this->line('  Overall Success Rate: <comment>'.($summary['overall_success_rate'] * 100).'%</comment>');
         } catch (\Exception $e) {
             $this->error("Benchmark failed: {$e->getMessage()}");
+
             return Command::FAILURE;
         }
 
@@ -223,7 +224,7 @@ class FirestoreOptimizeCommand extends Command
                     $this->line("  • <comment>{$rec['title']}</comment> ({$rec['priority']} priority)");
                     $this->line("    {$rec['description']}");
                     if (!empty($rec['actions'])) {
-                        $this->line("    Actions:");
+                        $this->line('    Actions:');
                         foreach ($rec['actions'] as $action) {
                             $this->line("      - {$action}");
                         }
@@ -234,9 +235,9 @@ class FirestoreOptimizeCommand extends Command
             if (empty($querySuggestions) && empty($indexSuggestions) && empty($recommendations)) {
                 $this->info('✓ No optimization suggestions at this time. System is performing well!');
             }
-
         } catch (\Exception $e) {
             $this->error("Failed to generate suggestions: {$e->getMessage()}");
+
             return Command::FAILURE;
         }
 
@@ -355,9 +356,9 @@ class FirestoreOptimizeCommand extends Command
         foreach ($components as $component => $data) {
             $score = $data['score'] ?? 0;
             $color = $score >= 70 ? 'info' : ($score >= 50 ? 'comment' : 'error');
-            
-            $this->line("  <comment>" . ucfirst($component) . ":</comment> <{$color}>{$score}/100</{$color}>");
-            
+
+            $this->line('  <comment>'.ucfirst($component).":</comment> <{$color}>{$score}/100</{$color}>");
+
             // Show key metrics
             if ($component === 'queries' && isset($data['avg_time_ms'])) {
                 $this->line("    Average Time: {$data['avg_time_ms']}ms");
@@ -380,6 +381,7 @@ class FirestoreOptimizeCommand extends Command
     {
         if (empty($recommendations)) {
             $this->info('✓ No recommendations - system is performing well!');
+
             return;
         }
 

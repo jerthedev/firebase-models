@@ -4,7 +4,7 @@ namespace JTD\FirebaseModels\Cache;
 
 /**
  * Cache manager that coordinates between request cache and persistent cache.
- * 
+ *
  * Provides a unified interface for caching with intelligent fallback:
  * 1. Check request cache (fastest)
  * 2. Check persistent cache (cross-request)
@@ -44,6 +44,7 @@ class CacheManager
                 if (static::$config['auto_promote'] && static::$config['request_cache_enabled']) {
                     RequestCache::put($key, $value);
                 }
+
                 return $value;
             }
         }
@@ -67,7 +68,7 @@ class CacheManager
         if (static::$config['persistent_cache_enabled'] && PersistentCache::isEnabled()) {
             $ttl = $ttl ?? static::$config['default_ttl'];
             $store = $store ?? static::$config['default_store'];
-            
+
             if (!PersistentCache::put($key, $value, $ttl, $tags, $store)) {
                 $success = false;
             }
@@ -91,7 +92,7 @@ class CacheManager
         // Store in persistent cache forever
         if (static::$config['persistent_cache_enabled'] && PersistentCache::isEnabled()) {
             $store = $store ?? static::$config['default_store'];
-            
+
             if (!PersistentCache::forever($key, $value, $tags, $store)) {
                 $success = false;
             }

@@ -3,7 +3,6 @@
 namespace JTD\FirebaseModels\Firestore\Transactions;
 
 use Google\Cloud\Firestore\Transaction;
-use Google\Cloud\Firestore\DocumentReference;
 use JTD\FirebaseModels\Facades\FirestoreDB;
 
 /**
@@ -12,7 +11,9 @@ use JTD\FirebaseModels\Facades\FirestoreDB;
 class TransactionBuilder
 {
     protected array $operations = [];
+
     protected array $options = [];
+
     protected array $conditions = [];
 
     /**
@@ -79,6 +80,7 @@ class TransactionBuilder
     public function withOptions(array $options): static
     {
         $this->options = array_merge($this->options, $options);
+
         return $this;
     }
 
@@ -89,6 +91,7 @@ class TransactionBuilder
     {
         $this->options['max_attempts'] = $maxAttempts;
         $this->options['retry_delay'] = $retryDelay;
+
         return $this;
     }
 
@@ -98,6 +101,7 @@ class TransactionBuilder
     public function withTimeout(int $seconds): static
     {
         $this->options['timeout'] = $seconds;
+
         return $this;
     }
 
@@ -107,6 +111,7 @@ class TransactionBuilder
     public function withLogging(bool $enabled = true): static
     {
         $this->options['log_attempts'] = $enabled;
+
         return $this;
     }
 
@@ -123,10 +128,10 @@ class TransactionBuilder
     /**
      * Execute with retry logic.
      */
-    public function executeWithRetry(int $maxAttempts = null): mixed
+    public function executeWithRetry(?int $maxAttempts = null): mixed
     {
         $attempts = $maxAttempts ?? $this->options['max_attempts'] ?? 3;
-        
+
         return TransactionManager::executeWithRetry(function (Transaction $transaction) {
             return $this->executeOperations($transaction);
         }, $attempts, $this->options);
@@ -178,7 +183,7 @@ class TransactionBuilder
 
         foreach ($condition['conditions'] as $field => $expectedValue) {
             $actualValue = $data[$field] ?? null;
-            
+
             if ($actualValue !== $expectedValue) {
                 throw new \Exception(
                     "Condition failed: {$field} expected '{$expectedValue}', got '{$actualValue}'"
@@ -195,13 +200,13 @@ class TransactionBuilder
         switch ($operation['type']) {
             case 'create':
                 return $this->executeCreate($transaction, $operation);
-                
+
             case 'update':
                 return $this->executeUpdate($transaction, $operation);
-                
+
             case 'delete':
                 return $this->executeDelete($transaction, $operation);
-                
+
             default:
                 throw new \InvalidArgumentException("Unknown operation type: {$operation['type']}");
         }
@@ -213,14 +218,16 @@ class TransactionBuilder
     protected function executeCreate(Transaction $transaction, array $operation): string
     {
         $collection = FirestoreDB::collection($operation['collection']);
-        
+
         if ($operation['id']) {
             $docRef = $collection->document($operation['id']);
             $transaction->set($docRef, $operation['data']);
+
             return $operation['id'];
         } else {
             $docRef = $collection->newDocument();
             $transaction->set($docRef, $operation['data']);
+
             return $docRef->id();
         }
     }
@@ -266,6 +273,7 @@ class TransactionBuilder
     {
         $this->operations = [];
         $this->conditions = [];
+
         return $this;
     }
 

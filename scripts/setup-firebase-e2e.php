@@ -2,26 +2,26 @@
 
 /**
  * Firebase E2E Testing Setup Script
- * 
+ *
  * This script helps set up your Firebase project for comprehensive E2E testing
  * by creating required indexes and verifying configurations.
  */
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__.'/../vendor/autoload.php';
 
-use Kreait\Firebase\Factory;
-use Kreait\Firebase\Exception\FirebaseException;
+use Google\ApiCore\ApiException;
 use Google\Cloud\Firestore\Admin\V1\FirestoreAdminClient;
 use Google\Cloud\Firestore\Admin\V1\Index;
 use Google\Cloud\Firestore\Admin\V1\Index\IndexField;
 use Google\Cloud\Firestore\Admin\V1\Index\IndexField\Order;
-use Google\ApiCore\ApiException;
+use Kreait\Firebase\Exception\FirebaseException;
+use Kreait\Firebase\Factory;
 
 echo "🔥 Firebase E2E Testing Setup\n";
 echo "============================\n\n";
 
 // Check for credentials
-$credentialsPath = __DIR__ . '/../tests/credentials/e2e-credentials.json';
+$credentialsPath = __DIR__.'/../tests/credentials/e2e-credentials.json';
 
 if (!file_exists($credentialsPath)) {
     echo "❌ E2E credentials not found!\n";
@@ -35,48 +35,48 @@ try {
     $factory = (new Factory())->withServiceAccount($credentialsPath);
     $firestore = $factory->createFirestore();
     $auth = $factory->createAuth();
-    
+
     $credentials = json_decode(file_get_contents($credentialsPath), true);
     $projectId = $credentials['project_id'];
-    
+
     echo "✅ Connected to Firebase project: {$projectId}\n\n";
-    
+
     // Test basic connectivity
     echo "🧪 Testing basic connectivity...\n";
-    
+
     // Test Firestore
-    $testCollection = 'setup_test_' . time();
+    $testCollection = 'setup_test_'.time();
     $testDoc = $firestore->database()->collection($testCollection)->add([
         'test' => true,
         'timestamp' => new DateTime(),
-        'setup_script' => true
+        'setup_script' => true,
     ]);
-    
+
     echo "✅ Firestore write test passed\n";
-    
+
     // Read back the document
     $readDoc = $testDoc->snapshot();
     if ($readDoc->exists()) {
         echo "✅ Firestore read test passed\n";
     }
-    
+
     // Clean up test document
     $testDoc->delete();
     echo "✅ Firestore delete test passed\n";
-    
+
     // Test Authentication
     try {
         $userProperties = [
             'email' => 'setup-test@example.com',
             'password' => 'setuptest123',
-            'displayName' => 'Setup Test User'
+            'displayName' => 'Setup Test User',
         ];
-        
+
         // Try to create a test user (will fail if already exists, which is fine)
         try {
             $testUser = $auth->createUser($userProperties);
             echo "✅ Firebase Auth create user test passed\n";
-            
+
             // Clean up test user
             $auth->deleteUser($testUser->uid);
             echo "✅ Firebase Auth delete user test passed\n";
@@ -87,9 +87,8 @@ try {
                 throw $e;
             }
         }
-        
     } catch (FirebaseException $e) {
-        echo "⚠️  Firebase Auth test skipped: " . $e->getMessage() . "\n";
+        echo '⚠️  Firebase Auth test skipped: '.$e->getMessage()."\n";
     }
 
     // Create Firestore indexes programmatically
@@ -98,13 +97,13 @@ try {
 
     try {
         $adminClient = new FirestoreAdminClient([
-            'credentials' => $credentialsPath
+            'credentials' => $credentialsPath,
         ]);
 
         $databaseName = $adminClient->databaseName($projectId, '(default)');
 
         echo "Connected to Firestore Admin API for project: {$projectId}\n";
-    
+
         // Define required indexes for E2E testing
         $requiredIndexes = [
             [
@@ -113,8 +112,8 @@ try {
                 'fields' => [
                     ['field' => 'category', 'order' => Order::ASCENDING],
                     ['field' => 'priority', 'order' => Order::ASCENDING],
-                    ['field' => '__name__', 'order' => Order::ASCENDING]
-                ]
+                    ['field' => '__name__', 'order' => Order::ASCENDING],
+                ],
             ],
             [
                 'name' => 'E2E User Query Index',
@@ -122,8 +121,8 @@ try {
                 'fields' => [
                     ['field' => 'active', 'order' => Order::ASCENDING],
                     ['field' => 'role', 'order' => Order::ASCENDING],
-                    ['field' => 'created_at', 'order' => Order::DESCENDING]
-                ]
+                    ['field' => 'created_at', 'order' => Order::DESCENDING],
+                ],
             ],
             [
                 'name' => 'E2E Posts Query Index',
@@ -131,8 +130,8 @@ try {
                 'fields' => [
                     ['field' => 'status', 'order' => Order::ASCENDING],
                     ['field' => 'category_id', 'order' => Order::ASCENDING],
-                    ['field' => 'published_at', 'order' => Order::DESCENDING]
-                ]
+                    ['field' => 'published_at', 'order' => Order::DESCENDING],
+                ],
             ],
             [
                 'name' => 'E2E Categories Query Index',
@@ -140,9 +139,9 @@ try {
                 'fields' => [
                     ['field' => 'active', 'order' => Order::ASCENDING],
                     ['field' => 'sort_order', 'order' => Order::ASCENDING],
-                    ['field' => 'name', 'order' => Order::ASCENDING]
-                ]
-            ]
+                    ['field' => 'name', 'order' => Order::ASCENDING],
+                ],
+            ],
         ];
 
         // Create each index
@@ -175,24 +174,23 @@ try {
 
                 echo "  ✅ Index creation started: {$indexConfig['name']}\n";
                 echo "     Collection Group: {$indexConfig['collectionGroup']}\n";
-                echo "     Fields: " . implode(', ', array_map(function($f) {
-                    return $f['field'] . ' (' . ($f['order'] === Order::ASCENDING ? 'ASC' : 'DESC') . ')';
-                }, $indexConfig['fields'])) . "\n";
+                echo '     Fields: '.implode(', ', array_map(function ($f) {
+                    return $f['field'].' ('.($f['order'] === Order::ASCENDING ? 'ASC' : 'DESC').')';
+                }, $indexConfig['fields']))."\n";
                 echo "     Status: Building (this may take a few minutes)\n\n";
 
                 $createdIndexes++;
-
             } catch (ApiException $e) {
                 if ($e->getStatus() === 'ALREADY_EXISTS') {
                     echo "  ⚠️  Index already exists: {$indexConfig['name']}\n\n";
                     $skippedIndexes++;
                 } else {
                     echo "  ❌ Failed to create index: {$indexConfig['name']}\n";
-                    echo "     Error: " . $e->getMessage() . "\n\n";
+                    echo '     Error: '.$e->getMessage()."\n\n";
                 }
             } catch (Exception $e) {
                 echo "  ❌ Failed to create index: {$indexConfig['name']}\n";
-                echo "     Error: " . $e->getMessage() . "\n\n";
+                echo '     Error: '.$e->getMessage()."\n\n";
             }
         }
 
@@ -205,9 +203,8 @@ try {
             echo "   You can monitor progress in the Firebase Console:\n";
             echo "   https://console.firebase.google.com/project/{$projectId}/firestore/indexes\n\n";
         }
-
     } catch (Exception $e) {
-        echo "❌ Failed to create indexes automatically: " . $e->getMessage() . "\n";
+        echo '❌ Failed to create indexes automatically: '.$e->getMessage()."\n";
         echo "You'll need to create them manually in the Firebase Console.\n\n";
 
         // Fall back to manual instructions
@@ -217,14 +214,14 @@ try {
         echo "Create these composite indexes:\n\n";
 
         foreach ($requiredIndexes as $i => $indexConfig) {
-            echo ($i + 1) . ". {$indexConfig['name']}\n";
+            echo ($i + 1).". {$indexConfig['name']}\n";
             echo "   Collection Group: {$indexConfig['collectionGroup']}\n";
-            echo "   Fields: " . implode(', ', array_map(function($f) {
-                return $f['field'] . ' (' . ($f['order'] === Order::ASCENDING ? 'Ascending' : 'Descending') . ')';
-            }, $indexConfig['fields'])) . "\n\n";
+            echo '   Fields: '.implode(', ', array_map(function ($f) {
+                return $f['field'].' ('.($f['order'] === Order::ASCENDING ? 'Ascending' : 'Descending').')';
+            }, $indexConfig['fields']))."\n\n";
         }
     }
-    
+
     echo "2. 🔐 **Update Firestore Security Rules**\n";
     echo "   Go to: https://console.firebase.google.com/project/{$projectId}/firestore/rules\n";
     echo "   Add these rules for E2E testing:\n\n";
@@ -248,11 +245,11 @@ try {
     echo "     }\n";
     echo "   }\n";
     echo "   ```\n\n";
-    
+
     echo "3. 🔑 **Enable Authentication Methods**\n";
     echo "   Go to: https://console.firebase.google.com/project/{$projectId}/authentication/providers\n";
     echo "   Enable: Email/Password, Anonymous, Custom Token\n\n";
-    
+
     echo "4. ⚙️  **Service Account Permissions**\n";
     echo "   Go to: https://console.cloud.google.com/iam-admin/iam?project={$projectId}\n";
     echo "   Your service account needs these roles:\n";
@@ -273,9 +270,8 @@ try {
     echo "1. Create the indexes (manually or by adding permissions)\n";
     echo "2. Update Firestore security rules\n";
     echo "3. Run E2E tests: composer test-e2e\n";
-    
 } catch (Exception $e) {
-    echo "❌ Setup failed: " . $e->getMessage() . "\n";
-    echo "Stack trace:\n" . $e->getTraceAsString() . "\n";
+    echo '❌ Setup failed: '.$e->getMessage()."\n";
+    echo "Stack trace:\n".$e->getTraceAsString()."\n";
     exit(1);
 }

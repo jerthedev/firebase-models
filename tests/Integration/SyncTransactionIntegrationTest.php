@@ -2,12 +2,10 @@
 
 namespace JTD\FirebaseModels\Tests\Integration;
 
-use JTD\FirebaseModels\Tests\TestSuites\IntegrationTestSuite;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use JTD\FirebaseModels\Firestore\Transactions\TransactionManager;
 use JTD\FirebaseModels\Sync\SyncManager;
-use JTD\FirebaseModels\Sync\ConflictResolvers\LastWriteWinsResolver;
-use JTD\FirebaseModels\Sync\ConflictResolvers\VersionBasedResolver;
+use JTD\FirebaseModels\Tests\TestSuites\IntegrationTestSuite;
 
 /**
  * Integration tests for sync mode with transaction support.
@@ -21,9 +19,9 @@ class SyncTransactionIntegrationTest extends IntegrationTestSuite
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->syncManager = app(SyncManager::class);
-        
+
         // Configure sync mode
         config([
             'firebase-models.sync.enabled' => true,
@@ -185,15 +183,15 @@ class SyncTransactionIntegrationTest extends IntegrationTestSuite
         foreach ($userIds as $index => $userId) {
             $this->assertDatabaseHas('firebase_sync_users', [
                 'firebase_id' => $userId,
-                'name' => 'Batch User ' . ($index + 1),
+                'name' => 'Batch User '.($index + 1),
             ]);
         }
 
         // Test department-based filtering in sync
         $engineeringSyncResult = $this->syncManager->syncCollection('users', [
             'filters' => [
-                ['field' => 'department', 'operator' => '==', 'value' => 'Engineering']
-            ]
+                ['field' => 'department', 'operator' => '==', 'value' => 'Engineering'],
+            ],
         ]);
 
         $this->assertTrue($engineeringSyncResult->isSuccess());
@@ -259,7 +257,7 @@ class SyncTransactionIntegrationTest extends IntegrationTestSuite
     public function test_version_based_conflict_resolution()
     {
         $userId = 'version-test-user';
-        
+
         // Create user with version
         $this->firestore->collection('users')->document($userId)->set([
             'name' => 'Version User',
@@ -322,7 +320,7 @@ class SyncTransactionIntegrationTest extends IntegrationTestSuite
         }
 
         // Only one transaction should succeed
-        $this->assertTrue($transaction1Success XOR $transaction2Success);
+        $this->assertTrue($transaction1Success xor $transaction2Success);
 
         // Sync and verify final state
         $syncResult = $this->syncManager->syncCollection('users');
@@ -384,7 +382,7 @@ class SyncTransactionIntegrationTest extends IntegrationTestSuite
         // Test partial sync with filters
         $engineeringSyncResult = $this->syncManager->syncCollection('users', [
             'filters' => [
-                ['field' => 'department', 'operator' => '==', 'value' => 'Engineering']
+                ['field' => 'department', 'operator' => '==', 'value' => 'Engineering'],
             ],
             'since' => now()->subMinutes(5),
         ]);
@@ -407,6 +405,7 @@ class SyncTransactionIntegrationTest extends IntegrationTestSuite
                 'email' => 'success@example.com',
                 'balance' => 1000,
             ]);
+
             return $userRef->id();
         });
 

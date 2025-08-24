@@ -2,12 +2,12 @@
 
 namespace JTD\FirebaseModels\Firestore\Concerns;
 
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Str;
 
 /**
  * Enhanced mutators support for Firestore models.
- * 
+ *
  * Provides full Laravel Eloquent compatibility for attribute mutators,
  * including support for both legacy setXAttribute methods and modern
  * Attribute objects with get/set methods.
@@ -46,7 +46,7 @@ trait HasMutators
     public function hasAttributeMutator(string $key): bool
     {
         $class = static::class;
-        
+
         if (!isset(static::$attributeMutatorCache[$class])) {
             static::cacheAttributeMutators($class);
         }
@@ -62,17 +62,20 @@ trait HasMutators
         // Try legacy mutator first
         if ($this->hasLegacySetMutator($key)) {
             $this->{'set'.Str::studly($key).'Attribute'}($value);
+
             return $this;
         }
 
         // Try attribute mutator
         if ($this->hasAttributeMutator($key)) {
             $this->setAttributeMutatorValue($key, $value);
+
             return $this;
         }
 
         // Fallback to direct assignment
         $this->attributes[$key] = $value;
+
         return $this;
     }
 
@@ -86,6 +89,7 @@ trait HasMutators
 
         if (!$mutator) {
             $this->attributes[$key] = $value;
+
             return;
         }
 
@@ -94,15 +98,16 @@ trait HasMutators
 
         if (!$attribute instanceof Attribute) {
             $this->attributes[$key] = $value;
+
             return;
         }
 
         // Call the set method if it exists
         $set = $attribute->set;
-        
+
         if ($set instanceof \Closure) {
             $result = $set($value, $this->attributes);
-            
+
             // If the setter returns an array, merge it with attributes
             if (is_array($result)) {
                 foreach ($result as $k => $v) {
@@ -130,7 +135,7 @@ trait HasMutators
             if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)$/', $method, $matches)) {
                 try {
                     $reflection = new \ReflectionMethod($class, $method);
-                    
+
                     // Skip if method has parameters
                     if ($reflection->getNumberOfParameters() > 0) {
                         continue;
@@ -187,13 +192,13 @@ trait HasMutators
     public function getMutatedAttributes(): array
     {
         $class = static::class;
-        
+
         $legacy = static::getMutatorMethods($class);
-        
+
         if (!isset(static::$attributeMutatorCache[$class])) {
             static::cacheAttributeMutators($class);
         }
-        
+
         $modern = static::$attributeMutatorCache[$class];
 
         return array_merge(array_keys($legacy), array_keys($modern));
@@ -225,10 +230,10 @@ trait HasMutators
 
             if ($mutator) {
                 $attribute = $this->$mutator();
-                
+
                 if ($attribute instanceof Attribute) {
                     $set = $attribute->set;
-                    
+
                     if ($set instanceof \Closure) {
                         return $set($value, $this->attributes);
                     }

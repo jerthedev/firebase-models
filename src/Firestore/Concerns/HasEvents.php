@@ -2,9 +2,8 @@
 
 namespace JTD\FirebaseModels\Firestore\Concerns;
 
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Arr;
-use Illuminate\Database\Events\ModelEvent;
+use Illuminate\Support\Facades\Event;
 
 /**
  * Trait for handling model events.
@@ -45,7 +44,7 @@ trait HasEvents
      */
     public static function observe(object|array|string $classes): void
     {
-        $instance = new static;
+        $instance = new static();
 
         foreach (Arr::wrap($classes) as $class) {
             $instance->registerObserver($class);
@@ -57,7 +56,7 @@ trait HasEvents
      */
     protected function registerObserver(object|string $class): void
     {
-        $observer = is_string($class) ? new $class : $class;
+        $observer = is_string($class) ? new $class() : $class;
 
         // When registering a model observer, we will spin through the possible events
         // and determine if this observer has that method. If it does, we will hook
@@ -118,7 +117,8 @@ trait HasEvents
     public function addObservableEvents(array|string $observables): void
     {
         $this->observables = array_unique(array_merge(
-            $this->observables, is_array($observables) ? $observables : func_get_args()
+            $this->observables,
+            is_array($observables) ? $observables : func_get_args()
         ));
     }
 
@@ -128,7 +128,8 @@ trait HasEvents
     public function removeObservableEvents(array|string $observables): static
     {
         $this->observables = array_diff(
-            $this->observables, is_array($observables) ? $observables : func_get_args()
+            $this->observables,
+            is_array($observables) ? $observables : func_get_args()
         );
 
         return $this;
@@ -169,7 +170,8 @@ trait HasEvents
         }
 
         return !empty($result) ? $result : static::$dispatcher->{$method}(
-            "eloquent.{$event}: ".static::class, $this
+            "eloquent.{$event}: ".static::class,
+            $this
         );
     }
 
@@ -292,7 +294,7 @@ trait HasEvents
             return;
         }
 
-        $instance = new static;
+        $instance = new static();
 
         foreach ($instance->getObservableEvents() as $event) {
             static::$dispatcher->forget("eloquent.{$event}: ".static::class);
@@ -359,7 +361,7 @@ trait HasEvents
         }
 
         $modelEvents = [];
-        $instance = new static;
+        $instance = new static();
 
         foreach ($instance->getObservableEvents() as $event) {
             $modelEvents[] = "eloquent.{$event}: ".static::class;

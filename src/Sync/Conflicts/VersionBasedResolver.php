@@ -2,9 +2,8 @@
 
 namespace JTD\FirebaseModels\Sync\Conflicts;
 
-use JTD\FirebaseModels\Contracts\Sync\ConflictResolverInterface;
 use JTD\FirebaseModels\Contracts\Sync\ConflictResolutionInterface;
-use JTD\FirebaseModels\Sync\Conflicts\ConflictResolution;
+use JTD\FirebaseModels\Contracts\Sync\ConflictResolverInterface;
 
 /**
  * Version-based conflict resolver that uses version numbers to determine
@@ -43,7 +42,7 @@ class VersionBasedResolver implements ConflictResolverInterface
         if ($firestoreVersion === null && $localVersion === null) {
             $resolvedData = $firestoreData;
             $resolvedData[$this->versionField] = 1;
-            
+
             return new ConflictResolution(
                 $resolvedData,
                 'initialize_version',
@@ -58,7 +57,7 @@ class VersionBasedResolver implements ConflictResolverInterface
             if ($this->autoIncrement) {
                 $resolvedData[$this->versionField] = $firestoreVersion + 1;
             }
-            
+
             return new ConflictResolution(
                 $resolvedData,
                 'firestore_has_version',
@@ -72,7 +71,7 @@ class VersionBasedResolver implements ConflictResolverInterface
             if ($this->autoIncrement) {
                 $resolvedData[$this->versionField] = $localVersion + 1;
             }
-            
+
             return new ConflictResolution(
                 $resolvedData,
                 'local_has_version',
@@ -87,7 +86,7 @@ class VersionBasedResolver implements ConflictResolverInterface
             if ($this->autoIncrement) {
                 $resolvedData[$this->versionField] = $firestoreVersion + 1;
             }
-            
+
             return new ConflictResolution(
                 $resolvedData,
                 'firestore_newer_version',
@@ -99,7 +98,7 @@ class VersionBasedResolver implements ConflictResolverInterface
             if ($this->autoIncrement) {
                 $resolvedData[$this->versionField] = $localVersion + 1;
             }
-            
+
             return new ConflictResolution(
                 $resolvedData,
                 'local_newer_version',
@@ -124,7 +123,7 @@ class VersionBasedResolver implements ConflictResolverInterface
             $resolvedData[$this->versionField] = $firestoreVersion + 1;
             $resolvedData['_conflict_detected'] = true;
             $resolvedData['_conflict_timestamp'] = now()->toISOString();
-            
+
             return new ConflictResolution(
                 $resolvedData,
                 'version_conflict',
@@ -134,7 +133,7 @@ class VersionBasedResolver implements ConflictResolverInterface
                 [
                     'firestore_version' => $firestoreVersion,
                     'local_version' => $localVersion,
-                    'conflict_type' => 'version_mismatch'
+                    'conflict_type' => 'version_mismatch',
                 ]
             );
         }
@@ -218,7 +217,7 @@ class VersionBasedResolver implements ConflictResolverInterface
             '_conflict_detected',
             '_conflict_timestamp',
             'created_at',
-            'updated_at'
+            'updated_at',
         ];
 
         foreach ($excludeFields as $field) {

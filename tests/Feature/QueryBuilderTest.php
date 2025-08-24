@@ -2,20 +2,19 @@
 
 namespace JTD\FirebaseModels\Tests\Feature\Restructured;
 
+use Illuminate\Support\Collection;
 use JTD\FirebaseModels\Firestore\FirestoreModel;
 use JTD\FirebaseModels\Tests\TestSuites\FeatureTestSuite;
 use JTD\FirebaseModels\Tests\Utilities\TestDataFactory;
 use PHPUnit\Framework\Attributes\Test;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Carbon;
 
 /**
  * Comprehensive Query Builder Feature Test
- * 
+ *
  * Consolidated from:
  * - tests/Feature/FirestoreQueryBuilderTest.php
  * - tests/Feature/FirestoreQueryBuilderEnhancedTest.php
- * 
+ *
  * Uses new FeatureTestSuite for comprehensive query builder testing scenarios.
  */
 
@@ -23,9 +22,9 @@ use Illuminate\Support\Carbon;
 class QueryBuilderTestPost extends FirestoreModel
 {
     protected ?string $collection = 'query_builder_test_posts';
-    
+
     protected array $fillable = [
-        'title', 'content', 'published', 'author_id', 'views', 'category_id', 'tags', 'price'
+        'title', 'content', 'published', 'author_id', 'views', 'category_id', 'tags', 'price',
     ];
 
     protected array $casts = [
@@ -66,7 +65,7 @@ class QueryBuilderTest extends FeatureTestSuite
 
         // Test get all records
         $allPosts = QueryBuilderTestPost::all();
-        
+
         expect($allPosts)->toBeInstanceOf(Collection::class);
         expect($allPosts)->toHaveCount(10);
         expect($allPosts->first())->toBeFirestoreModel();
@@ -77,13 +76,13 @@ class QueryBuilderTest extends FeatureTestSuite
             'title' => 'Specific Post',
             'content' => 'Specific content',
             'published' => true,
-            'views' => 150
+            'views' => 150,
         ];
-        
+
         $this->mockFirestoreGet('query_builder_test_posts', 'specific-post-123', $specificPost);
-        
+
         $post = QueryBuilderTestPost::find('specific-post-123');
-        
+
         expect($post)->toBeFirestoreModel();
         expect($post->id)->toBe('specific-post-123');
         expect($post->title)->toBe('Specific Post');
@@ -91,15 +90,15 @@ class QueryBuilderTest extends FeatureTestSuite
 
         // Test find returns null for missing record
         $this->mockFirestoreGet('query_builder_test_posts', 'nonexistent', null);
-        
+
         $missingPost = QueryBuilderTestPost::find('nonexistent');
         expect($missingPost)->toBeNull();
 
         // Test findOrFail
         $foundPost = QueryBuilderTestPost::findOrFail('specific-post-123');
         expect($foundPost)->toBeFirestoreModel();
-        
-        expect(fn() => QueryBuilderTestPost::findOrFail('nonexistent'))
+
+        expect(fn () => QueryBuilderTestPost::findOrFail('nonexistent'))
             ->toThrow(\Illuminate\Database\RecordNotFoundException::class);
 
         // Test first record
@@ -125,10 +124,10 @@ class QueryBuilderTest extends FeatureTestSuite
 
         // Test empty collection
         $this->mockComplexQueryScenario('query_builder_test_posts', []);
-        
+
         $emptyCount = QueryBuilderTestPost::count();
         expect($emptyCount)->toBe(0);
-        
+
         $hasNoRecords = QueryBuilderTestPost::exists();
         expect($hasNoRecords)->toBeFalse();
     }
@@ -147,15 +146,15 @@ class QueryBuilderTest extends FeatureTestSuite
             TestDataFactory::createPost(['id' => '3', 'title' => 'Third Post', 'published' => true, 'views' => 200]),
             TestDataFactory::createPost(['id' => '4', 'title' => 'Fourth Post', 'published' => true, 'views' => 75]),
         ];
-        
+
         $this->mockComplexQueryScenario('query_builder_test_posts', $testPosts);
 
         // Test basic where clause
         $publishedPosts = QueryBuilderTestPost::where('published', true)->get();
-        
+
         expect($publishedPosts)->toHaveCount(3);
         $this->assertFirestoreQueryExecuted('query_builder_test_posts', [
-            ['field' => 'published', 'operator' => '==', 'value' => true]
+            ['field' => 'published', 'operator' => '==', 'value' => true],
         ]);
 
         // Test where with operator
@@ -171,13 +170,13 @@ class QueryBuilderTest extends FeatureTestSuite
         // Test where with different operators
         $exactViews = QueryBuilderTestPost::where('views', '=', 100)->get();
         expect($exactViews)->toHaveCount(1);
-        
+
         $notPublished = QueryBuilderTestPost::where('published', '!=', true)->get();
         expect($notPublished)->toHaveCount(1);
-        
+
         $highViews = QueryBuilderTestPost::where('views', '>=', 100)->get();
         expect($highViews)->toHaveCount(2);
-        
+
         $lowViews = QueryBuilderTestPost::where('views', '<=', 75)->get();
         expect($lowViews)->toHaveCount(2);
     }
@@ -193,7 +192,7 @@ class QueryBuilderTest extends FeatureTestSuite
             TestDataFactory::createPost(['id' => '4', 'category_id' => 3, 'price' => 40.00, 'tags' => ['lifestyle']]),
             TestDataFactory::createPost(['id' => '5', 'category_id' => 2, 'price' => 50.00, 'tags' => ['sports', 'review']]),
         ];
-        
+
         $this->mockComplexQueryScenario('query_builder_test_posts', $advancedTestData);
 
         // Test whereIn
@@ -218,13 +217,13 @@ class QueryBuilderTest extends FeatureTestSuite
             TestDataFactory::createPost(['id' => '1', 'title' => 'Post A', 'content' => null]),
             TestDataFactory::createPost(['id' => '2', 'title' => 'Post B', 'content' => 'Has content']),
         ];
-        
+
         $this->mockComplexQueryScenario('query_builder_test_posts', $nullTestData);
-        
+
         $nullContent = QueryBuilderTestPost::whereNull('content')->get();
         expect($nullContent)->toHaveCount(1);
         expect($nullContent->first()->title)->toBe('Post A');
-        
+
         $hasContent = QueryBuilderTestPost::whereNotNull('content')->get();
         expect($hasContent)->toHaveCount(1);
         expect($hasContent->first()->title)->toBe('Post B');
@@ -240,7 +239,7 @@ class QueryBuilderTest extends FeatureTestSuite
             TestDataFactory::createPost(['id' => '3', 'title' => 'Post C', 'created_at' => '2023-02-01 09:15:00']),
             TestDataFactory::createPost(['id' => '4', 'title' => 'Post D', 'created_at' => '2024-01-01 12:00:00']),
         ];
-        
+
         $this->mockComplexQueryScenario('query_builder_test_posts', $dateTestData);
 
         // Test whereDate
@@ -278,7 +277,7 @@ class QueryBuilderTest extends FeatureTestSuite
             TestDataFactory::createPost(['id' => '2', 'title' => 'Beta Post', 'views' => 100, 'created_at' => '2023-01-01']),
             TestDataFactory::createPost(['id' => '3', 'title' => 'Gamma Post', 'views' => 200, 'created_at' => '2023-01-02']),
         ];
-        
+
         $this->mockComplexQueryScenario('query_builder_test_posts', $orderTestData);
 
         // Test orderBy ascending
@@ -296,7 +295,7 @@ class QueryBuilderTest extends FeatureTestSuite
         // Test latest and oldest
         $latest = QueryBuilderTestPost::latest('created_at')->get();
         expect($latest->first()->title)->toBe('Alpha Post');
-        
+
         $oldest = QueryBuilderTestPost::oldest('created_at')->get();
         expect($oldest->first()->title)->toBe('Beta Post');
 
@@ -311,7 +310,7 @@ class QueryBuilderTest extends FeatureTestSuite
         // Test offset and skip
         $offset = QueryBuilderTestPost::offset(1)->limit(2)->get();
         expect($offset)->toHaveCount(2);
-        
+
         $skipped = QueryBuilderTestPost::skip(1)->take(2)->get();
         expect($skipped)->toHaveCount(2);
     }
@@ -330,7 +329,7 @@ class QueryBuilderTest extends FeatureTestSuite
             TestDataFactory::createPost(['id' => '3', 'views' => 150, 'price' => 15.25]),
             TestDataFactory::createPost(['id' => '4', 'views' => 300, 'price' => 30.00]),
         ];
-        
+
         $this->mockComplexQueryScenario('query_builder_test_posts', $aggregationData);
 
         // Test count
@@ -380,15 +379,15 @@ class QueryBuilderTest extends FeatureTestSuite
                 ->orderBy('value', 'asc')
                 ->limit(10)
                 ->offset(5);
-            
+
             $results = $complexQuery->get();
-            
+
             // Test query builder state
             expect($complexQuery)->toBeInstanceOf(\JTD\FirebaseModels\Firestore\FirestoreModelQueryBuilder::class);
-            
+
             return $results;
         });
-        
+
         expect($scenarioMetrics['result'])->toBeInstanceOf(Collection::class);
         $this->assertFeaturePerformance($scenarioMetrics, 1.0, 5 * 1024 * 1024);
     }
@@ -402,7 +401,7 @@ class QueryBuilderTest extends FeatureTestSuite
             TestDataFactory::createPost(['id' => '2', 'title' => 'Second Title', 'views' => 200]),
             TestDataFactory::createPost(['id' => '3', 'title' => 'Third Title', 'views' => 300]),
         ];
-        
+
         $this->mockComplexQueryScenario('query_builder_test_posts', $pluckData);
 
         // Test pluck single column
@@ -415,7 +414,7 @@ class QueryBuilderTest extends FeatureTestSuite
         expect($titlesWithKeys->toArray())->toBe([
             '1' => 'First Title',
             '2' => 'Second Title',
-            '3' => 'Third Title'
+            '3' => 'Third Title',
         ]);
 
         // Test value (first value of column)
@@ -461,16 +460,16 @@ class QueryBuilderTest extends FeatureTestSuite
     {
         // Create test models for query testing
         $models = $this->createTestModels(QueryBuilderTestPost::class, 5);
-        
+
         // Verify models were created
         expect($models)->toHaveCount(5);
         foreach ($models as $model) {
             expect($model)->toBeInstanceOf(QueryBuilderTestPost::class);
         }
-        
+
         // Clear test data
         $this->cleanupFeatureData();
-        
+
         // Verify cleanup
         $operations = $this->getPerformedOperations();
         expect($operations)->toBeEmpty();

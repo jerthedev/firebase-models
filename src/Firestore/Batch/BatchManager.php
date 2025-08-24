@@ -2,11 +2,9 @@
 
 namespace JTD\FirebaseModels\Firestore\Batch;
 
-use Google\Cloud\Firestore\WriteBatch;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use JTD\FirebaseModels\Facades\FirestoreDB;
-use JTD\FirebaseModels\Firestore\Batch\BatchResult;
 use JTD\FirebaseModels\Firestore\Batch\Exceptions\BatchException;
 
 /**
@@ -31,6 +29,7 @@ class BatchManager
     public static function create(array $options = []): BatchOperation
     {
         $options = array_merge(static::$defaultOptions, $options);
+
         return new BatchOperation($options);
     }
 
@@ -63,7 +62,7 @@ class BatchManager
                     Log::info("Bulk insert chunk {$chunkIndex} completed", [
                         'collection' => $collection,
                         'chunk_size' => count($chunk),
-                        'total_chunks' => count($chunks)
+                        'total_chunks' => count($chunks),
                     ]);
                 }
             }
@@ -73,23 +72,23 @@ class BatchManager
                 'collection' => $collection,
                 'document_ids' => $results,
                 'total_documents' => count($documents),
-                'chunks_processed' => count($chunks)
+                'chunks_processed' => count($chunks),
             ]);
 
             $result->setDuration(microtime(true) - $startTime);
-            return $result;
 
+            return $result;
         } catch (\Exception $e) {
             if ($options['log_operations']) {
                 Log::error('Bulk insert failed', [
                     'collection' => $collection,
                     'error' => $e->getMessage(),
-                    'documents_count' => count($documents)
+                    'documents_count' => count($documents),
                 ]);
             }
 
             throw new BatchException(
-                "Bulk insert failed for collection {$collection}: " . $e->getMessage(),
+                "Bulk insert failed for collection {$collection}: ".$e->getMessage(),
                 $e->getCode(),
                 $e
             );
@@ -123,7 +122,7 @@ class BatchManager
                     Log::info("Bulk update chunk {$chunkIndex} completed", [
                         'collection' => $collection,
                         'chunk_size' => count($chunk),
-                        'total_chunks' => count($chunks)
+                        'total_chunks' => count($chunks),
                     ]);
                 }
             }
@@ -132,23 +131,23 @@ class BatchManager
                 'operation' => 'bulk_update',
                 'collection' => $collection,
                 'updated_documents' => $processedCount,
-                'chunks_processed' => count($chunks)
+                'chunks_processed' => count($chunks),
             ]);
 
             $result->setDuration(microtime(true) - $startTime);
-            return $result;
 
+            return $result;
         } catch (\Exception $e) {
             if ($options['log_operations']) {
                 Log::error('Bulk update failed', [
                     'collection' => $collection,
                     'error' => $e->getMessage(),
-                    'updates_count' => count($updates)
+                    'updates_count' => count($updates),
                 ]);
             }
 
             throw new BatchException(
-                "Bulk update failed for collection {$collection}: " . $e->getMessage(),
+                "Bulk update failed for collection {$collection}: ".$e->getMessage(),
                 $e->getCode(),
                 $e
             );
@@ -182,7 +181,7 @@ class BatchManager
                     Log::info("Bulk delete chunk {$chunkIndex} completed", [
                         'collection' => $collection,
                         'chunk_size' => count($chunk),
-                        'total_chunks' => count($chunks)
+                        'total_chunks' => count($chunks),
                     ]);
                 }
             }
@@ -191,23 +190,23 @@ class BatchManager
                 'operation' => 'bulk_delete',
                 'collection' => $collection,
                 'deleted_documents' => $processedCount,
-                'chunks_processed' => count($chunks)
+                'chunks_processed' => count($chunks),
             ]);
 
             $result->setDuration(microtime(true) - $startTime);
-            return $result;
 
+            return $result;
         } catch (\Exception $e) {
             if ($options['log_operations']) {
                 Log::error('Bulk delete failed', [
                     'collection' => $collection,
                     'error' => $e->getMessage(),
-                    'document_ids_count' => count($documentIds)
+                    'document_ids_count' => count($documentIds),
                 ]);
             }
 
             throw new BatchException(
-                "Bulk delete failed for collection {$collection}: " . $e->getMessage(),
+                "Bulk delete failed for collection {$collection}: ".$e->getMessage(),
                 $e->getCode(),
                 $e
             );
@@ -241,7 +240,7 @@ class BatchManager
                     Log::info("Bulk upsert chunk {$chunkIndex} completed", [
                         'collection' => $collection,
                         'chunk_size' => count($chunk),
-                        'total_chunks' => count($chunks)
+                        'total_chunks' => count($chunks),
                     ]);
                 }
             }
@@ -250,23 +249,23 @@ class BatchManager
                 'operation' => 'bulk_upsert',
                 'collection' => $collection,
                 'upserted_documents' => $processedCount,
-                'chunks_processed' => count($chunks)
+                'chunks_processed' => count($chunks),
             ]);
 
             $result->setDuration(microtime(true) - $startTime);
-            return $result;
 
+            return $result;
         } catch (\Exception $e) {
             if ($options['log_operations']) {
                 Log::error('Bulk upsert failed', [
                     'collection' => $collection,
                     'error' => $e->getMessage(),
-                    'documents_count' => count($documents)
+                    'documents_count' => count($documents),
                 ]);
             }
 
             throw new BatchException(
-                "Bulk upsert failed for collection {$collection}: " . $e->getMessage(),
+                "Bulk upsert failed for collection {$collection}: ".$e->getMessage(),
                 $e->getCode(),
                 $e
             );

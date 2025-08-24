@@ -44,6 +44,7 @@ trait HasVersioning
     public function getVersion(): ?int
     {
         $version = $this->getAttribute($this->versionField);
+
         return $version !== null ? (int) $version : null;
     }
 
@@ -53,6 +54,7 @@ trait HasVersioning
     public function setVersion(int $version): static
     {
         $this->setAttribute($this->versionField, $version);
+
         return $this;
     }
 
@@ -63,6 +65,7 @@ trait HasVersioning
     {
         $currentVersion = $this->getVersion() ?? 0;
         $this->setVersion($currentVersion + 1);
+
         return $this;
     }
 
@@ -103,6 +106,7 @@ trait HasVersioning
     public function setVersionField(string $field): static
     {
         $this->versionField = $field;
+
         return $this;
     }
 
@@ -112,6 +116,7 @@ trait HasVersioning
     public function setAutoIncrementVersion(bool $autoIncrement): static
     {
         $this->autoIncrementVersion = $autoIncrement;
+
         return $this;
     }
 
@@ -129,7 +134,7 @@ trait HasVersioning
     public function compareVersion($other): int
     {
         $thisVersion = $this->getVersion() ?? 0;
-        
+
         if ($other instanceof static) {
             $otherVersion = $other->getVersion() ?? 0;
         } elseif (is_numeric($other)) {
@@ -185,6 +190,7 @@ trait HasVersioning
     public function forceSetVersion(int $version): static
     {
         $this->attributes[$this->versionField] = $version;
+
         return $this;
     }
 
@@ -194,6 +200,7 @@ trait HasVersioning
     public function resetVersion(): static
     {
         $this->setVersion(1);
+
         return $this;
     }
 }

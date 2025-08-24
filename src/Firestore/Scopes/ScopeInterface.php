@@ -2,12 +2,12 @@
 
 namespace JTD\FirebaseModels\Firestore\Scopes;
 
-use JTD\FirebaseModels\Firestore\FirestoreModelQueryBuilder;
 use JTD\FirebaseModels\Firestore\FirestoreModel;
+use JTD\FirebaseModels\Firestore\FirestoreModelQueryBuilder;
 
 /**
  * Interface for global scopes.
- * 
+ *
  * Global scopes allow you to add constraints to all queries for a given model.
  * This is useful for implementing features like soft deletes, multi-tenancy,
  * or any other global filtering logic.
@@ -21,7 +21,7 @@ interface ScopeInterface
 
     /**
      * Remove the scope from a given Firestore query builder.
-     * 
+     *
      * This method is called when using withoutGlobalScope() or similar methods
      * to temporarily disable the scope for a specific query.
      */

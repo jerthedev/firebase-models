@@ -2,12 +2,12 @@
 
 namespace JTD\FirebaseModels\Firestore\Concerns;
 
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Str;
 
 /**
  * Enhanced accessors support for Firestore models.
- * 
+ *
  * Provides full Laravel Eloquent compatibility for attribute accessors,
  * including support for both legacy getXAttribute methods and modern
  * Attribute objects with get/set methods.
@@ -46,7 +46,7 @@ trait HasAccessors
     public function hasAttributeAccessor(string $key): bool
     {
         $class = static::class;
-        
+
         if (!isset(static::$attributeAccessorCache[$class])) {
             static::cacheAttributeAccessors($class);
         }
@@ -93,7 +93,7 @@ trait HasAccessors
 
         // Call the get method if it exists
         $get = $attribute->get;
-        
+
         if ($get instanceof \Closure) {
             return $get($value, $this->attributes);
         }
@@ -115,7 +115,7 @@ trait HasAccessors
             if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)$/', $method, $matches)) {
                 try {
                     $reflection = new \ReflectionMethod($class, $method);
-                    
+
                     // Skip if method has parameters
                     if ($reflection->getNumberOfParameters() > 0) {
                         continue;
@@ -172,13 +172,13 @@ trait HasAccessors
     public function getMutatedAttributes(): array
     {
         $class = static::class;
-        
+
         $legacy = static::getAccessorMethods($class);
-        
+
         if (!isset(static::$attributeAccessorCache[$class])) {
             static::cacheAttributeAccessors($class);
         }
-        
+
         $modern = static::$attributeAccessorCache[$class];
 
         return array_merge(array_keys($legacy), array_keys($modern));

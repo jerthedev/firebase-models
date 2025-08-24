@@ -2,14 +2,14 @@
 
 namespace JTD\FirebaseModels\Tests\Unit;
 
+use Illuminate\Support\Collection;
+use JTD\FirebaseModels\Facades\FirestoreDB;
+use JTD\FirebaseModels\Firestore\FirestoreQueryBuilder;
+use JTD\FirebaseModels\Tests\Models\TestPost;
 use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
 use JTD\FirebaseModels\Tests\Utilities\TestDataFactory;
-use JTD\FirebaseModels\Tests\Models\TestPost;
-use JTD\FirebaseModels\Firestore\FirestoreQueryBuilder;
-use JTD\FirebaseModels\Facades\FirestoreDB;
-use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\Group;
-use Illuminate\Support\Collection;
+use PHPUnit\Framework\Attributes\Test;
 
 #[Group('unit')]
 #[Group('core')]
@@ -20,7 +20,7 @@ class FirestoreQueryBuilderCoreTest extends UnitTestSuite
     public function it_creates_query_builder_instances()
     {
         $query = FirestoreDB::collection('posts');
-        
+
         expect($query)->toBeInstanceOf(FirestoreQueryBuilder::class);
         expect($query->getCollection())->toBe('posts');
     }
@@ -31,13 +31,13 @@ class FirestoreQueryBuilderCoreTest extends UnitTestSuite
         $testData = [
             TestDataFactory::createPost(['id' => '1', 'published' => true, 'views' => 100]),
             TestDataFactory::createPost(['id' => '2', 'published' => false, 'views' => 50]),
-            TestDataFactory::createPost(['id' => '3', 'published' => true, 'views' => 200])
+            TestDataFactory::createPost(['id' => '3', 'published' => true, 'views' => 200]),
         ];
 
         $this->mockFirestoreQuery('posts', $testData);
 
         $query = FirestoreDB::collection('posts');
-        
+
         // Test equality
         $results = $query->where('published', '=', true)->get();
         expect($results)->toHaveCount(2);
@@ -57,7 +57,7 @@ class FirestoreQueryBuilderCoreTest extends UnitTestSuite
         $testData = [
             TestDataFactory::createPost(['id' => '1', 'status' => 'published', 'tags' => ['php', 'laravel']]),
             TestDataFactory::createPost(['id' => '2', 'status' => 'draft', 'tags' => ['javascript', 'react']]),
-            TestDataFactory::createPost(['id' => '3', 'status' => 'archived', 'tags' => ['python', 'django']])
+            TestDataFactory::createPost(['id' => '3', 'status' => 'archived', 'tags' => ['python', 'django']]),
         ];
 
         $this->mockFirestoreQuery('posts', $testData);
@@ -83,7 +83,7 @@ class FirestoreQueryBuilderCoreTest extends UnitTestSuite
         $testData = [
             TestDataFactory::createPost(['id' => '1', 'title' => 'Post A', 'views' => 100, 'created_at' => '2024-01-01']),
             TestDataFactory::createPost(['id' => '2', 'title' => 'Post B', 'views' => 200, 'created_at' => '2024-01-02']),
-            TestDataFactory::createPost(['id' => '3', 'title' => 'Post C', 'views' => 150, 'created_at' => '2024-01-03'])
+            TestDataFactory::createPost(['id' => '3', 'title' => 'Post C', 'views' => 150, 'created_at' => '2024-01-03']),
         ];
 
         $this->mockFirestoreQuery('posts', $testData);
@@ -118,7 +118,7 @@ class FirestoreQueryBuilderCoreTest extends UnitTestSuite
             $testData[] = TestDataFactory::createPost([
                 'id' => "post-{$i}",
                 'title' => "Post {$i}",
-                'views' => $i * 10
+                'views' => $i * 10,
             ]);
         }
 
@@ -149,7 +149,7 @@ class FirestoreQueryBuilderCoreTest extends UnitTestSuite
         $testData = [
             TestDataFactory::createPost(['id' => '1', 'title' => 'First Post']),
             TestDataFactory::createPost(['id' => '2', 'title' => 'Second Post']),
-            TestDataFactory::createPost(['id' => '3', 'title' => 'Third Post'])
+            TestDataFactory::createPost(['id' => '3', 'title' => 'Third Post']),
         ];
 
         $this->mockFirestoreQuery('posts', $testData);
@@ -190,7 +190,7 @@ class FirestoreQueryBuilderCoreTest extends UnitTestSuite
         $testData = [
             TestDataFactory::createPost(['id' => '1', 'views' => 100, 'likes' => 10]),
             TestDataFactory::createPost(['id' => '2', 'views' => 200, 'likes' => 25]),
-            TestDataFactory::createPost(['id' => '3', 'views' => 150, 'likes' => 15])
+            TestDataFactory::createPost(['id' => '3', 'views' => 150, 'likes' => 15]),
         ];
 
         $this->mockFirestoreQuery('posts', $testData);
@@ -219,7 +219,7 @@ class FirestoreQueryBuilderCoreTest extends UnitTestSuite
     {
         $testData = [
             TestDataFactory::createPost(['id' => '1', 'published' => true]),
-            TestDataFactory::createPost(['id' => '2', 'published' => false])
+            TestDataFactory::createPost(['id' => '2', 'published' => false]),
         ];
 
         $this->mockFirestoreQuery('posts', $testData);
@@ -247,7 +247,7 @@ class FirestoreQueryBuilderCoreTest extends UnitTestSuite
         $testData = [
             TestDataFactory::createPost(['id' => '1', 'published' => true, 'featured' => true]),
             TestDataFactory::createPost(['id' => '2', 'published' => true, 'featured' => false]),
-            TestDataFactory::createPost(['id' => '3', 'published' => false, 'featured' => true])
+            TestDataFactory::createPost(['id' => '3', 'published' => false, 'featured' => true]),
         ];
 
         $this->mockFirestoreQuery('posts', $testData);
@@ -312,7 +312,7 @@ class FirestoreQueryBuilderCoreTest extends UnitTestSuite
 
         // Original query should remain unchanged
         expect($originalQuery)->not->toBe($clonedQuery);
-        
+
         // Both should be valid query builders
         expect($originalQuery)->toBeInstanceOf(FirestoreQueryBuilder::class);
         expect($clonedQuery)->toBeInstanceOf(FirestoreQueryBuilder::class);
@@ -355,7 +355,7 @@ class FirestoreQueryBuilderCoreTest extends UnitTestSuite
                 'id' => "post-{$i}",
                 'title' => "Post {$i}",
                 'published' => $i % 2 === 0,
-                'views' => $i * 10
+                'views' => $i * 10,
             ]);
         }
 

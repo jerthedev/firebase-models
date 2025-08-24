@@ -8,7 +8,9 @@ namespace JTD\FirebaseModels\Firestore\Batch\Exceptions;
 class BatchException extends \Exception
 {
     protected array $context = [];
+
     protected int $operationCount = 0;
+
     protected ?string $batchType = null;
 
     /**
@@ -42,6 +44,7 @@ class BatchException extends \Exception
     public function setContext(array $context): static
     {
         $this->context = $context;
+
         return $this;
     }
 
@@ -51,6 +54,7 @@ class BatchException extends \Exception
     public function addContext(string $key, mixed $value): static
     {
         $this->context[$key] = $value;
+
         return $this;
     }
 
@@ -68,6 +72,7 @@ class BatchException extends \Exception
     public function setOperationCount(int $count): static
     {
         $this->operationCount = $count;
+
         return $this;
     }
 
@@ -85,6 +90,7 @@ class BatchException extends \Exception
     public function setBatchType(?string $type): static
     {
         $this->batchType = $type;
+
         return $this;
     }
 

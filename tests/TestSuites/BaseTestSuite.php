@@ -2,8 +2,8 @@
 
 namespace JTD\FirebaseModels\Tests\TestSuites;
 
-use JTD\FirebaseModels\Tests\TestCase;
 use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
+use JTD\FirebaseModels\Tests\TestCase;
 
 /**
  * BaseTestSuite provides a standardized foundation for all test suites
@@ -12,7 +12,9 @@ use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
 abstract class BaseTestSuite extends TestCase
 {
     protected array $testRequirements = [];
+
     protected bool $autoCleanup = true;
+
     protected array $memorySnapshots = [];
 
     /**
@@ -87,7 +89,7 @@ abstract class BaseTestSuite extends TestCase
     {
         $memoryUsage = memory_get_usage();
         $memoryLimit = $this->getMemoryLimit();
-        
+
         // Force GC if using more than 70% of available memory
         return $memoryUsage > ($memoryLimit * 0.7);
     }
@@ -101,7 +103,7 @@ abstract class BaseTestSuite extends TestCase
         if ($limit === '-1') {
             return PHP_INT_MAX;
         }
-        
+
         return $this->convertToBytes($limit);
     }
 
@@ -112,7 +114,7 @@ abstract class BaseTestSuite extends TestCase
     {
         $unit = strtolower(substr($limit, -1));
         $value = (int) substr($limit, 0, -1);
-        
+
         return match ($unit) {
             'g' => $value * 1024 * 1024 * 1024,
             'm' => $value * 1024 * 1024,
@@ -129,7 +131,7 @@ abstract class BaseTestSuite extends TestCase
         $peakUsage = memory_get_peak_usage();
         $currentUsage = memory_get_usage();
         $memoryLimit = $this->getMemoryLimit();
-        
+
         // Log if peak usage exceeds 50% of limit
         if ($peakUsage > ($memoryLimit * 0.5)) {
             error_log(sprintf(
@@ -149,13 +151,13 @@ abstract class BaseTestSuite extends TestCase
     {
         $units = ['B', 'KB', 'MB', 'GB'];
         $unitIndex = 0;
-        
+
         while ($bytes >= 1024 && $unitIndex < count($units) - 1) {
             $bytes /= 1024;
             $unitIndex++;
         }
-        
-        return round($bytes, 2) . ' ' . $units[$unitIndex];
+
+        return round($bytes, 2).' '.$units[$unitIndex];
     }
 
     /**

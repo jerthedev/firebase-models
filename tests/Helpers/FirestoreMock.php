@@ -2,14 +2,13 @@
 
 namespace JTD\FirebaseModels\Tests\Helpers;
 
-use Mockery;
-use Google\Cloud\Firestore\FirestoreClient;
 use Google\Cloud\Firestore\CollectionReference;
 use Google\Cloud\Firestore\DocumentReference;
 use Google\Cloud\Firestore\DocumentSnapshot;
+use Google\Cloud\Firestore\FirestoreClient;
 use Google\Cloud\Firestore\Query;
-use Google\Cloud\Firestore\Timestamp;
 use Illuminate\Support\Collection;
+use Mockery;
 
 /**
  * FirestoreMock provides comprehensive mocking capabilities for Firestore operations
@@ -18,9 +17,13 @@ use Illuminate\Support\Collection;
 class FirestoreMock
 {
     protected static ?self $instance = null;
+
     protected array $documents = [];
+
     protected array $operations = [];
+
     protected array $queryMocks = [];
+
     protected ?FirestoreClient $mockClient = null;
 
     public static function initialize(): void
@@ -70,6 +73,7 @@ class FirestoreMock
         $this->mockClient->shouldReceive('document')
             ->andReturnUsing(function ($documentPath) {
                 [$collection, $id] = explode('/', $documentPath, 2);
+
                 return $this->createMockDocument($collection, $id);
             });
 
@@ -92,6 +96,7 @@ class FirestoreMock
                 $id = $this->generateDocumentId();
                 $this->storeDocument($collectionName, $id, $data);
                 $this->recordOperation('create', $collectionName, $id);
+
                 return $this->createMockDocumentReference($collectionName, $id);
             });
 
@@ -99,6 +104,7 @@ class FirestoreMock
         $mockCollection->shouldReceive('document')
             ->andReturnUsing(function ($id = null) use ($collectionName) {
                 $id = $id ?: $this->generateDocumentId();
+
                 return $this->createMockDocumentReference($collectionName, $id);
             });
 
@@ -106,7 +112,7 @@ class FirestoreMock
         $mockCollection->shouldReceive('where')
             ->andReturnUsing(function ($field, $operator, $value) use ($collectionName) {
                 return $this->createMockQuery($collectionName, [
-                    ['field' => $field, 'operator' => $operator, 'value' => $value]
+                    ['field' => $field, 'operator' => $operator, 'value' => $value],
                 ]);
             });
 
@@ -114,7 +120,7 @@ class FirestoreMock
         $mockCollection->shouldReceive('orderBy')
             ->andReturnUsing(function ($field, $direction = 'ASC') use ($collectionName) {
                 return $this->createMockQuery($collectionName, [], [
-                    ['field' => $field, 'direction' => $direction]
+                    ['field' => $field, 'direction' => $direction],
                 ]);
             });
 
@@ -122,16 +128,17 @@ class FirestoreMock
         $mockCollection->shouldReceive('whereIn')
             ->andReturnUsing(function ($field, $values) use ($collectionName) {
                 return $this->createMockQuery($collectionName, [
-                    ['field' => $field, 'operator' => 'in', 'value' => $values]
+                    ['field' => $field, 'operator' => 'in', 'value' => $values],
                 ]);
             });
 
         // Mock when() method for conditional queries
         $mockCollection->shouldReceive('when')
-            ->andReturnUsing(function ($condition, $callback) use ($collectionName, $mockCollection) {
+            ->andReturnUsing(function ($condition, $callback) use ($mockCollection) {
                 if ($condition) {
                     return $callback($mockCollection);
                 }
+
                 return $mockCollection;
             });
 
@@ -152,6 +159,7 @@ class FirestoreMock
                         $sum += $data[$field];
                     }
                 }
+
                 return $sum;
             });
 
@@ -195,6 +203,7 @@ class FirestoreMock
             ->andReturnUsing(function ($data, $options = []) use ($collection, $id) {
                 $this->storeDocument($collection, $id, $data);
                 $this->recordOperation('set', $collection, $id);
+
                 return true;
             });
 
@@ -203,6 +212,7 @@ class FirestoreMock
             ->andReturnUsing(function ($data) use ($collection, $id) {
                 $this->updateDocument($collection, $id, $data);
                 $this->recordOperation('update', $collection, $id);
+
                 return true;
             });
 
@@ -211,6 +221,7 @@ class FirestoreMock
             ->andReturnUsing(function () use ($collection, $id) {
                 $this->deleteDocument($collection, $id);
                 $this->recordOperation('delete', $collection, $id);
+
                 return true;
             });
 
@@ -255,8 +266,6 @@ class FirestoreMock
         // Get filtered documents based on query parameters
         $documents = $this->executeQuery($collection, $wheres, $orders, $limit, $offset);
 
-
-
         // Create a mock that properly implements iteration
         $mockQuerySnapshot = Mockery::mock(QuerySnapshot::class, \IteratorAggregate::class, \Countable::class);
 
@@ -286,8 +295,9 @@ class FirestoreMock
         $mockQuery->shouldReceive('where')
             ->andReturnUsing(function ($field, $operator, $value) use ($collection, $wheres, $orders, $limit, $offset) {
                 $newWheres = array_merge($wheres, [
-                    ['field' => $field, 'operator' => $operator, 'value' => $value]
+                    ['field' => $field, 'operator' => $operator, 'value' => $value],
                 ]);
+
                 return $this->createMockQuery($collection, $newWheres, $orders, $limit, $offset);
             });
 
@@ -295,8 +305,9 @@ class FirestoreMock
         $mockQuery->shouldReceive('orderBy')
             ->andReturnUsing(function ($field, $direction = 'ASC') use ($collection, $wheres, $orders, $limit, $offset) {
                 $newOrders = array_merge($orders, [
-                    ['field' => $field, 'direction' => $direction]
+                    ['field' => $field, 'direction' => $direction],
                 ]);
+
                 return $this->createMockQuery($collection, $wheres, $newOrders, $limit, $offset);
             });
 
@@ -316,6 +327,7 @@ class FirestoreMock
         $mockQuery->shouldReceive('documents')
             ->andReturnUsing(function () use ($collection, $wheres, $orders, $limit, $offset) {
                 $this->recordQuery($collection, $wheres, $orders, $limit, $offset);
+
                 return $this->executeQuery($collection, $wheres, $orders, $limit, $offset);
             });
 
@@ -323,6 +335,7 @@ class FirestoreMock
         $mockQuery->shouldReceive('get')
             ->andReturnUsing(function () use ($collection, $wheres, $orders, $limit, $offset) {
                 $this->recordQuery($collection, $wheres, $orders, $limit, $offset);
+
                 return $this->createMockQuerySnapshot($collection, $wheres, $orders, $limit, $offset);
             });
 
@@ -332,13 +345,13 @@ class FirestoreMock
     protected function executeQuery(string $collection, array $wheres = [], array $orders = [], ?int $limit = null, ?int $offset = null): array
     {
         $documents = $this->getCollectionDocuments($collection);
-        
+
         // Apply where filters
         foreach ($wheres as $where) {
             $documents = array_filter($documents, function ($doc) use ($where) {
                 $data = $doc->data();
                 $fieldValue = $data[$where['field']] ?? null;
-                
+
                 return match ($where['operator']) {
                     '=', '==' => $fieldValue == $where['value'],
                     '!=' => $fieldValue != $where['value'],
@@ -349,7 +362,7 @@ class FirestoreMock
                     'in' => in_array($fieldValue, $where['value']),
                     'not-in' => !in_array($fieldValue, $where['value']),
                     'array-contains' => is_array($fieldValue) && in_array($where['value'], $fieldValue),
-                    'like' => str_contains(strtolower((string)$fieldValue), strtolower(str_replace('%', '', (string)$where['value']))),
+                    'like' => str_contains(strtolower((string) $fieldValue), strtolower(str_replace('%', '', (string) $where['value']))),
                     default => false,
                 };
             });
@@ -365,6 +378,7 @@ class FirestoreMock
 
                 // Handle both uppercase and lowercase direction values
                 $direction = strtolower($order['direction']);
+
                 return $direction === 'desc' || $direction === 'descending' ? -$result : $result;
             });
         }
@@ -385,11 +399,11 @@ class FirestoreMock
     public function getCollectionDocuments(string $collection): array
     {
         $documents = [];
-        
+
         foreach ($this->documents[$collection] ?? [] as $id => $data) {
             $documents[] = $this->createMockDocumentSnapshot($collection, $id);
         }
-        
+
         return $documents;
     }
 
@@ -401,8 +415,6 @@ class FirestoreMock
 
         $this->documents[$collection][$id] = $data;
     }
-
-
 
     public function updateDocument(string $collection, string $id, array $data): void
     {
@@ -453,7 +465,7 @@ class FirestoreMock
 
     protected function generateDocumentId(): string
     {
-        return 'mock_' . uniqid() . '_' . random_int(1000, 9999);
+        return 'mock_'.uniqid().'_'.random_int(1000, 9999);
     }
 
     // Public API methods for testing
@@ -462,6 +474,7 @@ class FirestoreMock
     {
         $instance = static::getInstance();
         $instance->storeDocument($collection, $id, $data);
+
         return array_merge(['id' => $id], $data);
     }
 
@@ -499,24 +512,24 @@ class FirestoreMock
     public static function assertOperationCalled(string $operation, string $collection, ?string $id = null): void
     {
         $instance = static::getInstance();
-        
+
         $found = false;
         foreach ($instance->operations as $op) {
-            if ($op['operation'] === $operation && 
-                $op['collection'] === $collection && 
+            if ($op['operation'] === $operation &&
+                $op['collection'] === $collection &&
                 ($id === null || $op['id'] === $id)) {
                 $found = true;
                 break;
             }
         }
-        
+
         if (!$found) {
             $message = "Expected Firestore operation '{$operation}' on collection '{$collection}'";
             if ($id) {
                 $message .= " with ID '{$id}'";
             }
-            $message .= " was not called.";
-            
+            $message .= ' was not called.';
+
             throw new \PHPUnit\Framework\AssertionFailedError($message);
         }
     }
@@ -524,7 +537,7 @@ class FirestoreMock
     public static function assertQueryExecuted(string $collection, array $expectedWheres = []): void
     {
         $instance = static::getInstance();
-        
+
         $found = false;
         foreach ($instance->queryMocks as $query) {
             if ($query['collection'] === $collection) {
@@ -534,7 +547,7 @@ class FirestoreMock
                 }
             }
         }
-        
+
         if (!$found) {
             throw new \PHPUnit\Framework\AssertionFailedError(
                 "Expected Firestore query on collection '{$collection}' was not executed."
@@ -619,6 +632,7 @@ class FirestoreMock
         $this->mockClient->shouldReceive('runTransaction')
             ->andReturnUsing(function ($callable) {
                 $transaction = $this->createMockTransaction();
+
                 return $callable($transaction);
             });
     }
@@ -631,24 +645,28 @@ class FirestoreMock
         $mockBatch->shouldReceive('create')
             ->andReturnUsing(function ($docRef, $data) use (&$operations) {
                 $operations[] = ['type' => 'create', 'ref' => $docRef, 'data' => $data];
+
                 return $mockBatch;
             });
 
         $mockBatch->shouldReceive('set')
             ->andReturnUsing(function ($docRef, $data, $options = []) use (&$operations) {
                 $operations[] = ['type' => 'set', 'ref' => $docRef, 'data' => $data, 'options' => $options];
+
                 return $mockBatch;
             });
 
         $mockBatch->shouldReceive('update')
             ->andReturnUsing(function ($docRef, $data) use (&$operations) {
                 $operations[] = ['type' => 'update', 'ref' => $docRef, 'data' => $data];
+
                 return $mockBatch;
             });
 
         $mockBatch->shouldReceive('delete')
             ->andReturnUsing(function ($docRef) use (&$operations) {
                 $operations[] = ['type' => 'delete', 'ref' => $docRef];
+
                 return $mockBatch;
             });
 
@@ -657,6 +675,7 @@ class FirestoreMock
                 foreach ($operations as $op) {
                     $this->executeBatchOperation($op);
                 }
+
                 return true;
             });
 
@@ -673,30 +692,35 @@ class FirestoreMock
                 // Extract collection and ID from document reference
                 $path = $docRef->path();
                 [$collection, $id] = explode('/', $path, 2);
+
                 return $this->createMockDocumentSnapshot($collection, $id);
             });
 
         $mockTransaction->shouldReceive('create')
             ->andReturnUsing(function ($docRef, $data) use (&$operations) {
                 $operations[] = ['type' => 'create', 'ref' => $docRef, 'data' => $data];
+
                 return $mockTransaction;
             });
 
         $mockTransaction->shouldReceive('set')
             ->andReturnUsing(function ($docRef, $data, $options = []) use (&$operations) {
                 $operations[] = ['type' => 'set', 'ref' => $docRef, 'data' => $data, 'options' => $options];
+
                 return $mockTransaction;
             });
 
         $mockTransaction->shouldReceive('update')
             ->andReturnUsing(function ($docRef, $data) use (&$operations) {
                 $operations[] = ['type' => 'update', 'ref' => $docRef, 'data' => $data];
+
                 return $mockTransaction;
             });
 
         $mockTransaction->shouldReceive('delete')
             ->andReturnUsing(function ($docRef) use (&$operations) {
                 $operations[] = ['type' => 'delete', 'ref' => $docRef];
+
                 return $mockTransaction;
             });
 
@@ -753,7 +777,7 @@ class FirestoreMock
                     'in' => in_array($fieldValue, $where['value']),
                     'not-in' => !in_array($fieldValue, $where['value']),
                     'array-contains' => is_array($fieldValue) && in_array($where['value'], $fieldValue),
-                    'like' => str_contains(strtolower((string)$fieldValue), strtolower(str_replace('%', '', (string)$where['value']))),
+                    'like' => str_contains(strtolower((string) $fieldValue), strtolower(str_replace('%', '', (string) $where['value']))),
                     default => false,
                 };
             });

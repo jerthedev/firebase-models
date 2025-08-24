@@ -8,11 +8,17 @@ namespace JTD\FirebaseModels\Firestore\Transactions;
 class TransactionResult
 {
     protected bool $success = false;
+
     protected mixed $data = null;
+
     protected ?string $error = null;
+
     protected ?\Exception $exception = null;
+
     protected float $duration = 0.0;
+
     protected int $attempts = 0;
+
     protected array $metadata = [];
 
     /**
@@ -21,6 +27,7 @@ class TransactionResult
     public function setSuccess(bool $success): static
     {
         $this->success = $success;
+
         return $this;
     }
 
@@ -38,6 +45,7 @@ class TransactionResult
     public function setData(mixed $data): static
     {
         $this->data = $data;
+
         return $this;
     }
 
@@ -55,6 +63,7 @@ class TransactionResult
     public function setError(?string $error): static
     {
         $this->error = $error;
+
         return $this;
     }
 
@@ -72,6 +81,7 @@ class TransactionResult
     public function setException(?\Exception $exception): static
     {
         $this->exception = $exception;
+
         return $this;
     }
 
@@ -89,6 +99,7 @@ class TransactionResult
     public function setDuration(float $duration): static
     {
         $this->duration = $duration;
+
         return $this;
     }
 
@@ -114,6 +125,7 @@ class TransactionResult
     public function setAttempts(int $attempts): static
     {
         $this->attempts = $attempts;
+
         return $this;
     }
 
@@ -131,6 +143,7 @@ class TransactionResult
     public function setMetadata(array $metadata): static
     {
         $this->metadata = $metadata;
+
         return $this;
     }
 
@@ -140,6 +153,7 @@ class TransactionResult
     public function addMetadata(string $key, mixed $value): static
     {
         $this->metadata[$key] = $value;
+
         return $this;
     }
 

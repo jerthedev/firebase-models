@@ -2,10 +2,10 @@
 
 namespace JTD\FirebaseModels\Tests;
 
-use Orchestra\Testbench\TestCase as Orchestra;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use JTD\FirebaseModels\JtdFirebaseModelsServiceProvider;
 use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
 {

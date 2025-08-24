@@ -3,8 +3,8 @@
 namespace JTD\FirebaseModels\Tests\Unit\Cache;
 
 use JTD\FirebaseModels\Cache\CacheManager;
-use JTD\FirebaseModels\Cache\RequestCache;
 use JTD\FirebaseModels\Cache\PersistentCache;
+use JTD\FirebaseModels\Cache\RequestCache;
 use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -159,6 +159,7 @@ class CacheManagerTest extends UnitTestSuite
 
         $callback = function () use (&$callCount) {
             $callCount++;
+
             return 'computed_value';
         };
 
@@ -184,6 +185,7 @@ class CacheManagerTest extends UnitTestSuite
 
         $callback = function () use (&$callCount) {
             $callCount++;
+
             return 'forever_value';
         };
 
@@ -263,16 +265,16 @@ class CacheManagerTest extends UnitTestSuite
     public function it_provides_combined_statistics()
     {
         // Generate some cache activity
-            CacheManager::put('stats_key', 'value', 60);
-            CacheManager::get('stats_key'); // Hit
-            CacheManager::get('non_existent'); // Miss
-            
-            $stats = CacheManager::getStats();
-            
-            expect($stats)->toHaveKey('request_cache');
-            expect($stats)->toHaveKey('persistent_cache');
-            expect($stats)->toHaveKey('combined');
-            
+        CacheManager::put('stats_key', 'value', 60);
+        CacheManager::get('stats_key'); // Hit
+        CacheManager::get('non_existent'); // Miss
+
+        $stats = CacheManager::getStats();
+
+        expect($stats)->toHaveKey('request_cache');
+        expect($stats)->toHaveKey('persistent_cache');
+        expect($stats)->toHaveKey('combined');
+
         expect($stats['combined']['hits'])->toBeGreaterThan(0);
         expect($stats['combined']['misses'])->toBeGreaterThan(0);
         expect($stats['combined']['sets'])->toBeGreaterThan(0);
@@ -354,9 +356,7 @@ class CacheManagerTest extends UnitTestSuite
     #[Test]
     public function it_handles_callback_returning_null()
     {
-        $callback = function () {
-            return null;
-        };
+        $callback = function () {};
 
         $result = CacheManager::remember('null_callback', $callback, 60);
         expect($result)->toBeNull();

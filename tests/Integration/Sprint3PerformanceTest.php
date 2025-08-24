@@ -2,12 +2,12 @@
 
 namespace JTD\FirebaseModels\Tests\Integration;
 
-use JTD\FirebaseModels\Tests\TestSuites\PerformanceTestSuite;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use JTD\FirebaseModels\Firestore\Batch\BatchManager;
 use JTD\FirebaseModels\Firestore\Transactions\TransactionManager;
 use JTD\FirebaseModels\Sync\SyncManager;
 use JTD\FirebaseModels\Testing\BatchTestHelper;
+use JTD\FirebaseModels\Tests\TestSuites\PerformanceTestSuite;
 
 /**
  * Performance and stress tests for Sprint 3 features.
@@ -39,7 +39,7 @@ class Sprint3PerformanceTest extends PerformanceTestSuite
     public function test_batch_operation_performance()
     {
         $testSizes = [100, 500, 1000];
-        
+
         foreach ($testSizes as $size) {
             $this->runBatchPerformanceTest($size);
         }
@@ -58,7 +58,7 @@ class Sprint3PerformanceTest extends PerformanceTestSuite
 
         for ($i = 0; $i < $concurrentTransactions; $i++) {
             $startTime = microtime(true);
-            
+
             $result = TransactionManager::executeWithResult(function ($transaction) use ($i) {
                 // Create user
                 $userRef = $this->firestore->collection('users')->newDocument();
@@ -82,7 +82,7 @@ class Sprint3PerformanceTest extends PerformanceTestSuite
             });
 
             $duration = microtime(true) - $startTime;
-            
+
             $results[] = [
                 'success' => $result->isSuccess(),
                 'duration' => $duration,
@@ -113,7 +113,7 @@ class Sprint3PerformanceTest extends PerformanceTestSuite
     public function test_sync_performance()
     {
         $syncManager = app(SyncManager::class);
-        
+
         // Create large dataset
         $userData = BatchTestHelper::createTestData(2000, [
             'name' => 'Sync User {i}',
@@ -347,7 +347,7 @@ class Sprint3PerformanceTest extends PerformanceTestSuite
     private function assertPerformanceScaling(string $operation): void
     {
         $metrics = $this->performanceMetrics[$operation] ?? [];
-        
+
         if (count($metrics) < 2) {
             return; // Need at least 2 data points
         }
@@ -377,14 +377,14 @@ class Sprint3PerformanceTest extends PerformanceTestSuite
         // Log to file for analysis
         file_put_contents(
             storage_path('logs/sprint3-performance.json'),
-            json_encode($logData, JSON_PRETTY_PRINT) . "\n",
+            json_encode($logData, JSON_PRETTY_PRINT)."\n",
             FILE_APPEND | LOCK_EX
         );
 
         // Output summary to console
         echo "\n=== Sprint 3 Performance Test Results ===\n";
         foreach ($this->performanceMetrics as $test => $metrics) {
-            echo "{$test}: " . json_encode($metrics, JSON_PRETTY_PRINT) . "\n";
+            echo "{$test}: ".json_encode($metrics, JSON_PRETTY_PRINT)."\n";
         }
         echo "==========================================\n";
     }

@@ -2,12 +2,12 @@
 
 /**
  * E2E Test Runner for Firebase Models
- * 
+ *
  * This script runs End-to-End tests against real Firebase API.
  * It requires valid credentials in tests/credentials/e2e-credentials.json
  */
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__.'/../vendor/autoload.php';
 
 use JTD\FirebaseModels\Tests\E2E\E2ETestConfig;
 
@@ -25,7 +25,7 @@ $projectId = $credentials['project_id'] ?? 'unknown';
 echo "🔥 Firebase Models E2E Test Runner\n";
 echo "=====================================\n";
 echo "Project ID: {$projectId}\n";
-echo "Credentials: " . E2ETestConfig::getCredentialsPath() . "\n";
+echo 'Credentials: '.E2ETestConfig::getCredentialsPath()."\n";
 echo "\n";
 
 // Warning about real Firebase usage
@@ -34,8 +34,8 @@ echo "Make sure you're using a test project, not production data.\n";
 echo "\n";
 
 // Ask for confirmation
-echo "Do you want to proceed? (y/N): ";
-$handle = fopen("php://stdin", "r");
+echo 'Do you want to proceed? (y/N): ';
+$handle = fopen('php://stdin', 'r');
 $line = fgets($handle);
 fclose($handle);
 
@@ -48,7 +48,7 @@ echo "\n🚀 Running E2E tests...\n\n";
 
 // Set environment variables for E2E testing
 putenv('FIREBASE_E2E_MODE=true');
-putenv('FIREBASE_PROJECT_ID=' . $projectId);
+putenv('FIREBASE_PROJECT_ID='.$projectId);
 
 // Run the tests
 $testCommand = 'vendor/bin/pest --group=e2e --colors=always';
@@ -63,7 +63,7 @@ $testFilter = null;
 foreach ($argv as $arg) {
     if (strpos($arg, '--filter=') === 0) {
         $testFilter = substr($arg, 9);
-        $testCommand .= ' --filter="' . $testFilter . '"';
+        $testCommand .= ' --filter="'.$testFilter.'"';
         break;
     }
 }

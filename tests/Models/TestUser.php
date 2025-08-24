@@ -2,16 +2,14 @@
 
 namespace JTD\FirebaseModels\Tests\Models;
 
-use JTD\FirebaseModels\Auth\FirebaseAuthenticatable;
-use JTD\FirebaseModels\Firestore\FirestoreModel;
 use Illuminate\Support\Carbon;
+use JTD\FirebaseModels\Auth\FirebaseAuthenticatable;
 
 /**
  * Test User model for unit testing.
  */
 class TestUser extends FirebaseAuthenticatable
 {
-
     protected ?string $collection = 'users';
 
     protected array $fillable = [
@@ -63,6 +61,7 @@ class TestUser extends FirebaseAuthenticatable
     public function setCollection(string $collection): static
     {
         $this->collection = $collection;
+
         return $this;
     }
 
@@ -136,6 +135,7 @@ class TestUser extends FirebaseAuthenticatable
     public function hasPermission(string $permission): bool
     {
         $permissions = $this->permissions ?? [];
+
         return in_array($permission, $permissions);
     }
 
@@ -149,6 +149,7 @@ class TestUser extends FirebaseAuthenticatable
             $permissions[] = $permission;
             $this->permissions = $permissions;
         }
+
         return $this;
     }
 
@@ -158,7 +159,8 @@ class TestUser extends FirebaseAuthenticatable
     public function removePermission(string $permission): static
     {
         $permissions = $this->permissions ?? [];
-        $this->permissions = array_values(array_filter($permissions, fn($p) => $p !== $permission));
+        $this->permissions = array_values(array_filter($permissions, fn ($p) => $p !== $permission));
+
         return $this;
     }
 
@@ -200,6 +202,7 @@ class TestUser extends FirebaseAuthenticatable
     public function markAsVerified(): static
     {
         $this->email_verified_at = Carbon::now();
+
         return $this;
     }
 
@@ -209,6 +212,7 @@ class TestUser extends FirebaseAuthenticatable
     public function updateLastLogin(): static
     {
         $this->last_login = Carbon::now();
+
         return $this;
     }
 

@@ -24,9 +24,9 @@ class BelongsTo extends Relation
     public function __construct(FirestoreModelQueryBuilder $query, FirestoreModel $child, string $foreignKey, string $ownerKey, string $relationName)
     {
         $this->child = $child;
-        
+
         parent::__construct($query, $child, $foreignKey, $ownerKey);
-        
+
         $this->relationName = $relationName;
     }
 
@@ -64,6 +64,7 @@ class BelongsTo extends Relation
         if (empty($keys)) {
             // If no keys, add a constraint that will return no results
             $this->query->where($this->localKey, '=', '__no_match__');
+
             return;
         }
 
@@ -108,7 +109,7 @@ class BelongsTo extends Relation
 
         foreach ($models as $model) {
             $key = $model->getAttribute($this->foreignKey);
-            
+
             if (isset($dictionary[$key])) {
                 $model->setRelation($relation, $dictionary[$key]);
             }
@@ -154,7 +155,7 @@ class BelongsTo extends Relation
     public function associate(FirestoreModel $model): FirestoreModel
     {
         $this->child->setAttribute($this->foreignKey, $model->getAttribute($this->localKey));
-        
+
         if ($this->child->isDirty($this->foreignKey)) {
             $this->child->setRelation($this->relationName, $model);
         }
@@ -168,7 +169,7 @@ class BelongsTo extends Relation
     public function dissociate(): FirestoreModel
     {
         $this->child->setAttribute($this->foreignKey, null);
-        
+
         return $this->child->setRelation($this->relationName, null);
     }
 
@@ -178,7 +179,7 @@ class BelongsTo extends Relation
     public function update(array $attributes): int
     {
         $instance = $this->getResults();
-        
+
         if ($instance) {
             return $instance->fill($attributes)->save() ? 1 : 0;
         }

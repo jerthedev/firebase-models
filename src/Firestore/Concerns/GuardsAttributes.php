@@ -40,7 +40,8 @@ trait GuardsAttributes
             } elseif ($totallyGuarded) {
                 throw new \Illuminate\Database\Eloquent\MassAssignmentException(sprintf(
                     'Add [%s] to fillable property to allow mass assignment on [%s].',
-                    $key, get_class($this)
+                    $key,
+                    get_class($this)
                 ));
             }
         }

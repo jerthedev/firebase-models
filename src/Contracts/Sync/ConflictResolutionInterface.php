@@ -9,15 +9,11 @@ interface ConflictResolutionInterface
 {
     /**
      * Get the resolved data.
-     *
-     * @return array
      */
     public function getResolvedData(): array;
 
     /**
      * Get the resolution action taken.
-     *
-     * @return string
      */
     public function getAction(): string;
 
@@ -30,22 +26,16 @@ interface ConflictResolutionInterface
 
     /**
      * Check if the resolution requires manual intervention.
-     *
-     * @return bool
      */
     public function requiresManualIntervention(): bool;
 
     /**
      * Get any additional metadata about the resolution.
-     *
-     * @return array
      */
     public function getMetadata(): array;
 
     /**
      * Get a human-readable description of the resolution.
-     *
-     * @return string
      */
     public function getDescription(): string;
 }

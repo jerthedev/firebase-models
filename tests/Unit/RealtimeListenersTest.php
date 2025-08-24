@@ -2,15 +2,14 @@
 
 namespace JTD\FirebaseModels\Tests\Unit;
 
-use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
-use JTD\FirebaseModels\Tests\Models\TestPost;
-use JTD\FirebaseModels\Firestore\Listeners\RealtimeListenerManager;
-use JTD\FirebaseModels\Firestore\Listeners\DocumentListener;
-use JTD\FirebaseModels\Firestore\Listeners\CollectionListener;
-use JTD\FirebaseModels\Firestore\Listeners\QueryListener;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\Group;
 use Illuminate\Support\Facades\Event;
+use JTD\FirebaseModels\Firestore\Listeners\CollectionListener;
+use JTD\FirebaseModels\Firestore\Listeners\DocumentListener;
+use JTD\FirebaseModels\Firestore\Listeners\QueryListener;
+use JTD\FirebaseModels\Firestore\Listeners\RealtimeListenerManager;
+use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
 #[Group('unit')]
 #[Group('advanced')]
@@ -20,10 +19,10 @@ class RealtimeListenersTest extends UnitTestSuite
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Clear any existing listeners
         RealtimeListenerManager::stopAllListeners();
-        
+
         // Configure for testing
         RealtimeListenerManager::configure([
             'auto_reconnect' => true,
@@ -43,7 +42,7 @@ class RealtimeListenersTest extends UnitTestSuite
     public function it_creates_document_listeners()
     {
         $callbackExecuted = false;
-        
+
         $listener = RealtimeListenerManager::listenToDocument(
             'posts',
             'test-post-123',
@@ -67,7 +66,7 @@ class RealtimeListenersTest extends UnitTestSuite
     public function it_creates_collection_listeners()
     {
         $eventsReceived = [];
-        
+
         $listener = RealtimeListenerManager::listenToCollection(
             'posts',
             function ($changes) use (&$eventsReceived) {
@@ -99,10 +98,10 @@ class RealtimeListenersTest extends UnitTestSuite
     public function it_creates_query_listeners()
     {
         $queryResults = [];
-        
+
         $wheres = [
             ['field' => 'published', 'operator' => '=', 'value' => true],
-            ['field' => 'views', 'operator' => '>', 'value' => 100]
+            ['field' => 'views', 'operator' => '>', 'value' => 100],
         ];
 
         $listener = RealtimeListenerManager::listenToQuery(
@@ -202,7 +201,7 @@ class RealtimeListenersTest extends UnitTestSuite
     public function it_handles_auto_reconnection()
     {
         $reconnectAttempts = 0;
-        
+
         $listener = $this->createMockListener('document', 'posts', function () use (&$reconnectAttempts) {
             $reconnectAttempts++;
         });
@@ -243,7 +242,7 @@ class RealtimeListenersTest extends UnitTestSuite
         // Create listeners with different activity levels
         $activeListener = RealtimeListenerManager::listenToDocument('posts', 'active', function () {});
         $inactiveListener = RealtimeListenerManager::listenToDocument('posts', 'inactive', function () {});
-        
+
         // Simulate some activity
         $this->simulateListenerActivity($activeListener, 5, 0);
         $this->simulateListenerActivity($inactiveListener, 2, 3);
@@ -263,7 +262,7 @@ class RealtimeListenersTest extends UnitTestSuite
     {
         $healthyListener = RealtimeListenerManager::listenToDocument('posts', 'healthy', function () {});
         $unhealthyListener = RealtimeListenerManager::listenToDocument('posts', 'unhealthy', function () {});
-        
+
         // Simulate unhealthy state
         $this->simulateListenerActivity($unhealthyListener, 0, 15); // High error count
         $unhealthyListener->stop();
@@ -299,7 +298,7 @@ class RealtimeListenersTest extends UnitTestSuite
     public function it_handles_heartbeat_monitoring()
     {
         RealtimeListenerManager::startHeartbeat();
-        
+
         // In a real implementation, this would verify heartbeat functionality
         // For now, we just verify the methods exist and can be called
         expect(true)->toBeTrue();
@@ -316,7 +315,7 @@ class RealtimeListenersTest extends UnitTestSuite
         $newConfig = [
             'auto_reconnect' => false,
             'max_reconnect_attempts' => 10,
-            'custom_option' => 'test_value'
+            'custom_option' => 'test_value',
         ];
 
         RealtimeListenerManager::configure($newConfig);
@@ -361,12 +360,18 @@ class RealtimeListenersTest extends UnitTestSuite
     protected function createMockListener(string $type, string $collection, ?callable $callback = null): object
     {
         // Create a mock listener for testing
-        return new class($type, $collection, $callback) {
+        return new class($type, $collection, $callback)
+        {
             private string $type;
+
             private string $collection;
+
             private bool $active = true;
+
             private int $eventCount = 0;
+
             private int $errorCount = 0;
+
             private int $reconnectAttempts = 0;
 
             public function __construct(string $type, string $collection, ?callable $callback = null)
@@ -375,27 +380,86 @@ class RealtimeListenersTest extends UnitTestSuite
                 $this->collection = $collection;
             }
 
-            public function getType(): string { return $this->type; }
-            public function getCollection(): string { return $this->collection; }
-            public function isActive(): bool { return $this->active; }
-            public function stop(): void { $this->active = false; }
-            public function start(): void { $this->active = true; }
-            public function restart(): void { $this->active = true; }
-            public function canReconnect(): bool { return true; }
-            public function getEventCount(): int { return $this->eventCount; }
-            public function getErrorCount(): int { return $this->errorCount; }
-            public function getReconnectAttempts(): int { return $this->reconnectAttempts; }
-            public function incrementEventCount(int $count = 1): void { $this->eventCount += $count; }
-            public function incrementErrorCount(): void { $this->errorCount++; }
-            public function incrementReconnectAttempts(): void { $this->reconnectAttempts++; }
-            public function getLastEventTime(): ?string { return now()->toISOString(); }
-            public function getOptions(): array { return []; }
+            public function getType(): string
+            {
+                return $this->type;
+            }
+
+            public function getCollection(): string
+            {
+                return $this->collection;
+            }
+
+            public function isActive(): bool
+            {
+                return $this->active;
+            }
+
+            public function stop(): void
+            {
+                $this->active = false;
+            }
+
+            public function start(): void
+            {
+                $this->active = true;
+            }
+
+            public function restart(): void
+            {
+                $this->active = true;
+            }
+
+            public function canReconnect(): bool
+            {
+                return true;
+            }
+
+            public function getEventCount(): int
+            {
+                return $this->eventCount;
+            }
+
+            public function getErrorCount(): int
+            {
+                return $this->errorCount;
+            }
+
+            public function getReconnectAttempts(): int
+            {
+                return $this->reconnectAttempts;
+            }
+
+            public function incrementEventCount(int $count = 1): void
+            {
+                $this->eventCount += $count;
+            }
+
+            public function incrementErrorCount(): void
+            {
+                $this->errorCount++;
+            }
+
+            public function incrementReconnectAttempts(): void
+            {
+                $this->reconnectAttempts++;
+            }
+
+            public function getLastEventTime(): ?string
+            {
+                return now()->toISOString();
+            }
+
+            public function getOptions(): array
+            {
+                return [];
+            }
         };
     }
 
     protected function getListenerId($listener): string
     {
         // In a real implementation, this would return the actual listener ID
-        return 'test_listener_' . uniqid();
+        return 'test_listener_'.uniqid();
     }
 }

@@ -3,17 +3,16 @@
 namespace JTD\FirebaseModels\Auth;
 
 use Illuminate\Auth\GuardHelpers;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Auth\UserProvider;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Kreait\Firebase\Contract\Auth as FirebaseAuth;
-use Kreait\Firebase\Exception\InvalidArgumentException;
 use Throwable;
 
 /**
  * Firebase Authentication Guard for Laravel.
- * 
+ *
  * This guard integrates Firebase ID token authentication with Laravel's Auth system,
  * providing seamless authentication using Firebase tokens while maintaining
  * Laravel's standard Auth interface.
@@ -91,10 +90,10 @@ class FirebaseGuard implements Guard
             try {
                 // Verify the Firebase ID token
                 $verifiedIdToken = $this->firebaseAuth->verifyIdToken($token);
-                
+
                 // Get the user from the provider using the Firebase UID
                 $user = $this->provider->retrieveById($verifiedIdToken->claims()->get('sub'));
-                
+
                 if ($user && $user instanceof FirebaseAuthenticatable) {
                     // Set the Firebase token on the user model
                     $user->setFirebaseToken($verifiedIdToken);
@@ -119,6 +118,7 @@ class FirebaseGuard implements Guard
 
         try {
             $verifiedIdToken = $this->firebaseAuth->verifyIdToken($credentials['token']);
+
             return !is_null($verifiedIdToken);
         } catch (Throwable $e) {
             return false;
@@ -137,22 +137,22 @@ class FirebaseGuard implements Guard
         try {
             $verifiedIdToken = $this->firebaseAuth->verifyIdToken($credentials['token']);
             $uid = $verifiedIdToken->claims()->get('sub');
-            
+
             // Get or create the user
             $user = $this->provider->retrieveById($uid);
-            
+
             if (!$user) {
                 // If user doesn't exist, try to create from token
                 $user = $this->provider->retrieveByCredentials(['token' => $credentials['token']]);
             }
-            
+
             if ($user) {
                 $this->setUser($user);
-                
+
                 if ($user instanceof FirebaseAuthenticatable) {
                     $user->setFirebaseToken($verifiedIdToken);
                 }
-                
+
                 return true;
             }
         } catch (Throwable $e) {
@@ -169,6 +169,7 @@ class FirebaseGuard implements Guard
     {
         if ($this->validate($credentials)) {
             $this->setUser($this->provider->retrieveByCredentials($credentials));
+
             return true;
         }
 
@@ -221,6 +222,7 @@ class FirebaseGuard implements Guard
 
         if (str_starts_with($header, 'Bearer ')) {
             $token = substr($header, 7);
+
             return $token === '' ? '' : $token;
         }
 
@@ -233,6 +235,7 @@ class FirebaseGuard implements Guard
     public function setRequest(Request $request): static
     {
         $this->request = $request;
+
         return $this;
     }
 

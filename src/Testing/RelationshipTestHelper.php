@@ -4,9 +4,9 @@ namespace JTD\FirebaseModels\Testing;
 
 use Illuminate\Support\Collection;
 use JTD\FirebaseModels\Firestore\FirestoreModel;
-use JTD\FirebaseModels\Firestore\Relations\Relation;
 use JTD\FirebaseModels\Firestore\Relations\BelongsTo;
 use JTD\FirebaseModels\Firestore\Relations\HasMany;
+use JTD\FirebaseModels\Firestore\Relations\Relation;
 
 /**
  * Testing utilities for Firestore model relationships.
@@ -16,11 +16,11 @@ class RelationshipTestHelper
     /**
      * Assert that a model has a specific relationship.
      */
-    public static function assertHasRelation(FirestoreModel $model, string $relationName, string $expectedType = null): void
+    public static function assertHasRelation(FirestoreModel $model, string $relationName, ?string $expectedType = null): void
     {
         if (!method_exists($model, $relationName)) {
             throw new \PHPUnit\Framework\AssertionFailedError(
-                "Model " . get_class($model) . " does not have a '{$relationName}' relationship method."
+                'Model '.get_class($model)." does not have a '{$relationName}' relationship method."
             );
         }
 
@@ -34,7 +34,7 @@ class RelationshipTestHelper
 
         if ($expectedType && !$relation instanceof $expectedType) {
             throw new \PHPUnit\Framework\AssertionFailedError(
-                "Relationship '{$relationName}' is not of type '{$expectedType}', got " . get_class($relation)
+                "Relationship '{$relationName}' is not of type '{$expectedType}', got ".get_class($relation)
             );
         }
     }
@@ -46,8 +46,8 @@ class RelationshipTestHelper
         FirestoreModel $model,
         string $relationName,
         string $expectedRelatedModel,
-        string $expectedForeignKey = null,
-        string $expectedOwnerKey = null
+        ?string $expectedForeignKey = null,
+        ?string $expectedOwnerKey = null
     ): void {
         static::assertHasRelation($model, $relationName, BelongsTo::class);
 
@@ -57,7 +57,7 @@ class RelationshipTestHelper
         $relatedModel = $relation->getRelated();
         if (!$relatedModel instanceof $expectedRelatedModel) {
             throw new \PHPUnit\Framework\AssertionFailedError(
-                "BelongsTo relationship '{$relationName}' should relate to '{$expectedRelatedModel}', got " . get_class($relatedModel)
+                "BelongsTo relationship '{$relationName}' should relate to '{$expectedRelatedModel}', got ".get_class($relatedModel)
             );
         }
 
@@ -83,8 +83,8 @@ class RelationshipTestHelper
         FirestoreModel $model,
         string $relationName,
         string $expectedRelatedModel,
-        string $expectedForeignKey = null,
-        string $expectedLocalKey = null
+        ?string $expectedForeignKey = null,
+        ?string $expectedLocalKey = null
     ): void {
         static::assertHasRelation($model, $relationName, HasMany::class);
 
@@ -94,7 +94,7 @@ class RelationshipTestHelper
         $relatedModel = $relation->getRelated();
         if (!$relatedModel instanceof $expectedRelatedModel) {
             throw new \PHPUnit\Framework\AssertionFailedError(
-                "HasMany relationship '{$relationName}' should relate to '{$expectedRelatedModel}', got " . get_class($relatedModel)
+                "HasMany relationship '{$relationName}' should relate to '{$expectedRelatedModel}', got ".get_class($relatedModel)
             );
         }
 
@@ -131,7 +131,7 @@ class RelationshipTestHelper
         foreach ($eagerModels as $model) {
             if (!$model->relationLoaded($relationName)) {
                 throw new \PHPUnit\Framework\AssertionFailedError(
-                    "Relationship '{$relationName}' was not eager loaded on model " . get_class($model)
+                    "Relationship '{$relationName}' was not eager loaded on model ".get_class($model)
                 );
             }
         }
@@ -146,28 +146,28 @@ class RelationshipTestHelper
     public static function assertRelationshipResults(
         FirestoreModel $model,
         string $relationName,
-        int $expectedCount = null,
-        string $expectedType = null
+        ?int $expectedCount = null,
+        ?string $expectedType = null
     ): void {
         $results = $model->$relationName;
 
         if ($expectedType) {
             if ($expectedType === 'collection' && !$results instanceof Collection) {
                 throw new \PHPUnit\Framework\AssertionFailedError(
-                    "Relationship '{$relationName}' should return a Collection, got " . gettype($results)
+                    "Relationship '{$relationName}' should return a Collection, got ".gettype($results)
                 );
             }
 
             if ($expectedType === 'model' && !$results instanceof FirestoreModel && !is_null($results)) {
                 throw new \PHPUnit\Framework\AssertionFailedError(
-                    "Relationship '{$relationName}' should return a Model or null, got " . gettype($results)
+                    "Relationship '{$relationName}' should return a Model or null, got ".gettype($results)
                 );
             }
         }
 
         if ($expectedCount !== null) {
             $actualCount = $results instanceof Collection ? $results->count() : ($results ? 1 : 0);
-            
+
             if ($actualCount !== $expectedCount) {
                 throw new \PHPUnit\Framework\AssertionFailedError(
                     "Relationship '{$relationName}' should return {$expectedCount} results, got {$actualCount}"
@@ -334,6 +334,7 @@ class RelationshipTestHelper
         // This is a placeholder implementation
         // In practice, you'd hook into Firestore query logging
         $callback();
+
         return 1; // Simplified for demonstration
     }
 }

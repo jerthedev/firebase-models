@@ -2,12 +2,12 @@
 
 namespace JTD\FirebaseModels\Firestore\Concerns;
 
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Google\Cloud\Firestore\Timestamp;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 /**
  * Trait for handling model attributes, casting, and serialization.
@@ -224,8 +224,6 @@ trait HasAttributes
         return method_exists($this, 'set'.Str::studly($key).'Attribute');
     }
 
-
-
     /**
      * Set the value of an attribute using its mutator.
      */
@@ -234,17 +232,20 @@ trait HasAttributes
         // Try legacy mutator first
         if ($this->hasLegacySetMutator($key)) {
             $this->{'set'.Str::studly($key).'Attribute'}($value);
+
             return $this;
         }
 
         // Try attribute mutator
         if ($this->hasAttributeMutator($key)) {
             $this->setAttributeMutatorValue($key, $value);
+
             return $this;
         }
 
         // Fallback to direct assignment
         $this->attributes[$key] = $value;
+
         return $this;
     }
 
@@ -257,6 +258,7 @@ trait HasAttributes
 
         if (!method_exists($this, $method)) {
             $this->attributes[$key] = $value;
+
             return;
         }
 
@@ -265,6 +267,7 @@ trait HasAttributes
 
         if (!$attribute instanceof Attribute) {
             $this->attributes[$key] = $value;
+
             return;
         }
 
@@ -433,6 +436,7 @@ trait HasAttributes
 
         if (is_string($value)) {
             $value = strtolower(trim($value));
+
             return in_array($value, ['1', 'true', 'yes', 'on'], true);
         }
 
@@ -460,7 +464,8 @@ trait HasAttributes
         // when checking the field. We will just return the DateTime right away.
         if ($value instanceof \DateTimeInterface) {
             return Carbon::parse(
-                $value->format('Y-m-d H:i:s.u'), $value->getTimezone()
+                $value->format('Y-m-d H:i:s.u'),
+                $value->getTimezone()
             );
         }
 
@@ -828,7 +833,8 @@ trait HasAttributes
     public function isDirty(array|string|null $attributes = null): bool
     {
         return $this->hasChanges(
-            $this->getDirty(), is_array($attributes) ? $attributes : func_get_args()
+            $this->getDirty(),
+            is_array($attributes) ? $attributes : func_get_args()
         );
     }
 
@@ -846,14 +852,15 @@ trait HasAttributes
     public function wasChanged(array|string|null $attributes = null): bool
     {
         return $this->hasChanges(
-            $this->getChanges(), is_array($attributes) ? $attributes : func_get_args()
+            $this->getChanges(),
+            is_array($attributes) ? $attributes : func_get_args()
         );
     }
 
     /**
      * Determine if any of the given attributes were changed.
      */
-    protected function hasChanges(array $changes, array|null $attributes = null): bool
+    protected function hasChanges(array $changes, ?array $attributes = null): bool
     {
         // If no specific attributes were provided, we will just see if the dirty array
         // already contains any attributes. If it does we will just return that this
@@ -1015,6 +1022,7 @@ trait HasAttributes
 
             // Check return type
             $returnType = $reflection->getReturnType();
+
             return $returnType && $returnType->getName() === Attribute::class;
         } catch (\ReflectionException $e) {
             return false;
@@ -1104,14 +1112,16 @@ trait HasAttributes
         );
 
         $attributes = $this->addMutatedAttributesToArray(
-            $attributes, $mutatedAttributes = $this->getMutatedAttributes()
+            $attributes,
+            $mutatedAttributes = $this->getMutatedAttributes()
         );
 
         // Next we will handle any casts that have been setup for this model and cast
         // the values to their appropriate type. If the attribute has a mutator we
         // will not perform the cast on those attributes to avoid any confusion.
         $attributes = $this->addCastAttributesToArray(
-            $attributes, $mutatedAttributes
+            $attributes,
+            $mutatedAttributes
         );
 
         // Here we will grab all of the appended, calculated attributes to this model
@@ -1159,7 +1169,8 @@ trait HasAttributes
             // mutated attribute's actual values. After we finish mutating each of the
             // attributes we will return this final array of the mutated attributes.
             $attributes[$key] = $this->mutateAttributeForArray(
-                $key, $attributes[$key]
+                $key,
+                $attributes[$key]
             );
         }
 
@@ -1167,7 +1178,8 @@ trait HasAttributes
         foreach (array_keys($attributes) as $key) {
             if (!in_array($key, $mutatedAttributes) && $this->hasGetMutator($key)) {
                 $attributes[$key] = $this->mutateAttributeForArray(
-                    $key, $attributes[$key]
+                    $key,
+                    $attributes[$key]
                 );
             }
         }
@@ -1190,7 +1202,8 @@ trait HasAttributes
             // if the cast is a custom class cast. This will allow the IDE to know
             // the return type of the attribute when using the model in the IDE.
             $attributes[$key] = $this->castAttribute(
-                $key, $attributes[$key]
+                $key,
+                $attributes[$key]
             );
 
             // If the attribute cast was a date or a datetime, we will serialize the date
@@ -1332,7 +1345,7 @@ trait HasAttributes
                     'boot', 'booted', 'bootIfNotBooted', 'initializeTraits', 'fill', 'save',
                     'delete', 'update', 'create', 'find', 'where', 'first', 'get', 'all',
                     'toArray', 'toJson', 'getAttribute', 'setAttribute', 'hasGetMutator',
-                    'hasSetMutator', 'mutateAttribute', 'getMutatedAttributes', 'getModernAttributeAccessors'
+                    'hasSetMutator', 'mutateAttribute', 'getMutatedAttributes', 'getModernAttributeAccessors',
                 ])) {
                 continue;
             }
@@ -1424,7 +1437,7 @@ trait HasAttributes
         $decoded = json_decode($value, !$asObject);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \InvalidArgumentException('Unable to decode JSON: ' . json_last_error_msg());
+            throw new \InvalidArgumentException('Unable to decode JSON: '.json_last_error_msg());
         }
 
         return $decoded;
@@ -1472,7 +1485,9 @@ trait HasAttributes
         [$key, $path] = explode('->', $key, 2);
 
         $this->attributes[$key] = $this->asJson($this->getArrayAttributeWithValue(
-            $path, $key, $value
+            $path,
+            $key,
+            $value
         ));
 
         return $this;

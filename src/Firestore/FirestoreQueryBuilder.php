@@ -2,36 +2,47 @@
 
 namespace JTD\FirebaseModels\Firestore;
 
-use Google\Cloud\Firestore\Query;
+use Closure;
 use Google\Cloud\Firestore\CollectionReference;
-use Illuminate\Support\Collection;
+use Google\Cloud\Firestore\Query;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Request;
-use Closure;
 use JTD\FirebaseModels\Cache\Concerns\Cacheable;
 
 /**
  * Laravel-style query builder for Firestore.
- * 
+ *
  * Provides a fluent interface for building Firestore queries that mirrors
  * Laravel's query builder API as closely as possible.
  */
 class FirestoreQueryBuilder
 {
     use Cacheable;
+
     protected FirestoreDatabase $database;
+
     protected string $collection;
+
     protected CollectionReference $query;
+
     protected array $wheres = [];
+
     protected array $orders = [];
+
     protected ?int $limitValue = null;
+
     protected ?int $offsetValue = null;
+
     protected array $selects = [];
+
     protected bool $distinct = false;
+
     protected bool $randomOrder = false;
+
     protected ?string $cursorAfter = null;
+
     protected ?string $cursorBefore = null;
 
     public function __construct(FirestoreDatabase $database, string $collection)
@@ -288,9 +299,10 @@ class FirestoreQueryBuilder
         // Convert date to start and end of day for proper comparison
         if ($operator === '=') {
             $date = \Carbon\Carbon::parse($value);
+
             return $this->whereBetween($column, [
                 $date->startOfDay()->toDateTimeString(),
-                $date->endOfDay()->toDateTimeString()
+                $date->endOfDay()->toDateTimeString(),
             ]);
         }
 
@@ -322,9 +334,10 @@ class FirestoreQueryBuilder
 
         if ($operator === '=') {
             $year = (int) $value;
+
             return $this->whereBetween($column, [
                 "{$year}-01-01 00:00:00",
-                "{$year}-12-31 23:59:59"
+                "{$year}-12-31 23:59:59",
             ]);
         }
 
@@ -351,7 +364,7 @@ class FirestoreQueryBuilder
 
             return $this->whereBetween($column, [
                 $startOfMonth->toDateTimeString(),
-                $endOfMonth->toDateTimeString()
+                $endOfMonth->toDateTimeString(),
             ]);
         }
 
@@ -379,7 +392,7 @@ class FirestoreQueryBuilder
 
             return $this->whereBetween($column, [
                 $startOfDay->toDateTimeString(),
-                $endOfDay->toDateTimeString()
+                $endOfDay->toDateTimeString(),
             ]);
         }
 
@@ -431,6 +444,7 @@ class FirestoreQueryBuilder
     public function inRandomOrder(): static
     {
         $this->randomOrder = true;
+
         return $this;
     }
 
@@ -440,6 +454,7 @@ class FirestoreQueryBuilder
     public function limit(int $value): static
     {
         $this->limitValue = $value;
+
         return $this;
     }
 
@@ -457,6 +472,7 @@ class FirestoreQueryBuilder
     public function offset(int $value): static
     {
         $this->offsetValue = $value;
+
         return $this;
     }
 
@@ -475,6 +491,7 @@ class FirestoreQueryBuilder
     public function startAfter(string $documentId): static
     {
         $this->cursorAfter = $documentId;
+
         return $this;
     }
 
@@ -484,6 +501,7 @@ class FirestoreQueryBuilder
     public function startBefore(string $documentId): static
     {
         $this->cursorBefore = $documentId;
+
         return $this;
     }
 
@@ -513,6 +531,7 @@ class FirestoreQueryBuilder
     public function select(array|string ...$columns): static
     {
         $this->selects = is_array($columns[0]) ? $columns[0] : $columns;
+
         return $this;
     }
 
@@ -523,6 +542,7 @@ class FirestoreQueryBuilder
     {
         $columns = is_array($columns[0]) ? $columns[0] : $columns;
         $this->selects = array_merge($this->selects, $columns);
+
         return $this;
     }
 
@@ -532,6 +552,7 @@ class FirestoreQueryBuilder
     public function distinct(): static
     {
         $this->distinct = true;
+
         return $this;
     }
 
@@ -602,6 +623,7 @@ class FirestoreQueryBuilder
         // Clone the query to avoid mutating the original
         $query = clone $this;
         $results = $query->limit(1)->parentGet($columns);
+
         return $results->first();
     }
 
@@ -611,11 +633,11 @@ class FirestoreQueryBuilder
     public function firstOrFail(array $columns = ['*']): mixed
     {
         $result = $this->first($columns);
-        
+
         if ($result === null) {
             throw new \Illuminate\Database\RecordNotFoundException('No query results for model.');
         }
-        
+
         return $result;
     }
 
@@ -625,6 +647,7 @@ class FirestoreQueryBuilder
     public function value(string $column): mixed
     {
         $result = $this->first([$column]);
+
         return $result[$column] ?? null;
     }
 
@@ -634,6 +657,7 @@ class FirestoreQueryBuilder
     public function valueOrFail(string $column): mixed
     {
         $result = $this->firstOrFail([$column]);
+
         return $result[$column];
     }
 
@@ -666,6 +690,7 @@ class FirestoreQueryBuilder
     {
         // Clone the query to avoid mutating the original
         $query = clone $this;
+
         return $query->limit(1)->parentCount() > 0;
     }
 
@@ -709,6 +734,7 @@ class FirestoreQueryBuilder
     public function avg(string $column): float|int|null
     {
         $result = $this->get([$column])->avg($column);
+
         return $result;
     }
 
@@ -726,19 +752,19 @@ class FirestoreQueryBuilder
     public function find(string $id, array $columns = ['*']): mixed
     {
         $document = $this->database->collectionReference($this->collection)->document($id)->snapshot();
-        
+
         if (!$document->exists()) {
             return null;
         }
-        
+
         $data = $document->data();
         $data['id'] = $document->id();
-        
+
         // Apply column selection
         if (!empty($columns) && $columns !== ['*']) {
             $data = array_intersect_key($data, array_flip($columns));
         }
-        
+
         return $data;
     }
 
@@ -821,11 +847,13 @@ class FirestoreQueryBuilder
 
             case 'in':
                 $operator = $where['not'] ? 'not-in' : 'in';
+
                 return $query->where($where['column'], $operator, $where['values']);
 
             case 'null':
                 $value = $where['not'] ? null : null;
                 $operator = $where['not'] ? '!=' : '==';
+
                 return $query->where($where['column'], $operator, null);
 
             default:
@@ -911,12 +939,6 @@ class FirestoreQueryBuilder
         return $count;
     }
 
-
-
-
-
-
-
     /**
      * Chunk the results of the query.
      */
@@ -969,9 +991,10 @@ class FirestoreQueryBuilder
         try {
             $collection = $this->database->collectionReference($this->collection);
             $collection->add($values);
+
             return true;
         } catch (\Exception $e) {
-            throw new \RuntimeException("Failed to insert document: " . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to insert document: '.$e->getMessage(), 0, $e);
         }
     }
 
@@ -987,9 +1010,10 @@ class FirestoreQueryBuilder
         try {
             $collection = $this->database->collectionReference($this->collection);
             $docRef = $collection->add($values);
+
             return $docRef->id();
         } catch (\Exception $e) {
-            throw new \RuntimeException("Failed to insert document: " . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to insert document: '.$e->getMessage(), 0, $e);
         }
     }
 
@@ -1006,9 +1030,10 @@ class FirestoreQueryBuilder
             $collection = $this->database->collectionReference($this->collection);
             $docRef = $collection->document($id);
             $docRef->set($values);
+
             return true;
         } catch (\Exception $e) {
-            throw new \RuntimeException("Failed to insert document with ID: " . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to insert document with ID: '.$e->getMessage(), 0, $e);
         }
     }
 
@@ -1026,7 +1051,7 @@ class FirestoreQueryBuilder
             // This will be properly implemented once the mocking system is stable
             return 1;
         } catch (\Exception $e) {
-            throw new \RuntimeException("Failed to update documents: " . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to update documents: '.$e->getMessage(), 0, $e);
         }
     }
 
@@ -1074,7 +1099,7 @@ class FirestoreQueryBuilder
             // For bulk deletion without specific conditions, return mock count
             return 1;
         } catch (\Exception $e) {
-            throw new \RuntimeException("Failed to delete documents: " . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to delete documents: '.$e->getMessage(), 0, $e);
         }
     }
 
@@ -1093,5 +1118,4 @@ class FirestoreQueryBuilder
 
         return $references;
     }
-
 }

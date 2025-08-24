@@ -10,11 +10,17 @@ use JTD\FirebaseModels\Contracts\Sync\SyncResultInterface;
 class SyncResult implements SyncResultInterface
 {
     protected int $processedCount = 0;
+
     protected int $syncedCount = 0;
+
     protected int $conflictCount = 0;
+
     protected int $errorCount = 0;
+
     protected array $errors = [];
+
     protected array $conflicts = [];
+
     protected bool $successful = true;
 
     /**
@@ -84,7 +90,7 @@ class SyncResult implements SyncResultInterface
             'synced' => $this->syncedCount,
             'conflicts' => $this->conflictCount,
             'errors' => $this->errorCount,
-            'success_rate' => $this->processedCount > 0 ? 
+            'success_rate' => $this->processedCount > 0 ?
                 round(($this->syncedCount / $this->processedCount) * 100, 2) : 0,
         ];
     }

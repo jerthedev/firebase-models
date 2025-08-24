@@ -2,16 +2,16 @@
 
 namespace JTD\FirebaseModels\Tests\Unit;
 
-use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
-use JTD\FirebaseModels\Tests\Helpers\FirebaseAuthMock;
+use Illuminate\Http\Request;
+use JTD\FirebaseModels\Auth\FirebaseAuthenticatable;
 use JTD\FirebaseModels\Auth\FirebaseGuard;
 use JTD\FirebaseModels\Auth\FirebaseUserProvider;
-use JTD\FirebaseModels\Auth\FirebaseAuthenticatable;
+use JTD\FirebaseModels\Tests\Helpers\FirebaseAuthMock;
 use JTD\FirebaseModels\Tests\Models\TestUser;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\Group;
-use Illuminate\Http\Request;
+use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
 use Mockery;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
 #[Group('unit')]
 #[Group('core')]
@@ -19,20 +19,22 @@ use Mockery;
 class FirebaseAuthCoreTest extends UnitTestSuite
 {
     protected FirebaseGuard $guard;
+
     protected FirebaseUserProvider $provider;
+
     protected Request $request;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Set up Firebase Auth mocking
         FirebaseAuthMock::initialize();
         FirebaseAuthMock::clear();
-        
+
         // Create mock request
         $this->request = new Request();
-        
+
         // Create provider and guard instances
         $this->provider = new FirebaseUserProvider(
             app(\Kreait\Firebase\Contract\Auth::class),
@@ -96,7 +98,7 @@ class FirebaseAuthCoreTest extends UnitTestSuite
         // Create a test user in Firebase Auth mock
         $userData = FirebaseAuthMock::createTestUser([
             'email' => 'test@example.com',
-            'displayName' => 'Test User'
+            'displayName' => 'Test User',
         ]);
 
         // Create a valid token for the user
@@ -145,7 +147,7 @@ class FirebaseAuthCoreTest extends UnitTestSuite
         // Create test user and token
         $userData = FirebaseAuthMock::createTestUser([
             'email' => 'validate@example.com',
-            'displayName' => 'Validate User'
+            'displayName' => 'Validate User',
         ]);
         $token = FirebaseAuthMock::createTestToken($userData['uid']);
 
@@ -164,7 +166,7 @@ class FirebaseAuthCoreTest extends UnitTestSuite
         // Create test user and token
         $userData = FirebaseAuthMock::createTestUser([
             'email' => 'login@example.com',
-            'displayName' => 'Login User'
+            'displayName' => 'Login User',
         ]);
         $token = FirebaseAuthMock::createTestToken($userData['uid']);
 
@@ -184,7 +186,7 @@ class FirebaseAuthCoreTest extends UnitTestSuite
         // First, log in a user
         $userData = FirebaseAuthMock::createTestUser([
             'email' => 'logout@example.com',
-            'displayName' => 'Logout User'
+            'displayName' => 'Logout User',
         ]);
         $token = FirebaseAuthMock::createTestToken($userData['uid']);
 
@@ -203,7 +205,7 @@ class FirebaseAuthCoreTest extends UnitTestSuite
         // Create test user and token
         $userData = FirebaseAuthMock::createTestUser([
             'email' => 'once@example.com',
-            'displayName' => 'Once User'
+            'displayName' => 'Once User',
         ]);
         $token = FirebaseAuthMock::createTestToken($userData['uid']);
 
@@ -219,7 +221,7 @@ class FirebaseAuthCoreTest extends UnitTestSuite
         // Create test user
         $userData = FirebaseAuthMock::createTestUser([
             'email' => 'provider@example.com',
-            'displayName' => 'Provider User'
+            'displayName' => 'Provider User',
         ]);
 
         // Test retrieveById
@@ -247,7 +249,7 @@ class FirebaseAuthCoreTest extends UnitTestSuite
         $user = new TestUser([
             'uid' => 'test-uid-123',
             'email' => 'model@example.com',
-            'name' => 'Model User'
+            'name' => 'Model User',
         ]);
 
         expect($user)->toBeInstanceOf(FirebaseAuthenticatable::class);
@@ -262,13 +264,13 @@ class FirebaseAuthCoreTest extends UnitTestSuite
     {
         $user = new TestUser([
             'uid' => 'token-test-uid',
-            'email' => 'token@example.com'
+            'email' => 'token@example.com',
         ]);
 
         // Test token setting and getting
         $mockToken = Mockery::mock(\Kreait\Firebase\JWT\IdToken::class);
         $user->setFirebaseToken($mockToken);
-        
+
         expect($user->getFirebaseToken())->toBe($mockToken);
         expect($user->hasFirebaseToken())->toBeTrue();
 
@@ -287,7 +289,7 @@ class FirebaseAuthCoreTest extends UnitTestSuite
             'email' => 'create@example.com',
             'displayName' => 'Created User',
             'emailVerified' => true,
-            'disabled' => false
+            'disabled' => false,
         ];
 
         // Create user from Firebase data
@@ -309,7 +311,7 @@ class FirebaseAuthCoreTest extends UnitTestSuite
 
         // Log in a user
         $userData = FirebaseAuthMock::createTestUser([
-            'email' => 'state@example.com'
+            'email' => 'state@example.com',
         ]);
         $token = FirebaseAuthMock::createTestToken($userData['uid']);
         $this->guard->attempt(['token' => $token]);
@@ -335,7 +337,7 @@ class FirebaseAuthCoreTest extends UnitTestSuite
 
         // Perform login
         $userData = FirebaseAuthMock::createTestUser([
-            'email' => 'events@example.com'
+            'email' => 'events@example.com',
         ]);
         $token = FirebaseAuthMock::createTestToken($userData['uid']);
         $this->guard->attempt(['token' => $token]);

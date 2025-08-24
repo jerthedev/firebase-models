@@ -3,7 +3,6 @@
 namespace JTD\FirebaseModels\Sync\Schema;
 
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Str;
 
 /**
@@ -18,8 +17,8 @@ class SchemaGuide
     public static function generateMigration(string $collection, array $sampleData = []): string
     {
         $tableName = Str::snake($collection);
-        $className = 'Create' . Str::studly($tableName) . 'Table';
-        
+        $className = 'Create'.Str::studly($tableName).'Table';
+
         $columns = static::analyzeFields($sampleData);
         $columnDefinitions = static::generateColumnDefinitions($columns);
 
@@ -62,27 +61,27 @@ class SchemaGuide
         switch (gettype($value)) {
             case 'boolean':
                 return ['type' => 'boolean', 'default' => false];
-                
+
             case 'integer':
                 return ['type' => 'integer'];
-                
+
             case 'double':
                 return ['type' => 'decimal', 'precision' => 10, 'scale' => 2];
-                
+
             case 'string':
                 // Check for common patterns
                 if (Str::endsWith($field, '_at') || Str::endsWith($field, '_date')) {
                     return ['type' => 'timestamp', 'nullable' => true];
                 }
-                
+
                 if (Str::endsWith($field, '_id') || $field === 'id') {
                     return ['type' => 'string'];
                 }
-                
+
                 if (Str::endsWith($field, '_email') || $field === 'email') {
                     return ['type' => 'string', 'unique' => true];
                 }
-                
+
                 // Default string length based on content
                 $length = strlen($value);
                 if ($length > 500) {
@@ -92,10 +91,10 @@ class SchemaGuide
                 } else {
                     return ['type' => 'string'];
                 }
-                
+
             case 'array':
                 return ['type' => 'json'];
-                
+
             default:
                 return ['type' => 'text'];
         }
@@ -225,14 +224,15 @@ PHP;
     public static function validateSchema(string $tableName, array $firestoreFields): array
     {
         $issues = [];
-        
+
         if (!Schema::hasTable($tableName)) {
             $issues[] = "Table '{$tableName}' does not exist";
+
             return $issues;
         }
 
         $tableColumns = Schema::getColumnListing($tableName);
-        
+
         // Check for missing columns
         foreach ($firestoreFields as $field) {
             if (!in_array($field, $tableColumns)) {

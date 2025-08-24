@@ -41,7 +41,7 @@ class BatchValidator
 
         // Check operation count
         if (count($operations) > static::$limits['max_operations_per_batch']) {
-            $errors[] = "Too many operations: " . count($operations) . " (max: " . static::$limits['max_operations_per_batch'] . ")";
+            $errors[] = 'Too many operations: '.count($operations).' (max: '.static::$limits['max_operations_per_batch'].')';
         }
 
         // Validate each operation
@@ -64,6 +64,7 @@ class BatchValidator
         // Check operation type
         if (!$type || !isset(static::$rules[$type])) {
             $errors[] = "Operation {$index}: Invalid or missing operation type";
+
             return $errors;
         }
 
@@ -104,6 +105,7 @@ class BatchValidator
 
         if (empty($collection)) {
             $errors[] = "Operation {$index}: Collection name cannot be empty";
+
             return $errors;
         }
 
@@ -137,6 +139,7 @@ class BatchValidator
 
         if (empty($id)) {
             $errors[] = "Operation {$index}: Document ID cannot be empty";
+
             return $errors;
         }
 
@@ -168,7 +171,7 @@ class BatchValidator
         // Check document size
         $size = static::calculateDocumentSize($data);
         if ($size > static::$limits['max_document_size']) {
-            $errors[] = "Operation {$index}: Document size ({$size} bytes) exceeds limit (" . static::$limits['max_document_size'] . " bytes)";
+            $errors[] = "Operation {$index}: Document size ({$size} bytes) exceeds limit (".static::$limits['max_document_size'].' bytes)';
         }
 
         // Validate fields
@@ -220,7 +223,7 @@ class BatchValidator
 
         // Check length
         if (strlen($name) > static::$limits['max_field_name_length']) {
-            $errors[] = "Operation {$index}: Field name '{$path}' too long (max: " . static::$limits['max_field_name_length'] . " characters)";
+            $errors[] = "Operation {$index}: Field name '{$path}' too long (max: ".static::$limits['max_field_name_length'].' characters)';
         }
 
         // Check for reserved field names
@@ -240,12 +243,12 @@ class BatchValidator
 
         if (is_string($value)) {
             if (strlen($value) > static::$limits['max_field_value_length']) {
-                $errors[] = "Operation {$index}: String field '{$path}' too long (max: " . static::$limits['max_field_value_length'] . " characters)";
+                $errors[] = "Operation {$index}: String field '{$path}' too long (max: ".static::$limits['max_field_value_length'].' characters)';
             }
         } elseif (is_array($value) && !static::isAssociativeArray($value)) {
             // Array validation
             if (count($value) > static::$limits['max_array_elements']) {
-                $errors[] = "Operation {$index}: Array field '{$path}' has too many elements (max: " . static::$limits['max_array_elements'] . ")";
+                $errors[] = "Operation {$index}: Array field '{$path}' has too many elements (max: ".static::$limits['max_array_elements'].')';
             }
         }
 
@@ -274,10 +277,10 @@ class BatchValidator
     public static function validateOrFail(BatchOperation $batch): void
     {
         $errors = static::validateBatchOperation($batch);
-        
+
         if (!empty($errors)) {
             throw new BatchException(
-                'Batch validation failed: ' . implode('; ', $errors),
+                'Batch validation failed: '.implode('; ', $errors),
                 0,
                 null,
                 ['validation_errors' => $errors],

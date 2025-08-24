@@ -6,31 +6,16 @@ parameters:
         - src
     
     # The level 9 is the highest level
-    level: 8
+    level: 5
     
-    ignoreErrors:
-        # Ignore errors for dynamic properties in models
-        - '#Access to an undefined property [a-zA-Z0-9\\_]+::\$[a-zA-Z0-9_]+#'
-        
-        # Ignore errors for magic methods in models
-        - '#Call to an undefined method [a-zA-Z0-9\\_]+::[a-zA-Z0-9_]+\(\)#'
-        
-        # Ignore errors for Firestore SDK dynamic methods
-        - '#Call to an undefined method Google\\Cloud\\Firestore\\[a-zA-Z0-9\\_]+::[a-zA-Z0-9_]+\(\)#'
-        
-        # Ignore errors for Laravel facade methods
-        - '#Call to an undefined static method Illuminate\\Support\\Facades\\[a-zA-Z0-9\\_]+::[a-zA-Z0-9_]+\(\)#'
-        
-        # Ignore errors for test helper methods
-        - '#Method JTD\\FirebaseModels\\Tests\\[a-zA-Z0-9\\_]+::[a-zA-Z0-9_]+\(\) has no return type specified#'
+    ignoreErrors: []
     
     excludePaths:
         - src/config/*
         - tests/*
         - vendor/*
     
-    checkMissingIterableValueType: false
-    checkGenericClassInNonGenericObjectType: false
+
     
     # Laravel specific configurations
     universalObjectCratesClasses:

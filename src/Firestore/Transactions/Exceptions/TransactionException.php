@@ -32,6 +32,7 @@ class TransactionException extends \Exception
     public function setContext(array $context): static
     {
         $this->context = $context;
+
         return $this;
     }
 
@@ -41,6 +42,7 @@ class TransactionException extends \Exception
     public function addContext(string $key, mixed $value): static
     {
         $this->context[$key] = $value;
+
         return $this;
     }
 

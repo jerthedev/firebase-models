@@ -4,7 +4,7 @@ namespace JTD\FirebaseModels\Auth;
 
 /**
  * Default User model implementation using Firebase Authentication.
- * 
+ *
  * This is a concrete implementation of FirebaseAuthenticatable that can be used
  * directly or extended for custom user models. It provides sensible defaults
  * for most Firebase Auth use cases.
@@ -71,7 +71,7 @@ class User extends FirebaseAuthenticatable
         $lastName = $this->getAttribute('last_name');
 
         if ($firstName && $lastName) {
-            return trim($firstName . ' ' . $lastName);
+            return trim($firstName.' '.$lastName);
         }
 
         return $this->getAttribute('name');
@@ -84,11 +84,11 @@ class User extends FirebaseAuthenticatable
     {
         $name = $this->full_name ?? $this->email ?? '';
         $words = explode(' ', $name);
-        
+
         if (count($words) >= 2) {
-            return strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
+            return strtoupper(substr($words[0], 0, 1).substr($words[1], 0, 1));
         }
-        
+
         return strtoupper(substr($name, 0, 2));
     }
 
@@ -106,12 +106,13 @@ class User extends FirebaseAuthenticatable
     protected function generateGravatarUrl(): ?string
     {
         $email = $this->getAttribute('email');
-        
+
         if (!$email) {
             return null;
         }
-        
+
         $hash = md5(strtolower(trim($email)));
+
         return "https://www.gravatar.com/avatar/{$hash}?d=identicon&s=200";
     }
 
@@ -121,6 +122,7 @@ class User extends FirebaseAuthenticatable
     public function getPreference(string $key, mixed $default = null): mixed
     {
         $preferences = $this->getAttribute('preferences') ?? [];
+
         return $preferences[$key] ?? $default;
     }
 
@@ -132,7 +134,7 @@ class User extends FirebaseAuthenticatable
         $preferences = $this->getAttribute('preferences') ?? [];
         $preferences[$key] = $value;
         $this->setAttribute('preferences', $preferences);
-        
+
         return $this;
     }
 
@@ -198,14 +200,14 @@ class User extends FirebaseAuthenticatable
     public function toArray(): array
     {
         $array = parent::toArray();
-        
+
         // Add computed attributes
         $array['full_name'] = $this->full_name;
         $array['initials'] = $this->initials;
         $array['avatar_url'] = $this->avatar_url;
         $array['is_admin'] = $this->isAdmin();
         $array['has_verified_email'] = $this->hasVerifiedEmail();
-        
+
         return $array;
     }
 }

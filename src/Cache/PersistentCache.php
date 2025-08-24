@@ -2,14 +2,13 @@
 
 namespace JTD\FirebaseModels\Cache;
 
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Cache\Repository;
 use Illuminate\Cache\TaggedCache;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Persistent cache for Firestore operations using Laravel's cache system.
- * 
+ *
  * This cache provides cross-request persistence using Laravel's cache drivers
  * (Redis, Memcached, etc.) with intelligent invalidation strategies.
  */
@@ -52,7 +51,7 @@ class PersistentCache
     protected static function cache(?string $store = null): Repository
     {
         $store = $store ?? static::$defaultStore ?? config('firebase-models.cache.store');
-        
+
         if ($store) {
             return Cache::store($store);
         }
@@ -66,7 +65,7 @@ class PersistentCache
     protected static function taggedCache(array $tags = [], ?string $store = null): Repository|TaggedCache
     {
         $cache = static::cache($store);
-        
+
         if (empty($tags)) {
             return $cache;
         }
@@ -87,7 +86,7 @@ class PersistentCache
      */
     protected static function key(string $key): string
     {
-        return static::$keyPrefix . ':' . $key;
+        return static::$keyPrefix.':'.$key;
     }
 
     /**
@@ -102,18 +101,19 @@ class PersistentCache
         try {
             $cache = static::cache($store);
             $prefixedKey = static::key($key);
-            
+
             $value = $cache->get($prefixedKey, $default);
-            
+
             if ($value !== $default) {
                 static::$stats['hits']++;
             } else {
                 static::$stats['misses']++;
             }
-            
+
             return $value;
         } catch (\Exception $e) {
             static::$stats['misses']++;
+
             return $default;
         }
     }
@@ -131,13 +131,13 @@ class PersistentCache
             $cache = static::taggedCache($tags, $store);
             $prefixedKey = static::key($key);
             $ttl = $ttl ?? static::$defaultTtl;
-            
+
             $result = $cache->put($prefixedKey, $value, $ttl);
-            
+
             if ($result) {
                 static::$stats['sets']++;
             }
-            
+
             return $result;
         } catch (\Exception $e) {
             return false;
@@ -156,13 +156,13 @@ class PersistentCache
         try {
             $cache = static::taggedCache($tags, $store);
             $prefixedKey = static::key($key);
-            
+
             $result = $cache->forever($prefixedKey, $value);
-            
+
             if ($result) {
                 static::$stats['sets']++;
             }
-            
+
             return $result;
         } catch (\Exception $e) {
             return false;
@@ -182,25 +182,27 @@ class PersistentCache
             $cache = static::taggedCache($tags, $store);
             $prefixedKey = static::key($key);
             $ttl = $ttl ?? static::$defaultTtl;
-            
+
             $value = $cache->get($prefixedKey);
-            
+
             if ($value !== null) {
                 static::$stats['hits']++;
+
                 return $value;
             }
-            
+
             static::$stats['misses']++;
             $value = $callback();
-            
+
             if ($value !== null) {
                 $cache->put($prefixedKey, $value, $ttl);
                 static::$stats['sets']++;
             }
-            
+
             return $value;
         } catch (\Exception $e) {
             static::$stats['misses']++;
+
             return $callback();
         }
     }
@@ -217,25 +219,27 @@ class PersistentCache
         try {
             $cache = static::taggedCache($tags, $store);
             $prefixedKey = static::key($key);
-            
+
             $value = $cache->get($prefixedKey);
-            
+
             if ($value !== null) {
                 static::$stats['hits']++;
+
                 return $value;
             }
-            
+
             static::$stats['misses']++;
             $value = $callback();
-            
+
             if ($value !== null) {
                 $cache->forever($prefixedKey, $value);
                 static::$stats['sets']++;
             }
-            
+
             return $value;
         } catch (\Exception $e) {
             static::$stats['misses']++;
+
             return $callback();
         }
     }
@@ -252,7 +256,7 @@ class PersistentCache
         try {
             $cache = static::cache($store);
             $prefixedKey = static::key($key);
-            
+
             return $cache->has($prefixedKey);
         } catch (\Exception $e) {
             return false;
@@ -267,13 +271,13 @@ class PersistentCache
         try {
             $cache = static::cache($store);
             $prefixedKey = static::key($key);
-            
+
             $result = $cache->forget($prefixedKey);
-            
+
             if ($result) {
                 static::$stats['deletes']++;
             }
-            
+
             return $result;
         } catch (\Exception $e) {
             return false;
@@ -288,7 +292,7 @@ class PersistentCache
         try {
             $cache = static::cache($store);
             $prefixedKeys = array_map([static::class, 'key'], $keys);
-            
+
             $result = true;
             foreach ($prefixedKeys as $key) {
                 if (!$cache->forget($key)) {
@@ -297,7 +301,7 @@ class PersistentCache
                     static::$stats['deletes']++;
                 }
             }
-            
+
             return $result;
         } catch (\Exception $e) {
             return false;
@@ -311,13 +315,13 @@ class PersistentCache
     {
         try {
             $cache = static::taggedCache($tags, $store);
-            
+
             $result = $cache->flush();
-            
+
             if ($result) {
                 static::$stats['flushes']++;
             }
-            
+
             return $result;
         } catch (\Exception $e) {
             return false;
@@ -331,6 +335,7 @@ class PersistentCache
     {
         try {
             $cache = static::cache($store);
+
             return $cache->flush();
         } catch (\Exception $e) {
             return false;
@@ -353,7 +358,7 @@ class PersistentCache
     public static function getHitRate(): float
     {
         $total = static::$stats['hits'] + static::$stats['misses'];
-        
+
         if ($total === 0) {
             return 0.0;
         }

@@ -2,17 +2,17 @@
 
 namespace JTD\FirebaseModels\Tests\Unit\Accessors;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use JTD\FirebaseModels\Firestore\FirestoreModel;
 use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
 use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use PHPUnit\Framework\Attributes\Test;
 
 // Test model with legacy accessors
 class TestModelWithLegacyAccessors extends FirestoreModel
 {
     protected ?string $collection = 'test_models';
-    
+
     protected array $fillable = ['first_name', 'last_name', 'name', 'email', 'age', 'price', 'is_active'];
 
     protected array $appends = ['full_name', 'display_price'];
@@ -20,7 +20,7 @@ class TestModelWithLegacyAccessors extends FirestoreModel
     // Legacy accessor
     public function getFullNameAttribute(): string
     {
-        return ($this->attributes['first_name'] ?? '') . ' ' . ($this->attributes['last_name'] ?? '');
+        return ($this->attributes['first_name'] ?? '').' '.($this->attributes['last_name'] ?? '');
     }
 
     // Legacy mutator
@@ -32,7 +32,7 @@ class TestModelWithLegacyAccessors extends FirestoreModel
     // Legacy accessor with transformation
     public function getDisplayPriceAttribute(): string
     {
-        return '$' . number_format($this->attributes['price'] ?? 0, 2);
+        return '$'.number_format($this->attributes['price'] ?? 0, 2);
     }
 
     // Legacy mutator with validation
@@ -46,9 +46,9 @@ class TestModelWithLegacyAccessors extends FirestoreModel
 class TestModelWithModernAccessors extends FirestoreModel
 {
     protected ?string $collection = 'test_models';
-    
+
     protected array $fillable = ['name', 'email', 'age', 'price', 'is_active', 'metadata'];
-    
+
     protected array $appends = ['formatted_name', 'status_text'];
 
     // Modern accessor/mutator
@@ -83,11 +83,11 @@ class TestModelWithModernAccessors extends FirestoreModel
             get: function () {
                 $isActive = $this->attributes['is_active'] ?? false;
                 $age = $this->attributes['age'] ?? 0;
-                
+
                 if (!$isActive) {
                     return 'Inactive';
                 }
-                
+
                 return $age >= 18 ? 'Active Adult' : 'Active Minor';
             }
         );
@@ -142,12 +142,12 @@ class AccessorsTest extends UnitTestSuite
     #[Test]
     public function it_can_use_legacy_get_x_attribute_accessors()
     {
-            $model = new TestModelWithLegacyAccessors();
-            $model->fill([
-                'first_name' => 'John',
-                'last_name' => 'Doe',
-                'price' => 99.99,
-            ]);
+        $model = new TestModelWithLegacyAccessors();
+        $model->fill([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'price' => 99.99,
+        ]);
 
         expect($model->full_name)->toBe('John Doe');
         expect($model->display_price)->toBe('$99.99');
@@ -297,22 +297,25 @@ class AccessorsTest extends UnitTestSuite
     public function it_can_mix_legacy_and_modern_accessors_in_the_same_model()
     {
         // Create a model that uses both patterns
-        $model = new class extends FirestoreModel {
+        $model = new class() extends FirestoreModel
+        {
             protected ?string $collection = 'mixed_models';
+
             protected array $fillable = ['name', 'email'];
+
             protected array $appends = ['legacy_name', 'modern_name'];
 
             // Legacy accessor
             public function getLegacyNameAttribute(): string
             {
-                return 'Legacy: ' . ($this->attributes['name'] ?? '');
+                return 'Legacy: '.($this->attributes['name'] ?? '');
             }
 
             // Modern accessor
             public function modernName(): Attribute
             {
                 return Attribute::make(
-                    get: fn () => 'Modern: ' . ($this->attributes['name'] ?? ''),
+                    get: fn () => 'Modern: '.($this->attributes['name'] ?? ''),
                 );
             }
         };
@@ -330,21 +333,23 @@ class AccessorsTest extends UnitTestSuite
     #[Test]
     public function it_prioritizes_legacy_accessors_over_modern_ones()
     {
-        $model = new class extends FirestoreModel {
+        $model = new class() extends FirestoreModel
+        {
             protected ?string $collection = 'priority_models';
+
             protected array $fillable = ['name'];
 
             // Legacy accessor
             public function getNameAttribute(string $value): string
             {
-                return 'Legacy: ' . $value;
+                return 'Legacy: '.$value;
             }
 
             // Modern accessor (should be ignored due to legacy priority)
             public function name(): Attribute
             {
                 return Attribute::make(
-                    get: fn (string $value) => 'Modern: ' . $value,
+                    get: fn (string $value) => 'Modern: '.$value,
                 );
             }
         };
@@ -414,15 +419,19 @@ class AccessorsTest extends UnitTestSuite
     #[Test]
     public function it_respects_hidden_and_visible_attributes()
     {
-        $model = new class extends FirestoreModel {
+        $model = new class() extends FirestoreModel
+        {
             protected ?string $collection = 'visibility_models';
+
             protected array $fillable = ['name', 'email', 'secret'];
+
             protected array $hidden = ['secret'];
+
             protected array $appends = ['display_name'];
 
             public function getDisplayNameAttribute(): string
             {
-                return 'Display: ' . ($this->attributes['name'] ?? '');
+                return 'Display: '.($this->attributes['name'] ?? '');
             }
         };
 

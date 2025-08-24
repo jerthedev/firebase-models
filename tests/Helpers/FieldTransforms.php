@@ -4,7 +4,7 @@ namespace JTD\FirebaseModels\Tests\Helpers;
 
 /**
  * Field Transform Helpers for FirebaseMock v2
- * 
+ *
  * Provides helper methods to create field transforms that can be used
  * in tests to simulate Firestore field transforms like serverTimestamp(),
  * increment(), arrayUnion(), etc.
@@ -18,7 +18,7 @@ class FieldTransforms
     {
         return [
             '_transform_type' => 'serverTimestamp',
-            '_timestamp' => microtime(true)
+            '_timestamp' => microtime(true),
         ];
     }
 
@@ -29,7 +29,7 @@ class FieldTransforms
     {
         return [
             '_transform_type' => 'increment',
-            '_value' => $value
+            '_value' => $value,
         ];
     }
 
@@ -40,7 +40,7 @@ class FieldTransforms
     {
         return [
             '_transform_type' => 'increment',
-            '_value' => -$value
+            '_value' => -$value,
         ];
     }
 
@@ -51,7 +51,7 @@ class FieldTransforms
     {
         return [
             '_transform_type' => 'arrayUnion',
-            '_elements' => $elements
+            '_elements' => $elements,
         ];
     }
 
@@ -62,7 +62,7 @@ class FieldTransforms
     {
         return [
             '_transform_type' => 'arrayRemove',
-            '_elements' => $elements
+            '_elements' => $elements,
         ];
     }
 
@@ -72,7 +72,7 @@ class FieldTransforms
     public static function delete(): array
     {
         return [
-            '_transform_type' => 'delete'
+            '_transform_type' => 'delete',
         ];
     }
 
@@ -86,6 +86,7 @@ class FieldTransforms
         foreach ($transforms as $field => $transform) {
             if (!is_array($transform) || !isset($transform['_transform_type'])) {
                 $result[$field] = $transform;
+
                 continue;
             }
 
@@ -116,7 +117,7 @@ class FieldTransforms
     protected static function applyArrayUnion($currentValue, array $elements): array
     {
         $current = is_array($currentValue) ? $currentValue : [];
-        
+
         foreach ($elements as $element) {
             if (!in_array($element, $current, true)) {
                 $current[] = $element;
@@ -193,7 +194,8 @@ class FieldTransforms
      */
     public static function mockFieldValue(): object
     {
-        return new class {
+        return new class()
+        {
             public function serverTimestamp(): array
             {
                 return FieldTransforms::serverTimestamp();

@@ -2,12 +2,11 @@
 
 namespace JTD\FirebaseModels\Tests\Unit;
 
-use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
-use JTD\FirebaseModels\Optimization\QueryOptimizer;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\Group;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
+use JTD\FirebaseModels\Optimization\QueryOptimizer;
+use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
 #[Group('unit')]
 #[Group('optimization')]
@@ -17,7 +16,7 @@ class QueryOptimizerTest extends UnitTestSuite
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         QueryOptimizer::clearStats();
         QueryOptimizer::setEnabled(true);
         QueryOptimizer::configure([
@@ -103,7 +102,7 @@ class QueryOptimizerTest extends UnitTestSuite
     {
         $wheres = [
             ['field' => 'published', 'operator' => '=', 'value' => true],
-            ['field' => 'views', 'operator' => '>', 'value' => 100]
+            ['field' => 'views', 'operator' => '>', 'value' => 100],
         ];
         $orders = [['field' => 'created_at', 'direction' => 'desc']];
 
@@ -155,7 +154,7 @@ class QueryOptimizerTest extends UnitTestSuite
         $recommendations = QueryOptimizer::getOptimizationRecommendations();
 
         expect($recommendations)->toHaveCount(2);
-        
+
         $slowQueryRec = collect($recommendations)->firstWhere('type', 'slow_query');
         expect($slowQueryRec)->not->toBeNull();
         expect($slowQueryRec['avg_time_ms'])->toBeGreaterThan(100);
@@ -170,7 +169,7 @@ class QueryOptimizerTest extends UnitTestSuite
     {
         $wheres = [
             ['field' => 'tags', 'operator' => 'array-contains', 'value' => 'php'],
-            ['field' => 'published', 'operator' => '=', 'value' => true]
+            ['field' => 'published', 'operator' => '=', 'value' => true],
         ];
 
         $optimized = QueryOptimizer::optimizeQuery('posts', $wheres, [], null);
@@ -188,7 +187,7 @@ class QueryOptimizerTest extends UnitTestSuite
         $highPriorityWheres = [
             ['field' => 'published', 'operator' => '=', 'value' => true],
             ['field' => 'featured', 'operator' => '=', 'value' => true],
-            ['field' => 'views', 'operator' => '>', 'value' => 100]
+            ['field' => 'views', 'operator' => '>', 'value' => 100],
         ];
         $highPriorityOrders = [['field' => 'created_at', 'direction' => 'desc']];
 
@@ -280,7 +279,7 @@ class QueryOptimizerTest extends UnitTestSuite
     {
         $wheres = [
             ['field' => 'published', 'operator' => '=', 'value' => true],
-            ['field' => 'views', 'operator' => '>', 'value' => 100]
+            ['field' => 'views', 'operator' => '>', 'value' => 100],
         ];
         $orders = [['field' => 'created_at', 'direction' => 'desc']];
 
@@ -345,7 +344,7 @@ class QueryOptimizerTest extends UnitTestSuite
         ];
         $complexOrders = [
             ['field' => 'created_at', 'direction' => 'desc'],
-            ['field' => 'likes', 'direction' => 'desc']
+            ['field' => 'likes', 'direction' => 'desc'],
         ];
 
         $optimized = QueryOptimizer::optimizeQuery('posts', $complexWheres, $complexOrders, null);

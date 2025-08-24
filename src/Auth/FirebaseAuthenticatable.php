@@ -2,19 +2,18 @@
 
 namespace JTD\FirebaseModels\Auth;
 
-use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Contracts\Auth\Access\Authorizable;
-use Illuminate\Foundation\Auth\Access\Authorizable as AuthorizableTrait;
-use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Auth\Passwords\CanResetPassword as CanResetPasswordTrait;
+use Illuminate\Contracts\Auth\Access\Authorizable;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\CanResetPassword;
+use Illuminate\Foundation\Auth\Access\Authorizable as AuthorizableTrait;
 use Illuminate\Notifications\Notifiable;
 use JTD\FirebaseModels\Firestore\FirestoreModel;
 use Kreait\Firebase\Auth\UserRecord;
-use Kreait\Firebase\JWT\IdToken;
 
 /**
  * Abstract base class for Firebase-authenticated user models.
- * 
+ *
  * This class provides integration between Firebase Authentication and Laravel's
  * Auth system, allowing Firebase users to be used seamlessly with Laravel's
  * authentication guards and middleware.
@@ -147,6 +146,7 @@ abstract class FirebaseAuthenticatable extends FirestoreModel implements Authent
     public function setFirebaseToken($token): static
     {
         $this->firebaseToken = $token;
+
         return $this;
     }
 
@@ -165,6 +165,7 @@ abstract class FirebaseAuthenticatable extends FirestoreModel implements Authent
     {
         $this->firebaseUserRecord = $userRecord;
         $this->hydrateFromFirebaseUserRecord($userRecord);
+
         return $this;
     }
 
@@ -204,9 +205,9 @@ abstract class FirebaseAuthenticatable extends FirestoreModel implements Authent
     public function hydrateFromFirebaseToken($token): static
     {
         $this->firebaseToken = $token;
-        
+
         $claims = $token->claims();
-        
+
         $this->fill([
             'uid' => $claims->get('sub'),
             'email' => $claims->get('email'),
@@ -223,7 +224,7 @@ abstract class FirebaseAuthenticatable extends FirestoreModel implements Authent
                 $customClaims[$key] = $value;
             }
         }
-        
+
         if (!empty($customClaims)) {
             $this->setAttribute('custom_claims', $customClaims);
         }
@@ -254,6 +255,7 @@ abstract class FirebaseAuthenticatable extends FirestoreModel implements Authent
     public function getCustomClaim(string $key, mixed $default = null): mixed
     {
         $claims = $this->getAttribute('custom_claims') ?? [];
+
         return $claims[$key] ?? $default;
     }
 
@@ -263,6 +265,7 @@ abstract class FirebaseAuthenticatable extends FirestoreModel implements Authent
     public function hasCustomClaim(string $key): bool
     {
         $claims = $this->getAttribute('custom_claims') ?? [];
+
         return array_key_exists($key, $claims);
     }
 
@@ -348,10 +351,10 @@ abstract class FirebaseAuthenticatable extends FirestoreModel implements Authent
     public function toArray(): array
     {
         $array = parent::toArray();
-        
+
         // Remove sensitive Firebase-specific data
         unset($array['firebase_token']);
-        
+
         return $array;
     }
 }

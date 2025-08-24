@@ -2,20 +2,19 @@
 
 namespace JTD\FirebaseModels\Tests\Performance;
 
+use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
 use JTD\FirebaseModels\Tests\TestSuites\PerformanceTestSuite;
 use JTD\FirebaseModels\Tests\Utilities\TestDataFactory;
-use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Comprehensive Memory Optimization Performance Test
- * 
+ *
  * Migrated from:
  * - tests/Unit/MemoryOptimizationTest.php
- * 
+ *
  * Uses new PerformanceTestSuite for comprehensive memory and performance monitoring.
  */
-
 class MemoryOptimizationTest extends PerformanceTestSuite
 {
     protected function setUp(): void
@@ -83,7 +82,7 @@ class MemoryOptimizationTest extends PerformanceTestSuite
     public function it_properly_cleans_up_memory_between_tests()
     {
         $this->addPerformanceCheckpoint('cleanup_test_start');
-        
+
         // Test memory cleanup efficiency
         $cleanupResults = $this->measureOperation('memory_cleanup_test', function () {
             // Initialize and create test data
@@ -104,12 +103,12 @@ class MemoryOptimizationTest extends PerformanceTestSuite
 
             return 'cleanup_complete';
         });
-        
+
         $this->addPerformanceCheckpoint('cleanup_test_complete');
-        
+
         // Assert cleanup performance (allow more memory for cleanup operations)
         $this->assertPerformanceWithinLimits('memory_cleanup_test', 0.1, 8 * 1024 * 1024);
-        
+
         // Verify memory is properly cleaned up
         $this->assertMemoryWithinThresholds();
     }
@@ -185,31 +184,31 @@ class MemoryOptimizationTest extends PerformanceTestSuite
     public function it_properly_resets_static_instances()
     {
         $this->addPerformanceCheckpoint('static_reset_start');
-        
+
         // Test static instance reset performance
         $resetResults = $this->measureOperation('static_instance_reset', function () {
             // Create some data
             $testData = TestDataFactory::createUser(['name' => 'Test']);
             FirestoreMock::createDocument('test', 'doc1', $testData);
-            
+
             $mock1 = FirestoreMock::getInstance();
             expect($mock1->getDocuments())->not->toBeEmpty();
-            
+
             // Clear mocks
             FirestoreMock::clear();
-            
+
             // Get new instance - should be clean
             $mock2 = FirestoreMock::getInstance();
             expect($mock2->getDocuments())->toBeEmpty();
-            
+
             // Should be a new instance
             expect($mock1)->not->toBe($mock2);
-            
+
             return [$mock1, $mock2];
         });
-        
+
         $this->addPerformanceCheckpoint('static_reset_complete');
-        
+
         // Static reset should be very fast (allow more time for instance recreation)
         $this->assertPerformanceWithinLimits('static_instance_reset', 0.05, 1024 * 1024);
     }
@@ -218,28 +217,28 @@ class MemoryOptimizationTest extends PerformanceTestSuite
     public function it_clears_laravel_container_bindings_efficiently()
     {
         $this->addPerformanceCheckpoint('container_binding_start');
-        
+
         // Test container binding cleanup performance
         $bindingResults = $this->measureOperation('container_binding_cleanup', function () {
             // Set up mocking
             FirestoreMock::initialize();
-            
+
             // Verify bindings exist
             expect(app()->bound(\Google\Cloud\Firestore\FirestoreClient::class))->toBeTrue();
             expect(app()->bound(\Kreait\Firebase\Contract\Firestore::class))->toBeTrue();
-            
+
             // Clear mocks
             FirestoreMock::clear();
-            
+
             // Bindings should be cleared
             expect(app()->bound(\Google\Cloud\Firestore\FirestoreClient::class))->toBeFalse();
             expect(app()->bound(\Kreait\Firebase\Contract\Firestore::class))->toBeFalse();
-            
+
             return 'bindings_cleared';
         });
-        
+
         $this->addPerformanceCheckpoint('container_binding_complete');
-        
+
         // Container binding operations should be fast
         $this->assertPerformanceWithinLimits('container_binding_cleanup', 0.05, 1 * 1024 * 1024);
     }
@@ -252,7 +251,7 @@ class MemoryOptimizationTest extends PerformanceTestSuite
     public function it_prevents_mock_object_accumulation()
     {
         $this->addPerformanceCheckpoint('leak_prevention_start');
-        
+
         // Test memory leak prevention over multiple cycles
         $leakPreventionResults = $this->measureOperation('memory_leak_prevention', function () {
             // Run multiple test cycles
@@ -282,12 +281,12 @@ class MemoryOptimizationTest extends PerformanceTestSuite
 
             return 'cycles_complete';
         });
-        
+
         $this->addPerformanceCheckpoint('leak_prevention_complete');
-        
+
         // Memory leak prevention should be efficient (allow more memory for mock operations)
         $this->assertPerformanceWithinLimits('memory_leak_prevention', 0.5, 8 * 1024 * 1024);
-        
+
         // Overall memory usage should be within thresholds
         $this->assertMemoryWithinThresholds();
     }
@@ -312,6 +311,7 @@ class MemoryOptimizationTest extends PerformanceTestSuite
             }
 
             FirestoreMock::clear();
+
             return 'firestore_mock_complete';
         });
 
@@ -335,21 +335,21 @@ class MemoryOptimizationTest extends PerformanceTestSuite
     {
         // Perform various operations to generate metrics
         $this->performBulkOperations('performance_test', 200);
-        
+
         // Get performance report
         $report = $this->getPerformanceReport();
-        
+
         // Verify report structure
         expect($report)->toHaveKeys(['summary', 'operations', 'checkpoints', 'mock_type', 'memory_stats']);
         expect($report['summary'])->toHaveKeys(['total_time', 'memory_delta', 'peak_memory_delta']);
         expect($report['operations'])->toHaveKey('bulk_operations_200');
-        
+
         // Verify performance is within acceptable limits
         expect($report['summary']['total_time'])->toBeLessThan(2.0);
         expect($report['summary']['memory_delta'])->toBeLessThan(10 * 1024 * 1024);
-        
+
         // Log performance report for analysis
-        error_log('Memory Optimization Performance Report: ' . json_encode($report['summary']));
+        error_log('Memory Optimization Performance Report: '.json_encode($report['summary']));
     }
 
     // ========================================

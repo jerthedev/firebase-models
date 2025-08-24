@@ -31,22 +31,22 @@ abstract class IntegrationTestSuite extends BaseTestSuite
     protected function createTestDataset(array $collections = []): array
     {
         $dataset = [];
-        
+
         foreach ($collections as $collection => $config) {
             $count = $config['count'] ?? 10;
             $factory = $config['factory'] ?? null;
-            
+
             $dataset[$collection] = [];
-            
+
             for ($i = 0; $i < $count; $i++) {
                 $data = $factory ? $factory($i) : $this->generateDefaultData($collection, $i);
-                $id = $data['id'] ?? 'doc_' . $i;
-                
+                $id = $data['id'] ?? 'doc_'.$i;
+
                 $this->getFirestoreMock()->storeDocument($collection, $id, $data);
                 $dataset[$collection][$id] = $data;
             }
         }
-        
+
         return $dataset;
     }
 
@@ -56,8 +56,8 @@ abstract class IntegrationTestSuite extends BaseTestSuite
     protected function generateDefaultData(string $collection, int $index): array
     {
         return [
-            'id' => $collection . '_' . $index,
-            'name' => ucfirst($collection) . ' ' . $index,
+            'id' => $collection.'_'.$index,
+            'name' => ucfirst($collection).' '.$index,
             'index' => $index,
             'created_at' => now()->subMinutes($index),
             'updated_at' => now()->subMinutes($index / 2),
@@ -66,7 +66,7 @@ abstract class IntegrationTestSuite extends BaseTestSuite
             'metadata' => [
                 'source' => 'test',
                 'batch' => floor($index / 5),
-                'tags' => ['tag' . ($index % 3), 'tag' . ($index % 5)],
+                'tags' => ['tag'.($index % 3), 'tag'.($index % 5)],
             ],
         ];
     }
@@ -85,38 +85,39 @@ abstract class IntegrationTestSuite extends BaseTestSuite
         }
 
         $documents = $this->getFirestoreMock()->getCollectionDocuments($collection);
-        
+
         // Apply filters
         foreach ($filters as $filter) {
-            $documents = array_filter($documents, function($doc) use ($filter) {
+            $documents = array_filter($documents, function ($doc) use ($filter) {
                 return $this->applyFilter($doc, $filter);
             });
         }
-        
+
         // Apply ordering
         if (!empty($orderBy)) {
-            usort($documents, function($a, $b) use ($orderBy) {
+            usort($documents, function ($a, $b) use ($orderBy) {
                 foreach ($orderBy as $order) {
                     $field = $order['field'];
                     $direction = $order['direction'] ?? 'asc';
-                    
+
                     $aVal = $a[$field] ?? null;
                     $bVal = $b[$field] ?? null;
-                    
+
                     $cmp = $aVal <=> $bVal;
                     if ($cmp !== 0) {
                         return $direction === 'desc' ? -$cmp : $cmp;
                     }
                 }
+
                 return 0;
             });
         }
-        
+
         // Apply limit
         if ($limit !== null) {
             $documents = array_slice($documents, 0, $limit);
         }
-        
+
         return array_values($documents);
     }
 
@@ -193,19 +194,19 @@ abstract class IntegrationTestSuite extends BaseTestSuite
     protected function simulateBatchOperations(array $operations): array
     {
         $results = [];
-        
+
         foreach ($operations as $operation) {
             $type = $operation['type'];
             $collection = $operation['collection'];
             $id = $operation['id'];
             $data = $operation['data'] ?? [];
-            
+
             switch ($type) {
                 case 'create':
                     $this->getFirestoreMock()->storeDocument($collection, $id, $data);
                     $results[] = ['type' => 'create', 'id' => $id, 'success' => true];
                     break;
-                    
+
                 case 'update':
                     $existing = $this->getFirestoreMock()->getDocument($collection, $id);
                     if ($existing) {
@@ -216,14 +217,14 @@ abstract class IntegrationTestSuite extends BaseTestSuite
                         $results[] = ['type' => 'update', 'id' => $id, 'success' => false, 'error' => 'Document not found'];
                     }
                     break;
-                    
+
                 case 'delete':
                     $this->getFirestoreMock()->deleteDocument($collection, $id);
                     $results[] = ['type' => 'delete', 'id' => $id, 'success' => true];
                     break;
             }
         }
-        
+
         return $results;
     }
 
@@ -234,11 +235,11 @@ abstract class IntegrationTestSuite extends BaseTestSuite
     {
         $results = $this->mockComplexQuery($collection, $filters);
         $actualIds = array_column($results, 'id');
-        
+
         $this->assertEquals(
             sort($expectedIds),
             sort($actualIds),
-            "Query results do not match expected IDs"
+            'Query results do not match expected IDs'
         );
     }
 
@@ -247,11 +248,11 @@ abstract class IntegrationTestSuite extends BaseTestSuite
      */
     protected function assertBatchOperationsSuccessful(array $results): void
     {
-        $failures = array_filter($results, fn($result) => !$result['success']);
-        
+        $failures = array_filter($results, fn ($result) => !$result['success']);
+
         $this->assertEmpty(
             $failures,
-            "Some batch operations failed: " . json_encode($failures)
+            'Some batch operations failed: '.json_encode($failures)
         );
     }
 
@@ -265,14 +266,14 @@ abstract class IntegrationTestSuite extends BaseTestSuite
             $childCollection = $relationship['child_collection'];
             $parentId = $relationship['parent_id'];
             $childIds = $relationship['child_ids'];
-            
+
             // Update parent with child references
             $parent = $this->getFirestoreMock()->getDocument($parentCollection, $parentId);
             if ($parent) {
                 $parent['children'] = $childIds;
                 $this->getFirestoreMock()->storeDocument($parentCollection, $parentId, $parent);
             }
-            
+
             // Update children with parent reference
             foreach ($childIds as $childId) {
                 $child = $this->getFirestoreMock()->getDocument($childCollection, $childId);
@@ -293,7 +294,7 @@ abstract class IntegrationTestSuite extends BaseTestSuite
 
         for ($i = 0; $i < $count; $i++) {
             $data = array_merge($baseData, [
-                'id' => 'test-model-' . $i,
+                'id' => 'test-model-'.$i,
                 'name' => "Test Model {$i}",
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -327,6 +328,7 @@ abstract class IntegrationTestSuite extends BaseTestSuite
     {
         $startTime = microtime(true);
         $callback();
+
         return microtime(true) - $startTime;
     }
 
@@ -365,7 +367,7 @@ abstract class IntegrationTestSuite extends BaseTestSuite
             $unitIndex++;
         }
 
-        return round($bytes, 2) . ' ' . $units[$unitIndex];
+        return round($bytes, 2).' '.$units[$unitIndex];
     }
 
     /**

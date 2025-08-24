@@ -31,17 +31,17 @@ abstract class FeatureTestSuite extends BaseTestSuite
     protected function createTestModels(string $modelClass, int $count = 5, array $overrides = []): array
     {
         $models = [];
-        
+
         for ($i = 0; $i < $count; $i++) {
             $data = array_merge([
                 'id' => "test-model-{$i}",
                 'name' => "Test Model {$i}",
                 'created_at' => now()->subMinutes($i),
             ], $overrides);
-            
+
             $models[] = $this->createTestModel($modelClass, $data);
         }
-        
+
         return $models;
     }
 
@@ -100,7 +100,7 @@ abstract class FeatureTestSuite extends BaseTestSuite
     protected function createFeatureTestData(string $type, int $count = 10): array
     {
         $data = [];
-        
+
         for ($i = 0; $i < $count; $i++) {
             switch ($type) {
                 case 'products':
@@ -113,7 +113,7 @@ abstract class FeatureTestSuite extends BaseTestSuite
                         'created_at' => now()->subDays(rand(0, 30))->toISOString(),
                     ];
                     break;
-                    
+
                 case 'users':
                     $data[] = [
                         'id' => "user-{$i}",
@@ -124,19 +124,19 @@ abstract class FeatureTestSuite extends BaseTestSuite
                         'created_at' => now()->subDays(rand(0, 60))->toISOString(),
                     ];
                     break;
-                    
+
                 case 'posts':
                     $data[] = [
                         'id' => "post-{$i}",
                         'title' => "Post Title {$i}",
                         'content' => "This is the content for post {$i}",
                         'published' => $i % 4 !== 0,
-                        'author_id' => "user-" . rand(0, 4),
+                        'author_id' => 'user-'.rand(0, 4),
                         'views' => rand(0, 1000),
                         'created_at' => now()->subDays(rand(0, 90))->toISOString(),
                     ];
                     break;
-                    
+
                 default:
                     $data[] = [
                         'id' => "item-{$i}",
@@ -147,7 +147,7 @@ abstract class FeatureTestSuite extends BaseTestSuite
                     ];
             }
         }
-        
+
         return $data;
     }
 
@@ -158,24 +158,24 @@ abstract class FeatureTestSuite extends BaseTestSuite
     {
         $startTime = microtime(true);
         $startMemory = memory_get_usage();
-        
+
         $result = $scenario();
-        
+
         $endTime = microtime(true);
         $endMemory = memory_get_usage();
-        
+
         $metrics = [
             'scenario' => $scenarioName,
             'duration' => $endTime - $startTime,
             'memory_used' => $endMemory - $startMemory,
             'result' => $result,
         ];
-        
+
         // Log performance if scenario takes too long
         if ($metrics['duration'] > 1.0) {
             error_log("Feature scenario '{$scenarioName}' took {$metrics['duration']}s");
         }
-        
+
         return $metrics;
     }
 
@@ -184,11 +184,15 @@ abstract class FeatureTestSuite extends BaseTestSuite
      */
     protected function assertFeaturePerformance(array $metrics, float $maxDuration = 2.0, int $maxMemory = 10 * 1024 * 1024): void
     {
-        expect($metrics['duration'])->toBeLessThan($maxDuration, 
-            "Feature scenario '{$metrics['scenario']}' took {$metrics['duration']}s, expected < {$maxDuration}s");
-            
-        expect($metrics['memory_used'])->toBeLessThan($maxMemory,
-            "Feature scenario '{$metrics['scenario']}' used {$metrics['memory_used']} bytes, expected < {$maxMemory} bytes");
+        expect($metrics['duration'])->toBeLessThan(
+            $maxDuration,
+            "Feature scenario '{$metrics['scenario']}' took {$metrics['duration']}s, expected < {$maxDuration}s"
+        );
+
+        expect($metrics['memory_used'])->toBeLessThan(
+            $maxMemory,
+            "Feature scenario '{$metrics['scenario']}' used {$metrics['memory_used']} bytes, expected < {$maxMemory} bytes"
+        );
     }
 
     /**
@@ -197,7 +201,7 @@ abstract class FeatureTestSuite extends BaseTestSuite
     protected function createRealisticDataset(string $collection, int $size = 100): array
     {
         $dataset = [];
-        
+
         for ($i = 0; $i < $size; $i++) {
             $dataset[] = [
                 'id' => "realistic-{$i}",
@@ -212,7 +216,7 @@ abstract class FeatureTestSuite extends BaseTestSuite
                 'updated_at' => now()->subDays(rand(0, 30))->toISOString(),
             ];
         }
-        
+
         return $dataset;
     }
 
@@ -224,7 +228,7 @@ abstract class FeatureTestSuite extends BaseTestSuite
         foreach ($models as $model) {
             expect($model)->toBeInstanceOf(\JTD\FirebaseModels\Firestore\FirestoreModel::class);
             expect($model->exists)->toBeTrue();
-            
+
             // Additional relationship-specific assertions can be added here
             switch ($relationshipType) {
                 case 'belongs_to':
@@ -247,10 +251,10 @@ abstract class FeatureTestSuite extends BaseTestSuite
     {
         // Clear all test data
         $this->clearTestData();
-        
+
         // Force garbage collection for feature tests
         $this->forceGarbageCollection();
-        
+
         // Reset any static state
         $this->resetStaticState();
     }

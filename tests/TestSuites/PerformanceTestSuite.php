@@ -9,8 +9,11 @@ namespace JTD\FirebaseModels\Tests\TestSuites;
 abstract class PerformanceTestSuite extends BaseTestSuite
 {
     protected bool $autoCleanup = true;
+
     protected array $performanceMetrics = [];
+
     protected array $memoryThresholds = [];
+
     protected string $mockType = 'standard';
 
     /**
@@ -32,7 +35,7 @@ abstract class PerformanceTestSuite extends BaseTestSuite
         ];
 
         parent::setUp();
-        
+
         // Start performance monitoring
         $this->startPerformanceMonitoring();
     }
@@ -44,10 +47,10 @@ abstract class PerformanceTestSuite extends BaseTestSuite
     {
         // Stop performance monitoring
         $this->stopPerformanceMonitoring();
-        
+
         // Report performance metrics if needed
         $this->reportPerformanceMetrics();
-        
+
         parent::tearDown();
     }
 
@@ -107,19 +110,19 @@ abstract class PerformanceTestSuite extends BaseTestSuite
     {
         $startTime = microtime(true);
         $startMemory = memory_get_usage();
-        
+
         $result = $operation();
-        
+
         $endTime = microtime(true);
         $endMemory = memory_get_usage();
-        
+
         $this->performanceMetrics['operations'][$name] = [
             'duration' => $endTime - $startTime,
             'memory_delta' => $endMemory - $startMemory,
             'start_memory' => $startMemory,
             'end_memory' => $endMemory,
         ];
-        
+
         return $result;
     }
 
@@ -128,35 +131,35 @@ abstract class PerformanceTestSuite extends BaseTestSuite
      */
     protected function createLargeDataset(string $collection, int $count = 1000): array
     {
-        return $this->measureOperation("create_large_dataset_{$count}", function() use ($collection, $count) {
+        return $this->measureOperation("create_large_dataset_{$count}", function () use ($collection, $count) {
             $documents = [];
-            
+
             for ($i = 0; $i < $count; $i++) {
                 $data = [
-                    'id' => 'perf_test_' . $i,
+                    'id' => 'perf_test_'.$i,
                     'index' => $i,
-                    'name' => 'Performance Test Document ' . $i,
-                    'category' => 'category_' . ($i % 10),
+                    'name' => 'Performance Test Document '.$i,
+                    'category' => 'category_'.($i % 10),
                     'status' => $i % 2 === 0 ? 'active' : 'inactive',
                     'score' => rand(1, 100),
                     'created_at' => now()->subMinutes($i),
                     'metadata' => [
                         'batch' => floor($i / 100),
                         'group' => $i % 5,
-                        'tags' => array_map(fn($j) => 'tag_' . $j, range(0, $i % 3)),
+                        'tags' => array_map(fn ($j) => 'tag_'.$j, range(0, $i % 3)),
                         'large_text' => str_repeat('Lorem ipsum dolor sit amet. ', 10),
                     ],
                 ];
-                
+
                 $this->getFirestoreMock()->storeDocument($collection, $data['id'], $data);
                 $documents[] = $data;
-                
+
                 // Add checkpoint every 100 documents
                 if ($i % 100 === 0) {
                     $this->addPerformanceCheckpoint("created_{$i}_documents");
                 }
             }
-            
+
             return $documents;
         });
     }
@@ -166,36 +169,36 @@ abstract class PerformanceTestSuite extends BaseTestSuite
      */
     protected function performBulkOperations(string $collection, int $count = 500): array
     {
-        return $this->measureOperation("bulk_operations_{$count}", function() use ($collection, $count) {
+        return $this->measureOperation("bulk_operations_{$count}", function () use ($collection, $count) {
             $results = [];
-            
+
             // Bulk create
             for ($i = 0; $i < $count; $i++) {
-                $data = ['id' => 'bulk_' . $i, 'value' => $i];
+                $data = ['id' => 'bulk_'.$i, 'value' => $i];
                 $this->getFirestoreMock()->storeDocument($collection, $data['id'], $data);
                 $results['created'][] = $data['id'];
             }
-            
+
             // Bulk read
             for ($i = 0; $i < $count; $i++) {
-                $doc = $this->getFirestoreMock()->getDocument($collection, 'bulk_' . $i);
+                $doc = $this->getFirestoreMock()->getDocument($collection, 'bulk_'.$i);
                 $results['read'][] = $doc;
             }
-            
+
             // Bulk update
             for ($i = 0; $i < $count; $i++) {
-                $existing = $this->getFirestoreMock()->getDocument($collection, 'bulk_' . $i);
+                $existing = $this->getFirestoreMock()->getDocument($collection, 'bulk_'.$i);
                 $existing['updated'] = true;
-                $this->getFirestoreMock()->storeDocument($collection, 'bulk_' . $i, $existing);
-                $results['updated'][] = 'bulk_' . $i;
+                $this->getFirestoreMock()->storeDocument($collection, 'bulk_'.$i, $existing);
+                $results['updated'][] = 'bulk_'.$i;
             }
-            
+
             // Bulk delete
             for ($i = 0; $i < $count; $i++) {
-                $this->getFirestoreMock()->deleteDocument($collection, 'bulk_' . $i);
-                $results['deleted'][] = 'bulk_' . $i;
+                $this->getFirestoreMock()->deleteDocument($collection, 'bulk_'.$i);
+                $results['deleted'][] = 'bulk_'.$i;
             }
-            
+
             return $results;
         });
     }
@@ -206,15 +209,15 @@ abstract class PerformanceTestSuite extends BaseTestSuite
     protected function assertPerformanceWithinLimits(string $operationName, float $maxSeconds, int $maxMemoryBytes): void
     {
         $operation = $this->performanceMetrics['operations'][$operationName] ?? null;
-        
+
         $this->assertNotNull($operation, "Operation {$operationName} was not measured");
-        
+
         $this->assertLessThanOrEqual(
             $maxSeconds,
             $operation['duration'],
             "Operation {$operationName} took {$operation['duration']}s, exceeding limit of {$maxSeconds}s"
         );
-        
+
         $this->assertLessThanOrEqual(
             $maxMemoryBytes,
             $operation['memory_delta'],
@@ -229,7 +232,7 @@ abstract class PerformanceTestSuite extends BaseTestSuite
     {
         $currentMemory = memory_get_usage();
         $peakMemory = memory_get_peak_usage();
-        
+
         if (isset($this->memoryThresholds['critical'])) {
             $this->assertLessThan(
                 $this->memoryThresholds['critical'],
@@ -237,7 +240,7 @@ abstract class PerformanceTestSuite extends BaseTestSuite
                 "Peak memory usage ({$this->formatBytes($peakMemory)}) exceeded critical threshold ({$this->formatBytes($this->memoryThresholds['critical'])})"
             );
         }
-        
+
         if (isset($this->memoryThresholds['warning']) && $currentMemory > $this->memoryThresholds['warning']) {
             $this->addWarning(
                 "Current memory usage ({$this->formatBytes($currentMemory)}) exceeded warning threshold ({$this->formatBytes($this->memoryThresholds['warning'])})"
@@ -253,7 +256,7 @@ abstract class PerformanceTestSuite extends BaseTestSuite
         $totalTime = $this->performanceMetrics['total_time'] ?? 0;
         $memoryDelta = $this->performanceMetrics['memory_delta'] ?? 0;
         $peakMemoryDelta = $this->performanceMetrics['peak_memory_delta'] ?? 0;
-        
+
         // Report if test took longer than 5 seconds or used more than 10MB
         if ($totalTime > 5.0 || abs($memoryDelta) > 10 * 1024 * 1024) {
             error_log(sprintf(

@@ -4,10 +4,10 @@ namespace JTD\FirebaseModels\Firestore\Concerns;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use JTD\FirebaseModels\Firestore\FirestoreModel;
 use JTD\FirebaseModels\Firestore\Relations\BelongsTo;
 use JTD\FirebaseModels\Firestore\Relations\HasMany;
 use JTD\FirebaseModels\Firestore\Relations\Relation;
-use JTD\FirebaseModels\Firestore\FirestoreModel;
 
 /**
  * Trait for handling relationships in Firestore models.
@@ -35,7 +35,10 @@ trait HasRelationships
         $localKey = $localKey ?: $this->getKeyName();
 
         return $this->newHasMany(
-            $instance->newQuery(), $this, $foreignKey, $localKey
+            $instance->newQuery(),
+            $this,
+            $foreignKey,
+            $localKey
         );
     }
 
@@ -63,13 +66,17 @@ trait HasRelationships
         $instance = $this->newRelatedInstance($related);
 
         if (is_null($foreignKey)) {
-            $foreignKey = Str::snake($relation) . '_' . $instance->getKeyName();
+            $foreignKey = Str::snake($relation).'_'.$instance->getKeyName();
         }
 
         $ownerKey = $ownerKey ?: $instance->getKeyName();
 
         return $this->newBelongsTo(
-            $instance->newQuery(), $this, $foreignKey, $ownerKey, $relation
+            $instance->newQuery(),
+            $this,
+            $foreignKey,
+            $ownerKey,
+            $relation
         );
     }
 
@@ -101,7 +108,7 @@ trait HasRelationships
      */
     protected function newRelatedInstance(string $class): FirestoreModel
     {
-        return tap(new $class, function ($instance) {
+        return tap(new $class(), function ($instance) {
             if (!$instance->getConnectionName()) {
                 $instance->setConnection($this->connection);
             }
@@ -113,7 +120,7 @@ trait HasRelationships
      */
     public function getForeignKey(): string
     {
-        return Str::snake(class_basename($this)) . '_' . $this->getKeyName();
+        return Str::snake(class_basename($this)).'_'.$this->getKeyName();
     }
 
     /**
@@ -143,13 +150,15 @@ trait HasRelationships
             if (is_null($relation)) {
                 throw new \LogicException(sprintf(
                     '%s::%s must return a relationship instance, but "null" was returned. Was the "return" keyword used?',
-                    static::class, $method
+                    static::class,
+                    $method
                 ));
             }
 
             throw new \LogicException(sprintf(
                 '%s::%s must return a relationship instance.',
-                static::class, $method
+                static::class,
+                $method
             ));
         }
 

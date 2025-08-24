@@ -2,16 +2,15 @@
 
 namespace JTD\FirebaseModels\Tests\Unit;
 
-use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
-use JTD\FirebaseModels\Tests\Models\TestPost;
-use JTD\FirebaseModels\Tests\Models\TestUser;
-use JTD\FirebaseModels\Firestore\Transactions\TransactionManager;
-use JTD\FirebaseModels\Firestore\Transactions\TransactionBuilder;
-use JTD\FirebaseModels\Firestore\Transactions\TransactionResult;
-use JTD\FirebaseModels\Facades\FirestoreDB;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\Group;
 use Exception;
+use JTD\FirebaseModels\Facades\FirestoreDB;
+use JTD\FirebaseModels\Firestore\Transactions\TransactionBuilder;
+use JTD\FirebaseModels\Firestore\Transactions\TransactionManager;
+use JTD\FirebaseModels\Firestore\Transactions\TransactionResult;
+use JTD\FirebaseModels\Tests\Models\TestPost;
+use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
 #[Group('unit')]
 #[Group('advanced')]
@@ -66,12 +65,13 @@ class TransactionSystemTest extends UnitTestSuite
     public function it_handles_transaction_retry_logic()
     {
         $attempts = 0;
-        
+
         $this->mockFirestoreTransactionWithRetry(function ($transaction) use (&$attempts) {
             $attempts++;
             if ($attempts < 3) {
                 throw new Exception('Aborted transaction'); // Retryable error
             }
+
             return 'success_after_retry';
         });
 
@@ -80,6 +80,7 @@ class TransactionSystemTest extends UnitTestSuite
             if ($attempts < 3) {
                 throw new Exception('Aborted transaction');
             }
+
             return 'success_after_retry';
         }, ['max_attempts' => 5]);
 
@@ -116,11 +117,11 @@ class TransactionSystemTest extends UnitTestSuite
             ->create('posts', [
                 'title' => 'New Post',
                 'content' => 'Post content',
-                'published' => true
+                'published' => true,
             ])
             ->update('users', 'user-123', [
                 'last_post_at' => now(),
-                'post_count' => FirestoreDB::increment(1)
+                'post_count' => FirestoreDB::increment(1),
             ])
             ->delete('drafts', 'draft-456')
             ->withRetry(3, 200)
@@ -143,8 +144,8 @@ class TransactionSystemTest extends UnitTestSuite
                 'field' => 'balance',
                 'operator' => '>=',
                 'value' => 100,
-                'description' => 'User has sufficient balance'
-            ]
+                'description' => 'User has sufficient balance',
+            ],
         ];
 
         $result = TransactionManager::conditional($conditions, function ($transaction) {
@@ -162,9 +163,15 @@ class TransactionSystemTest extends UnitTestSuite
         $this->mockFirestoreTransactionSequence();
 
         $transactions = [
-            function ($transaction) { return 'result_1'; },
-            function ($transaction) { return 'result_2'; },
-            function ($transaction) { return 'result_3'; },
+            function ($transaction) {
+                return 'result_1';
+            },
+            function ($transaction) {
+                return 'result_2';
+            },
+            function ($transaction) {
+                return 'result_3';
+            },
         ];
 
         $results = TransactionManager::sequence($transactions);
@@ -183,12 +190,13 @@ class TransactionSystemTest extends UnitTestSuite
 
         $post = new TestPost([
             'title' => 'Transaction Test',
-            'content' => 'Testing model transactions'
+            'content' => 'Testing model transactions',
         ]);
 
         $result = $post->transaction(function ($model, $transaction) {
             $model->published = true;
             $model->published_at = now();
+
             return $model->save();
         });
 
@@ -210,13 +218,13 @@ class TransactionSystemTest extends UnitTestSuite
 
         $result = TransactionManager::executeWithResult(function ($transaction) use ($posts) {
             $createdIds = [];
-            
+
             foreach ($posts as $postData) {
                 $docRef = FirestoreDB::collection('posts')->newDocument();
                 $transaction->create($docRef, $postData);
                 $createdIds[] = $docRef->id();
             }
-            
+
             return $createdIds;
         });
 
@@ -233,6 +241,7 @@ class TransactionSystemTest extends UnitTestSuite
         $result = TransactionManager::executeWithResult(function ($transaction) {
             // Simulate some work
             usleep(10000); // 10ms
+
             return 'performance_test';
         }, ['log_performance' => true]);
 
@@ -249,6 +258,7 @@ class TransactionSystemTest extends UnitTestSuite
         $result = TransactionManager::executeWithResult(function ($transaction) {
             // Simulate long-running operation
             sleep(2);
+
             return 'timeout_test';
         }, ['timeout_seconds' => 1]);
 
@@ -269,7 +279,7 @@ class TransactionSystemTest extends UnitTestSuite
 
         foreach ($retryableErrors as $errorMessage) {
             $this->mockFirestoreTransactionWithError($errorMessage);
-            
+
             $result = TransactionManager::executeWithResult(function ($transaction) use ($errorMessage) {
                 throw new Exception($errorMessage);
             }, ['max_attempts' => 2]);
@@ -279,7 +289,7 @@ class TransactionSystemTest extends UnitTestSuite
 
         // Non-retryable error
         $this->mockFirestoreTransactionWithError('Invalid argument');
-        
+
         $result = TransactionManager::executeWithResult(function ($transaction) {
             throw new Exception('Invalid argument');
         }, ['max_attempts' => 3]);
@@ -291,7 +301,7 @@ class TransactionSystemTest extends UnitTestSuite
     public function it_handles_transaction_statistics()
     {
         $stats = TransactionManager::getStats();
-        
+
         expect($stats)->toBeArray();
         expect($stats)->toHaveKey('total_transactions');
         expect($stats)->toHaveKey('successful_transactions');
@@ -304,7 +314,7 @@ class TransactionSystemTest extends UnitTestSuite
     public function it_handles_transaction_configuration()
     {
         $originalOptions = TransactionManager::getDefaultOptions();
-        
+
         $newOptions = [
             'max_attempts' => 5,
             'retry_delay_ms' => 200,
@@ -330,15 +340,15 @@ class TransactionSystemTest extends UnitTestSuite
         $result = TransactionManager::executeWithResult(function ($outerTransaction) {
             // Outer transaction operations
             $outerResult = 'outer_result';
-            
+
             // Inner transaction (should be handled properly)
             $innerResult = TransactionManager::executeWithResult(function ($innerTransaction) {
                 return 'inner_result';
             });
-            
+
             return [
                 'outer' => $outerResult,
-                'inner' => $innerResult->getData()
+                'inner' => $innerResult->getData(),
             ];
         });
 

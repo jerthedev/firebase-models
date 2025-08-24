@@ -2,15 +2,15 @@
 
 namespace JTD\FirebaseModels\Cache\Concerns;
 
-use JTD\FirebaseModels\Cache\RequestCache;
-use JTD\FirebaseModels\Cache\PersistentCache;
-use JTD\FirebaseModels\Cache\CacheManager;
-use JTD\FirebaseModels\Cache\QueryCacheKey;
 use Illuminate\Support\Collection;
+use JTD\FirebaseModels\Cache\CacheManager;
+use JTD\FirebaseModels\Cache\PersistentCache;
+use JTD\FirebaseModels\Cache\QueryCacheKey;
+use JTD\FirebaseModels\Cache\RequestCache;
 
 /**
  * Trait for adding request-scoped caching to query builders.
- * 
+ *
  * This trait provides caching functionality that can be mixed into
  * Firestore query builders to automatically cache query results
  * for the duration of a single request.
@@ -87,7 +87,7 @@ trait Cacheable
     protected function executeQuery(string $method, array $arguments = []): mixed
     {
         // Call the parent method (e.g., parentGet, parentFirst, etc.)
-        $parentMethod = "parent" . ucfirst($method);
+        $parentMethod = 'parent'.ucfirst($method);
 
         if (method_exists($this, $parentMethod)) {
             return call_user_func_array([$this, $parentMethod], $arguments);
@@ -124,6 +124,7 @@ trait Cacheable
             if (!is_array($columns)) {
                 $columns = [$columns];
             }
+
             return QueryCacheKey::forModelQuery($this, $columns, $method);
         } elseif ($this instanceof \JTD\FirebaseModels\Firestore\FirestoreQueryBuilder) {
             return QueryCacheKey::forQueryBuilder($this, $method, $arguments);
@@ -188,6 +189,7 @@ trait Cacheable
     public function withoutCache(): static
     {
         $this->cacheEnabled = false;
+
         return $this;
     }
 
@@ -197,6 +199,7 @@ trait Cacheable
     public function withCache(): static
     {
         $this->cacheEnabled = true;
+
         return $this;
     }
 
@@ -206,6 +209,7 @@ trait Cacheable
     public function cacheKey(string $key): static
     {
         $this->customCacheKey = $key;
+
         return $this;
     }
 
@@ -215,6 +219,7 @@ trait Cacheable
     public function cacheTags(array $tags): static
     {
         $this->cacheTags = array_merge($this->cacheTags, $tags);
+
         return $this;
     }
 
@@ -224,6 +229,7 @@ trait Cacheable
     public function cacheTtl(int $ttl): static
     {
         $this->cacheTtl = $ttl;
+
         return $this;
     }
 
@@ -233,6 +239,7 @@ trait Cacheable
     public function cacheStore(string $store): static
     {
         $this->cacheStore = $store;
+
         return $this;
     }
 
@@ -242,6 +249,7 @@ trait Cacheable
     public function withPersistentCache(): static
     {
         $this->persistentCacheEnabled = true;
+
         return $this;
     }
 
@@ -251,6 +259,7 @@ trait Cacheable
     public function withoutPersistentCache(): static
     {
         $this->persistentCacheEnabled = false;
+
         return $this;
     }
 
@@ -270,6 +279,7 @@ trait Cacheable
         if ($this->customCacheKey !== null) {
             RequestCache::forget($this->customCacheKey);
             CacheManager::forget($this->customCacheKey, $this->cacheStore);
+
             return;
         }
 
@@ -304,6 +314,7 @@ trait Cacheable
     public function getCacheStats(): array
     {
         $stats = CacheManager::getStats();
+
         return $stats['combined'] ?? [];
     }
 
@@ -347,6 +358,7 @@ trait Cacheable
         $result = $this->getCached($method, $arguments);
 
         $this->cacheTtl = $originalTtl;
+
         return $result;
     }
 

@@ -2,11 +2,6 @@
 
 namespace JTD\FirebaseModels\Tests\Helpers;
 
-use Mockery;
-use Google\Cloud\Firestore\FirestoreClient;
-use Google\Cloud\Firestore\CollectionReference;
-use Google\Cloud\Firestore\DocumentReference;
-use Google\Cloud\Firestore\DocumentSnapshot;
 use Google\Cloud\Firestore\Query;
 
 /**
@@ -18,8 +13,11 @@ class FirestoreMockV2 extends FirestoreMock
     protected static ?FirestoreMockV2 $v2Instance = null;
 
     protected array $compoundIndexes = [];
+
     protected array $fieldTransforms = [];
+
     protected array $transactionState = [];
+
     protected bool $strictIndexValidation = false;
 
     /**
@@ -62,7 +60,7 @@ class FirestoreMockV2 extends FirestoreMock
         if (!isset($this->compoundIndexes[$collection])) {
             $this->compoundIndexes[$collection] = [];
         }
-        
+
         $this->compoundIndexes[$collection][] = $fields;
     }
 
@@ -77,15 +75,15 @@ class FirestoreMockV2 extends FirestoreMock
 
         // Check if query needs compound index
         $needsIndex = $this->queryNeedsCompoundIndex($wheres, $orders);
-        
+
         if ($needsIndex && !$this->hasMatchingIndex($collection, $wheres, $orders)) {
             $indexFields = $this->generateIndexFields($wheres, $orders);
             throw new \Google\Cloud\Core\Exception\FailedPreconditionException(
-                "The query requires an index. You can create it here: " .
-                "https://console.firebase.google.com/project/test-project/firestore/indexes?" .
-                "create_composite=" . urlencode(json_encode([
+                'The query requires an index. You can create it here: '.
+                'https://console.firebase.google.com/project/test-project/firestore/indexes?'.
+                'create_composite='.urlencode(json_encode([
                     'collection' => $collection,
-                    'fields' => $indexFields
+                    'fields' => $indexFields,
                 ]))
             );
         }
@@ -105,7 +103,7 @@ class FirestoreMockV2 extends FirestoreMock
         if (count($wheres) > 0 && count($orders) > 0) {
             $whereField = $wheres[0]['field'] ?? null;
             $orderField = $orders[0]['field'] ?? null;
-            
+
             if ($whereField !== $orderField) {
                 return true;
             }
@@ -151,7 +149,7 @@ class FirestoreMockV2 extends FirestoreMock
         foreach ($wheres as $where) {
             $fields[] = [
                 'field' => $where['field'],
-                'order' => 'ASCENDING'
+                'order' => 'ASCENDING',
             ];
         }
 
@@ -166,7 +164,7 @@ class FirestoreMockV2 extends FirestoreMock
 
             $fields[] = [
                 'field' => $order['field'],
-                'order' => $direction
+                'order' => $direction,
             ];
         }
 
@@ -183,7 +181,7 @@ class FirestoreMockV2 extends FirestoreMock
         }
 
         foreach ($requiredFields as $i => $required) {
-            if (!isset($index[$i]) || 
+            if (!isset($index[$i]) ||
                 $index[$i]['field'] !== $required['field'] ||
                 $index[$i]['order'] !== $required['order']) {
                 return false;
@@ -202,7 +200,7 @@ class FirestoreMockV2 extends FirestoreMock
         $this->validateQueryIndex($collection, $wheres, $orders);
 
         $documents = $this->getCollectionDocuments($collection);
-        
+
         // Apply enhanced where filters
         foreach ($wheres as $where) {
             $documents = array_filter($documents, function ($doc) use ($where) {
@@ -235,7 +233,7 @@ class FirestoreMockV2 extends FirestoreMock
     {
         $data = $doc->data();
         $fieldValue = $this->getNestedFieldValue($data, $where['field']);
-        
+
         return match ($where['operator']) {
             '=', '==' => $fieldValue == $where['value'],
             '!=' => $fieldValue != $where['value'],
@@ -243,11 +241,11 @@ class FirestoreMockV2 extends FirestoreMock
             '>=' => $fieldValue >= $where['value'],
             '<' => $fieldValue < $where['value'],
             '<=' => $fieldValue <= $where['value'],
-            'in' => in_array($fieldValue, (array)$where['value']),
-            'not-in' => !in_array($fieldValue, (array)$where['value']),
+            'in' => in_array($fieldValue, (array) $where['value']),
+            'not-in' => !in_array($fieldValue, (array) $where['value']),
             'array-contains' => is_array($fieldValue) && in_array($where['value'], $fieldValue),
-            'array-contains-any' => is_array($fieldValue) && !empty(array_intersect($fieldValue, (array)$where['value'])),
-            'like' => str_contains(strtolower((string)$fieldValue), strtolower(str_replace('%', '', (string)$where['value']))),
+            'array-contains-any' => is_array($fieldValue) && !empty(array_intersect($fieldValue, (array) $where['value'])),
+            'like' => str_contains(strtolower((string) $fieldValue), strtolower(str_replace('%', '', (string) $where['value']))),
             default => false,
         };
     }
@@ -283,14 +281,16 @@ class FirestoreMockV2 extends FirestoreMock
             foreach ($orders as $order) {
                 $aValue = $this->getNestedFieldValue($a->data(), $order['field']);
                 $bValue = $this->getNestedFieldValue($b->data(), $order['field']);
-                
+
                 $comparison = $this->compareValues($aValue, $bValue);
-                
+
                 if ($comparison !== 0) {
                     $direction = strtoupper($order['direction'] ?? 'ASC');
+
                     return $direction === 'DESC' ? -$comparison : $comparison;
                 }
             }
+
             return 0;
         });
 
@@ -302,10 +302,16 @@ class FirestoreMockV2 extends FirestoreMock
      */
     protected function compareValues($a, $b): int
     {
-        if ($a === $b) return 0;
-        if ($a === null) return -1;
-        if ($b === null) return 1;
-        
+        if ($a === $b) {
+            return 0;
+        }
+        if ($a === null) {
+            return -1;
+        }
+        if ($b === null) {
+            return 1;
+        }
+
         return $a <=> $b;
     }
 

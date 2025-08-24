@@ -2,15 +2,12 @@
 
 namespace JTD\FirebaseModels\Tests\Unit;
 
-use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
-use JTD\FirebaseModels\Tests\Utilities\TestDataFactory;
-use JTD\FirebaseModels\Tests\Models\TestPost;
-use JTD\FirebaseModels\Tests\Models\TestUser;
-use JTD\FirebaseModels\Firestore\FirestoreModel;
-use JTD\FirebaseModels\Facades\FirestoreDB;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\Group;
 use Illuminate\Support\Carbon;
+use JTD\FirebaseModels\Firestore\FirestoreModel;
+use JTD\FirebaseModels\Tests\Models\TestPost;
+use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
 #[Group('unit')]
 #[Group('core')]
@@ -21,7 +18,7 @@ class FirestoreModelCoreTest extends UnitTestSuite
     public function it_creates_model_instances_correctly()
     {
         $post = new TestPost();
-        
+
         expect($post)->toBeInstanceOf(FirestoreModel::class);
         expect($post->exists)->toBeFalse();
         expect($post->wasRecentlyCreated)->toBeFalse();
@@ -37,16 +34,16 @@ class FirestoreModelCoreTest extends UnitTestSuite
             'title' => 'Test Post',
             'content' => 'This is test content',
             'published' => true,
-            'views' => 100
+            'views' => 100,
         ];
 
         $post = new TestPost($data);
-        
+
         expect($post->title)->toBe('Test Post');
         expect($post->content)->toBe('This is test content');
         expect($post->published)->toBe(true);
         expect($post->views)->toBe(100);
-        
+
         // Test attribute access methods
         expect($post->getAttribute('title'))->toBe('Test Post');
         expect($post->getAttributes())->toEqual($data);
@@ -58,15 +55,15 @@ class FirestoreModelCoreTest extends UnitTestSuite
         $post = new TestPost([
             'published' => 'true',  // String that should be cast to boolean
             'views' => '100',       // String that should be cast to integer
-            'created_at' => '2024-01-01 12:00:00'  // String that should be cast to Carbon
+            'created_at' => '2024-01-01 12:00:00',  // String that should be cast to Carbon
         ]);
 
         expect($post->published)->toBe(true);
         expect($post->published)->toBeTrue();
-        
+
         expect($post->views)->toBe(100);
         expect($post->views)->toBeInt();
-        
+
         // created_at might be null if not set, so check if it exists first
         if ($post->created_at) {
             expect($post->created_at)->toBeInstanceOf(Carbon::class);
@@ -77,14 +74,14 @@ class FirestoreModelCoreTest extends UnitTestSuite
     public function it_handles_fillable_and_guarded_attributes()
     {
         $post = new TestPost();
-        
+
         // Test fillable attributes
         $post->fill([
             'title' => 'Fillable Title',
             'content' => 'Fillable Content',
-            'secret_field' => 'Should not be filled'  // Not in fillable
+            'secret_field' => 'Should not be filled',  // Not in fillable
         ]);
-        
+
         expect($post->title)->toBe('Fillable Title');
         expect($post->content)->toBe('Fillable Content');
         expect($post->getAttribute('secret_field'))->toBeNull();
@@ -95,24 +92,24 @@ class FirestoreModelCoreTest extends UnitTestSuite
     {
         $post = new TestPost([
             'title' => 'Original Title',
-            'content' => 'Original Content'
+            'content' => 'Original Content',
         ]);
-        
+
         // Mark as existing to enable dirty tracking
         $post->exists = true;
         $post->syncOriginal();
-        
+
         expect($post->isDirty())->toBeFalse();
         expect($post->isClean())->toBeTrue();
-        
+
         // Make changes
         $post->title = 'Modified Title';
-        
+
         expect($post->isDirty())->toBeTrue();
         expect($post->isDirty('title'))->toBeTrue();
         expect($post->isDirty('content'))->toBeFalse();
         expect($post->isClean())->toBeFalse();
-        
+
         expect($post->getDirty())->toEqual(['title' => 'Modified Title']);
         expect($post->getOriginal('title'))->toBe('Original Title');
     }
@@ -121,11 +118,11 @@ class FirestoreModelCoreTest extends UnitTestSuite
     public function it_handles_timestamps_correctly()
     {
         $post = new TestPost();
-        
+
         expect($post->usesTimestamps())->toBeTrue();
         expect($post->getCreatedAtColumn())->toBe('created_at');
         expect($post->getUpdatedAtColumn())->toBe('updated_at');
-        
+
         // Test timestamp setting
         $now = Carbon::now();
         $post->touch(); // Use touch() instead of updateTimestamps() which is protected
@@ -141,7 +138,7 @@ class FirestoreModelCoreTest extends UnitTestSuite
             'title' => 'Test Post',
             'content' => 'Test Content',
             'published' => true,
-            'views' => 100
+            'views' => 100,
         ]);
 
         // Test toArray
@@ -168,7 +165,7 @@ class FirestoreModelCoreTest extends UnitTestSuite
     {
         $post = new TestPost([
             'title' => 'Test Post',
-            'content' => 'Test Content'
+            'content' => 'Test Content',
         ]);
 
         // Test ArrayAccess interface
@@ -187,13 +184,13 @@ class FirestoreModelCoreTest extends UnitTestSuite
     public function it_handles_model_key_operations()
     {
         $post = new TestPost();
-        
+
         // Test auto-generated key
         expect($post->getKey())->toBeNull();
-        
+
         $post->setAttribute('id', 'test-123');
         expect($post->getKey())->toBe('test-123');
-        
+
         // Test key name
         expect($post->getKeyName())->toBe('id');
     }
@@ -202,7 +199,7 @@ class FirestoreModelCoreTest extends UnitTestSuite
     public function it_handles_model_collection_operations()
     {
         $post = new TestPost();
-        
+
         expect($post->getCollection())->toBe('posts');
     }
 
@@ -231,7 +228,7 @@ class FirestoreModelCoreTest extends UnitTestSuite
     {
         $post = new TestPost([
             'title' => 'Original Post',
-            'content' => 'Original Content'
+            'content' => 'Original Content',
         ]);
         $post->exists = true;
 
@@ -254,14 +251,14 @@ class FirestoreModelCoreTest extends UnitTestSuite
         $post = new TestPost([
             'id' => 'test-fresh',
             'title' => 'Original Title',
-            'content' => 'Original Content'
+            'content' => 'Original Content',
         ]);
-        
+
         $this->mockFirestoreQuery('posts', [$post->toArray()]);
-        
+
         // Modify the model
         $post->title = 'Modified Title';
-        
+
         // fresh() method doesn't exist, so skip this test
         $this->markTestSkipped('fresh() method not implemented in FirestoreModel');
     }
@@ -273,19 +270,19 @@ class FirestoreModelCoreTest extends UnitTestSuite
         $originalData = [
             'id' => 'test-refresh',
             'title' => 'Original Title',
-            'content' => 'Original Content'
+            'content' => 'Original Content',
         ];
-        
+
         $post = new TestPost($originalData);
         $post->exists = true;
-        
+
         // Mock the fresh data
         $this->mockFirestoreQuery('posts', [$originalData]);
-        
+
         // Modify the model
         $post->title = 'Modified Title';
         expect($post->title)->toBe('Modified Title');
-        
+
         // refresh() method doesn't exist, so skip this test
         $this->markTestSkipped('refresh() method not implemented in FirestoreModel');
     }
@@ -296,13 +293,13 @@ class FirestoreModelCoreTest extends UnitTestSuite
         $post = new TestPost([
             'title' => 'Test Post',
             'content' => 'Test Content',
-            'secret' => 'Hidden Value'
+            'secret' => 'Hidden Value',
         ]);
 
         // Test with hidden attributes
         $post->setHidden(['secret']);
         $array = $post->toArray();
-        
+
         expect($array)->toHaveKey('title');
         expect($array)->toHaveKey('content');
         expect($array)->not->toHaveKey('secret');
@@ -310,7 +307,7 @@ class FirestoreModelCoreTest extends UnitTestSuite
         // Test with visible attributes
         $post->setVisible(['title']);
         $array = $post->toArray();
-        
+
         expect($array)->toHaveKey('title');
         expect($array)->not->toHaveKey('content');
         expect($array)->not->toHaveKey('secret');
@@ -321,7 +318,7 @@ class FirestoreModelCoreTest extends UnitTestSuite
     {
         $post = new TestPost([
             'title' => 'Test Post',
-            'content' => 'Test Content'
+            'content' => 'Test Content',
         ]);
 
         // append() method doesn't exist, but appends are defined in the model

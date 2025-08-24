@@ -2,22 +2,21 @@
 
 namespace JTD\FirebaseModels\Tests\Unit\Restructured;
 
+use JTD\FirebaseModels\Facades\FirestoreDB;
+use JTD\FirebaseModels\Tests\Helpers\FirebaseAuthMock;
+use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
 use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
 use JTD\FirebaseModels\Tests\Utilities\TestDataFactory;
 use PHPUnit\Framework\Attributes\Test;
-use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
-use JTD\FirebaseModels\Tests\Helpers\FirebaseAuthMock;
-use JTD\FirebaseModels\Facades\FirestoreDB;
 
 /**
  * Comprehensive Firebase Mock System Test
- * 
+ *
  * Migrated from:
  * - tests/Unit/FirebaseMockTest.php
- * 
+ *
  * Uses new UnitTestSuite for optimized performance and memory management.
  */
-
 class FirebaseMockTest extends UnitTestSuite
 {
     protected function setUp(): void
@@ -30,7 +29,7 @@ class FirebaseMockTest extends UnitTestSuite
         ]);
 
         parent::setUp();
-        
+
         // Clear mock state before each test
         FirebaseAuthMock::clear();
     }
@@ -54,7 +53,7 @@ class FirebaseMockTest extends UnitTestSuite
             'id' => 'post-123',
             'title' => 'Test Post',
             'content' => 'Test content',
-            'published' => true
+            'published' => true,
         ]);
 
         $this->mockFirestoreGet('posts', 'post-123', $testData);
@@ -102,7 +101,7 @@ class FirebaseMockTest extends UnitTestSuite
         expect($documents)->toBeArray();
 
         $this->assertFirestoreQueryExecuted('posts', [
-            ['field' => 'published', 'operator' => '==', 'value' => true]
+            ['field' => 'published', 'operator' => '==', 'value' => true],
         ]);
 
         // Test query filtering
@@ -111,13 +110,13 @@ class FirebaseMockTest extends UnitTestSuite
             TestDataFactory::createPost(['id' => '2', 'published' => false, 'views' => 50]),
             TestDataFactory::createPost(['id' => '3', 'published' => true, 'views' => 200]),
         ];
-        
+
         $mock = FirestoreMock::getInstance();
         $filtered = $mock->filterDocuments($filterTestData, [
             ['field' => 'published', 'operator' => '==', 'value' => true],
-            ['field' => 'views', 'operator' => '>', 'value' => 75]
+            ['field' => 'views', 'operator' => '>', 'value' => 75],
         ]);
-        
+
         expect($filtered)->toHaveCount(2);
         expect($filtered[0]['id'])->toBe('1');
         expect($filtered[1]['id'])->toBe('3');
@@ -132,23 +131,23 @@ class FirebaseMockTest extends UnitTestSuite
             TestDataFactory::createPost(['id' => '2', 'title' => 'Post 2', 'views' => 300]),
             TestDataFactory::createPost(['id' => '3', 'title' => 'Post 3', 'views' => 200]),
         ];
-        
+
         $mock = FirestoreMock::getInstance();
-        
+
         // Test ascending order
         $orderedAsc = $mock->orderDocuments($orderTestData, [
-            ['field' => 'views', 'direction' => 'asc']
+            ['field' => 'views', 'direction' => 'asc'],
         ]);
-        
+
         expect($orderedAsc[0]['views'])->toBe(100);
         expect($orderedAsc[1]['views'])->toBe(200);
         expect($orderedAsc[2]['views'])->toBe(300);
-        
+
         // Test descending order
         $orderedDesc = $mock->orderDocuments($orderTestData, [
-            ['field' => 'views', 'direction' => 'desc']
+            ['field' => 'views', 'direction' => 'desc'],
         ]);
-        
+
         expect($orderedDesc[0]['views'])->toBe(300);
         expect($orderedDesc[1]['views'])->toBe(200);
         expect($orderedDesc[2]['views'])->toBe(100);
@@ -156,9 +155,9 @@ class FirebaseMockTest extends UnitTestSuite
         // Test query limiting
         $limitTestData = [];
         for ($i = 1; $i <= 5; $i++) {
-            $limitTestData[] = TestDataFactory::createPost(['id' => (string)$i, 'title' => "Post {$i}"]);
+            $limitTestData[] = TestDataFactory::createPost(['id' => (string) $i, 'title' => "Post {$i}"]);
         }
-        
+
         $limited = $mock->limitDocuments($limitTestData, 3);
         expect($limited)->toHaveCount(3);
         expect($limited[0]['id'])->toBe('1');
@@ -175,16 +174,16 @@ class FirebaseMockTest extends UnitTestSuite
         // Test user creation
         $userData = FirebaseAuthMock::createTestUser([
             'email' => 'test@example.com',
-            'displayName' => 'Test User'
+            'displayName' => 'Test User',
         ]);
-        
+
         expect($userData['email'])->toBe('test@example.com');
         expect($userData['displayName'])->toBe('Test User');
         expect($userData['uid'])->toBeString();
 
         // Test token creation
         $token = FirebaseAuthMock::createTestToken($userData['uid'], ['admin' => true]);
-        
+
         expect($token)->toBeString();
         expect($token)->toContain('mock_custom_token_');
 
@@ -198,7 +197,7 @@ class FirebaseMockTest extends UnitTestSuite
         // Test auth mock state clearing
         $mock = FirebaseAuthMock::getInstance();
         expect($mock->getUsers())->not->toBeEmpty();
-        
+
         FirebaseAuthMock::clear();
         expect($mock->getUsers())->toBeEmpty();
 
@@ -223,14 +222,14 @@ class FirebaseMockTest extends UnitTestSuite
         // Create a test user
         $userData = FirebaseAuthMock::createTestUser([
             'email' => 'author@example.com',
-            'displayName' => 'Post Author'
+            'displayName' => 'Post Author',
         ]);
 
         // Create a post associated with the user
         $postData = TestDataFactory::createPost([
             'title' => 'User Post',
             'author_id' => $userData['uid'],
-            'published' => true
+            'published' => true,
         ]);
 
         $collection = FirestoreDB::collection('posts');
@@ -239,7 +238,7 @@ class FirebaseMockTest extends UnitTestSuite
 
         // Verify both mocks work together
         $this->assertFirestoreOperationCalled('set', 'posts', 'user-post-123');
-        
+
         $authMock = FirebaseAuthMock::getInstance();
         $users = $authMock->getUsers();
         expect($users)->toHaveCount(1);
@@ -252,7 +251,7 @@ class FirebaseMockTest extends UnitTestSuite
         // Verify clean state
         $operations = $this->getPerformedOperations();
         expect($operations)->toBeEmpty();
-        
+
         $cleanUsers = $authMock->getUsers();
         expect($cleanUsers)->toBeEmpty();
     }
@@ -284,19 +283,19 @@ class FirebaseMockTest extends UnitTestSuite
                 'id' => "doc-{$i}",
                 'title' => "Document {$i}",
                 'views' => rand(1, 1000),
-                'published' => $i % 2 === 0
+                'published' => $i % 2 === 0,
             ]);
         }
 
         $this->mockFirestoreQuery('large_collection', $largeDataset);
 
         $mock = FirestoreMock::getInstance();
-        
+
         // Test filtering performance
         $filterTime = $this->benchmark(function () use ($mock, $largeDataset) {
             return $mock->filterDocuments($largeDataset, [
                 ['field' => 'published', 'operator' => '==', 'value' => true],
-                ['field' => 'views', 'operator' => '>', 'value' => 500]
+                ['field' => 'views', 'operator' => '>', 'value' => 500],
             ]);
         });
 
@@ -305,7 +304,7 @@ class FirebaseMockTest extends UnitTestSuite
         // Test ordering performance
         $orderTime = $this->benchmark(function () use ($mock, $largeDataset) {
             return $mock->orderDocuments($largeDataset, [
-                ['field' => 'views', 'direction' => 'desc']
+                ['field' => 'views', 'direction' => 'desc'],
             ]);
         });
 
@@ -338,7 +337,7 @@ class FirebaseMockTest extends UnitTestSuite
 
         // Test that new operations are tracked correctly after clearing
         $collection->document('new-post')->set(['title' => 'New Post']);
-        
+
         $newOperations = $this->getPerformedOperations();
         expect($newOperations)->toHaveCount(1);
         expect($newOperations[0]['type'])->toBe('set');
@@ -351,14 +350,14 @@ class FirebaseMockTest extends UnitTestSuite
     {
         // Create test data in both mocks
         $userData = FirebaseAuthMock::createTestUser(['email' => 'cleanup@example.com']);
-        
+
         $collection = FirestoreDB::collection('cleanup_test');
         $collection->document('test-doc')->set(TestDataFactory::createPost());
 
         // Verify data exists
         $authMock = FirebaseAuthMock::getInstance();
         expect($authMock->getUsers())->toHaveCount(1);
-        
+
         $operations = $this->getPerformedOperations();
         expect($operations)->toHaveCount(1);
 

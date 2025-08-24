@@ -2,19 +2,21 @@
 
 namespace JTD\FirebaseModels\Optimization;
 
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Memory Manager for Firestore operations.
- * 
+ *
  * Monitors memory usage, prevents memory leaks, and optimizes
  * resource allocation for large-scale Firestore operations.
  */
 class MemoryManager
 {
     protected static array $memoryStats = [];
+
     protected static array $resourcePools = [];
+
     protected static array $config = [
         'memory_limit_mb' => 128,
         'warning_threshold_mb' => 100,
@@ -26,6 +28,7 @@ class MemoryManager
     ];
 
     protected static array $allocations = [];
+
     protected static int $allocationCounter = 0;
 
     /**
@@ -43,7 +46,7 @@ class MemoryManager
 
         try {
             $result = $callback();
-            
+
             $endMemory = memory_get_usage(true);
             $endPeakMemory = memory_get_peak_usage(true);
             $endTime = microtime(true);
@@ -61,7 +64,6 @@ class MemoryManager
             static::checkMemoryThresholds($endMemory);
 
             return $result;
-
         } catch (\Throwable $e) {
             static::handleMemoryError($operation, $e);
             throw $e;
@@ -77,7 +79,7 @@ class MemoryManager
             return uniqid('alloc_');
         }
 
-        $allocationId = 'alloc_' . (++static::$allocationCounter);
+        $allocationId = 'alloc_'.(++static::$allocationCounter);
         $currentMemory = memory_get_usage(true);
 
         static::$allocations[$allocationId] = [
@@ -159,7 +161,6 @@ class MemoryManager
                     ]);
                 }
             }
-
         } finally {
             static::deallocate($allocationId);
         }
@@ -203,6 +204,7 @@ class MemoryManager
             $resourceId = uniqid('resource_');
             $pool['active'][$resourceId] = $resource;
             $pool['stats']['reused']++;
+
             return $resource;
         }
 
@@ -213,6 +215,7 @@ class MemoryManager
             $pool['active'][$resourceId] = $resource;
             $pool['stats']['created']++;
             $pool['stats']['peak_usage'] = max($pool['stats']['peak_usage'], count($pool['active']));
+
             return $resource;
         }
 
@@ -234,16 +237,18 @@ class MemoryManager
         $resourceId = array_search($resource, $pool['active'], true);
         if ($resourceId !== false) {
             unset($pool['active'][$resourceId]);
-            
+
             // Add back to pool if there's space
             if (count($pool['pool']) < $pool['max_size']) {
                 $pool['pool'][] = $resource;
+
                 return true;
             }
         }
 
         // Destroy resource if pool is full
         $pool['stats']['destroyed']++;
+
         return true;
     }
 
@@ -258,7 +263,7 @@ class MemoryManager
             'limit_mb' => static::$config['memory_limit_mb'],
             'usage_percentage' => (memory_get_usage(true) / 1024 / 1024) / static::$config['memory_limit_mb'] * 100,
             'operations_tracked' => count(static::$memoryStats),
-            'active_allocations' => count(array_filter(static::$allocations, fn($a) => $a['active'])),
+            'active_allocations' => count(array_filter(static::$allocations, fn ($a) => $a['active'])),
             'total_allocations' => count(static::$allocations),
             'resource_pools' => count(static::$resourcePools),
             'recent_operations' => array_slice(static::$memoryStats, -10),
@@ -270,7 +275,7 @@ class MemoryManager
      */
     public static function getAllocationStats(): array
     {
-        $activeAllocations = array_filter(static::$allocations, fn($a) => $a['active']);
+        $activeAllocations = array_filter(static::$allocations, fn ($a) => $a['active']);
         $totalActiveMemory = array_sum(array_column($activeAllocations, 'size_bytes'));
 
         return [
@@ -289,7 +294,7 @@ class MemoryManager
     public static function getResourcePoolStats(): array
     {
         $stats = [];
-        
+
         foreach (static::$resourcePools as $poolName => $pool) {
             $stats[$poolName] = [
                 'max_size' => $pool['max_size'],
@@ -346,6 +351,7 @@ class MemoryManager
         if (function_exists('gc_collect_cycles')) {
             return gc_collect_cycles();
         }
+
         return 0;
     }
 
@@ -402,7 +408,7 @@ class MemoryManager
     protected static function handleMemoryError(string $operation, \Throwable $error): void
     {
         $currentMemory = memory_get_usage(true) / 1024 / 1024;
-        
+
         Log::error('Memory error during operation', [
             'operation' => $operation,
             'error' => $error->getMessage(),
@@ -417,7 +423,7 @@ class MemoryManager
     protected static function cleanupOldAllocations(): void
     {
         $cutoffTime = microtime(true) - 3600; // 1 hour ago
-        
+
         static::$allocations = array_filter(static::$allocations, function ($allocation) use ($cutoffTime) {
             return $allocation['active'] || $allocation['allocated_at'] > $cutoffTime;
         });
@@ -441,7 +447,7 @@ class MemoryManager
     protected static function groupAllocationsByContext(): array
     {
         $grouped = [];
-        
+
         foreach (static::$allocations as $allocation) {
             $context = $allocation['context'];
             if (!isset($grouped[$context])) {
@@ -465,7 +471,7 @@ class MemoryManager
             }
         }
 
-        usort($allocations, fn($a, $b) => ($b['lifetime_ms'] ?? 0) <=> ($a['lifetime_ms'] ?? 0));
+        usort($allocations, fn ($a, $b) => ($b['lifetime_ms'] ?? 0) <=> ($a['lifetime_ms'] ?? 0));
 
         return array_slice($allocations, 0, $limit);
     }
@@ -473,7 +479,8 @@ class MemoryManager
     protected static function getLargestAllocations(int $limit = 10): array
     {
         $allocations = static::$allocations;
-        usort($allocations, fn($a, $b) => $b['size_bytes'] <=> $a['size_bytes']);
+        usort($allocations, fn ($a, $b) => $b['size_bytes'] <=> $a['size_bytes']);
+
         return array_slice($allocations, 0, $limit);
     }
 }

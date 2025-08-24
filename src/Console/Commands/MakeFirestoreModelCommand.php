@@ -49,7 +49,7 @@ class MakeFirestoreModelCommand extends GeneratorCommand
     {
         return file_exists($customPath = $this->laravel->basePath(trim($stub, '/')))
             ? $customPath
-            : __DIR__ . '/../../../stubs' . $stub;
+            : __DIR__.'/../../../stubs'.$stub;
     }
 
     /**
@@ -57,7 +57,7 @@ class MakeFirestoreModelCommand extends GeneratorCommand
      */
     protected function getDefaultNamespace($rootNamespace): string
     {
-        return $rootNamespace . '\Models';
+        return $rootNamespace.'\Models';
     }
 
     /**
@@ -81,7 +81,7 @@ class MakeFirestoreModelCommand extends GeneratorCommand
     protected function replaceCollection(string &$stub): static
     {
         $collection = $this->option('collection') ?: $this->getCollectionName();
-        
+
         $stub = str_replace(
             ['{{ collection }}', '{{collection}}'],
             $collection,
@@ -97,12 +97,12 @@ class MakeFirestoreModelCommand extends GeneratorCommand
     protected function replaceFillable(string &$stub): static
     {
         $fillable = $this->option('fillable');
-        
+
         if ($fillable) {
             $attributes = collect(explode(',', $fillable))
-                ->map(fn($attr) => "'" . trim($attr) . "'")
+                ->map(fn ($attr) => "'".trim($attr)."'")
                 ->implode(",\n        ");
-            
+
             $fillableArray = "[\n        {$attributes},\n    ]";
         } else {
             $fillableArray = "[\n        // Add your fillable attributes here\n    ]";
@@ -123,16 +123,17 @@ class MakeFirestoreModelCommand extends GeneratorCommand
     protected function replaceCasts(string &$stub): static
     {
         $casts = $this->option('casts');
-        
+
         if ($casts) {
             $castArray = collect(explode(',', $casts))
                 ->mapWithKeys(function ($cast) {
                     [$field, $type] = explode(':', trim($cast));
+
                     return [trim($field) => trim($type)];
                 })
-                ->map(fn($type, $field) => "'{$field}' => '{$type}'")
+                ->map(fn ($type, $field) => "'{$field}' => '{$type}'")
                 ->implode(",\n        ");
-            
+
             $castsArray = "[\n        {$castArray},\n    ]";
         } else {
             $castsArray = "[\n        // Add your cast attributes here\n        // 'published' => 'boolean',\n        // 'published_at' => 'datetime',\n        // 'tags' => 'array',\n    ]";
@@ -155,7 +156,7 @@ class MakeFirestoreModelCommand extends GeneratorCommand
         // Default to true unless explicitly set to false
         $timestampsOption = $this->option('timestamps');
         $timestamps = ($timestampsOption === 'false' || $timestampsOption === false) ? 'false' : 'true';
-        
+
         $stub = str_replace(
             ['{{ timestamps }}', '{{timestamps}}'],
             $timestamps,
@@ -171,6 +172,7 @@ class MakeFirestoreModelCommand extends GeneratorCommand
     protected function getCollectionName(): string
     {
         $modelName = class_basename($this->getNameInput());
+
         return Str::snake(Str::pluralStudly($modelName));
     }
 
@@ -196,14 +198,14 @@ class MakeFirestoreModelCommand extends GeneratorCommand
     {
         $modelName = $this->getNameInput();
         $collection = $this->option('collection') ?: $this->getCollectionName();
-        
+
         $this->info("Firestore model [{$modelName}] created successfully!");
         $this->line("Collection: <comment>{$collection}</comment>");
-        
+
         if ($this->option('fillable')) {
             $this->line("Fillable: <comment>{$this->option('fillable')}</comment>");
         }
-        
+
         if ($this->option('casts')) {
             $this->line("Casts: <comment>{$this->option('casts')}</comment>");
         }
@@ -216,25 +218,25 @@ class MakeFirestoreModelCommand extends GeneratorCommand
     {
         $modelName = $this->getNameInput();
         $modelClass = class_basename($modelName);
-        
+
         $this->newLine();
         $this->line('<info>Usage Examples:</info>');
         $this->line("use App\\Models\\{$modelClass};");
         $this->newLine();
         $this->line("// Create a new {$modelClass}");
         $this->line("\${$this->getVariableName()} = {$modelClass}::create([");
-        $this->line("    // Add your attributes here");
-        $this->line("]);");
+        $this->line('    // Add your attributes here');
+        $this->line(']);');
         $this->newLine();
         $this->line("// Query {$modelClass} records");
         $this->line("\${$this->getVariableName()}s = {$modelClass}::where('field', 'value')->get();");
         $this->newLine();
-        $this->line("// Find by ID");
+        $this->line('// Find by ID');
         $this->line("\${$this->getVariableName()} = {$modelClass}::find('document-id');");
-        
+
         if ($this->option('relationships')) {
             $this->newLine();
-            $this->line("// Load with relationships");
+            $this->line('// Load with relationships');
             $this->line("\${$this->getVariableName()} = {$modelClass}::with('relationship')->find('document-id');");
         }
     }

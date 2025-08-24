@@ -5,7 +5,6 @@ namespace JTD\FirebaseModels\Tests\Unit\Auth;
 use JTD\FirebaseModels\Auth\User;
 use JTD\FirebaseModels\Tests\Helpers\FirebaseAuthMock;
 use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
-use Kreait\Firebase\Auth\UserRecord;
 use Kreait\Firebase\JWT\IdToken;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -17,7 +16,7 @@ class TestFirebaseUser extends \JTD\FirebaseModels\Auth\FirebaseAuthenticatable
     protected array $fillable = [
         'uid', 'email', 'email_verified_at', 'name', 'photo_url',
         'phone_number', 'custom_claims', 'provider_data',
-        'last_sign_in_at', 'test_field'
+        'last_sign_in_at', 'test_field',
     ];
 }
 
@@ -53,7 +52,7 @@ class FirebaseAuthenticatableTest extends UnitTestSuite
         $user = new TestFirebaseUser([
             'uid' => 'test-uid-123',
             'email' => 'test@example.com',
-            'name' => 'Test User'
+            'name' => 'Test User',
         ]);
 
         expect($user->uid)->toBe('test-uid-123');
@@ -90,15 +89,35 @@ class FirebaseAuthenticatableTest extends UnitTestSuite
         $tokenData = FirebaseAuthMock::createTestToken('test-uid', ['role' => 'admin']);
 
         // Create a mock IdToken
-        $token = new class($tokenData) {
+        $token = new class($tokenData)
+        {
             private $data;
-            public function __construct($data) { $this->data = $data; }
-            public function claims() {
-                return new class($this->data) {
+
+            public function __construct($data)
+            {
+                $this->data = $data;
+            }
+
+            public function claims()
+            {
+                return new class($this->data)
+                {
                     private $data;
-                    public function __construct($data) { $this->data = $data; }
-                    public function get($key, $default = null) { return $this->data[$key] ?? $default; }
-                    public function all() { return $this->data; }
+
+                    public function __construct($data)
+                    {
+                        $this->data = $data;
+                    }
+
+                    public function get($key, $default = null)
+                    {
+                        return $this->data[$key] ?? $default;
+                    }
+
+                    public function all()
+                    {
+                        return $this->data;
+                    }
                 };
             }
         };
@@ -134,8 +153,8 @@ class FirebaseAuthenticatableTest extends UnitTestSuite
         $user = new TestFirebaseUser([
             'custom_claims' => [
                 'role' => 'admin',
-                'department' => 'engineering'
-            ]
+                'department' => 'engineering',
+            ],
         ]);
 
         expect($user->getCustomClaim('role'))->toBe('admin');
@@ -159,7 +178,7 @@ class FirebaseAuthenticatableTest extends UnitTestSuite
         $user = new TestFirebaseUser([
             'uid' => 'test-uid',
             'email' => 'test@example.com',
-            'custom_claims' => ['secret' => 'data']
+            'custom_claims' => ['secret' => 'data'],
         ]);
 
         $array = $user->toArray();

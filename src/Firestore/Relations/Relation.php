@@ -114,6 +114,7 @@ abstract class Relation implements RelationInterface
     public function setRelationName(string $name): static
     {
         $this->relationName = $name;
+
         return $this;
     }
 
@@ -179,6 +180,7 @@ abstract class Relation implements RelationInterface
     public function where(string $column, mixed $operator = null, mixed $value = null): static
     {
         $this->query->where($column, $operator, $value);
+
         return $this;
     }
 
@@ -188,6 +190,7 @@ abstract class Relation implements RelationInterface
     public function orWhere(string $column, mixed $operator = null, mixed $value = null): static
     {
         $this->query->orWhere($column, $operator, $value);
+
         return $this;
     }
 
@@ -197,6 +200,7 @@ abstract class Relation implements RelationInterface
     public function whereIn(string $column, array $values): static
     {
         $this->query->whereIn($column, $values);
+
         return $this;
     }
 
@@ -206,6 +210,7 @@ abstract class Relation implements RelationInterface
     public function orderBy(string $column, string $direction = 'asc'): static
     {
         $this->query->orderBy($column, $direction);
+
         return $this;
     }
 
@@ -215,6 +220,7 @@ abstract class Relation implements RelationInterface
     public function limit(int $limit): static
     {
         $this->query->limit($limit);
+
         return $this;
     }
 
@@ -224,6 +230,7 @@ abstract class Relation implements RelationInterface
     public function offset(int $offset): static
     {
         $this->query->offset($offset);
+
         return $this;
     }
 
@@ -275,16 +282,18 @@ abstract class Relation implements RelationInterface
     {
         if (method_exists($this->query, $method)) {
             $result = $this->query->{$method}(...$parameters);
-            
+
             if ($result === $this->query) {
                 return $this;
             }
-            
+
             return $result;
         }
 
         throw new \BadMethodCallException(sprintf(
-            'Call to undefined method %s::%s()', static::class, $method
+            'Call to undefined method %s::%s()',
+            static::class,
+            $method
         ));
     }
 }

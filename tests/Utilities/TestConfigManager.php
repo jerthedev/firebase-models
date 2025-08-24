@@ -11,7 +11,9 @@ use JTD\FirebaseModels\Tests\Helpers\FirestoreMockFactory;
 class TestConfigManager
 {
     private static ?self $instance = null;
+
     private array $config = [];
+
     private array $environmentDefaults = [];
 
     private function __construct()
@@ -25,7 +27,7 @@ class TestConfigManager
         if (self::$instance === null) {
             self::$instance = new self();
         }
-        
+
         return self::$instance;
     }
 
@@ -66,7 +68,7 @@ class TestConfigManager
     {
         $environment = $this->detectEnvironment();
         $defaults = $this->environmentDefaults[$environment] ?? $this->environmentDefaults['local'];
-        
+
         $this->config = array_merge($defaults, [
             'environment' => $environment,
             'mock_type' => $this->getEnvValue('TEST_MOCK_TYPE', $defaults['mock_type']),
@@ -88,11 +90,11 @@ class TestConfigManager
         if (getenv('GITHUB_ACTIONS') === 'true') {
             return 'github_actions';
         }
-        
+
         if (getenv('CI') === 'true') {
             return 'ci';
         }
-        
+
         return 'local';
     }
 
@@ -102,6 +104,7 @@ class TestConfigManager
     private function getEnvValue(string $key, $default = null)
     {
         $value = getenv($key);
+
         return $value !== false ? $value : $default;
     }
 
@@ -114,7 +117,7 @@ class TestConfigManager
         if ($value === false) {
             return $default;
         }
-        
+
         return in_array(strtolower($value), ['true', '1', 'yes', 'on']);
     }
 
@@ -125,7 +128,7 @@ class TestConfigManager
     {
         $unit = strtolower(substr($value, -1));
         $number = (int) substr($value, 0, -1);
-        
+
         return match ($unit) {
             'g' => $number * 1024 * 1024 * 1024,
             'm' => $number * 1024 * 1024,
@@ -167,7 +170,7 @@ class TestConfigManager
         if (!empty($testRequirements)) {
             return FirestoreMockFactory::recommendType($testRequirements);
         }
-        
+
         // Otherwise use environment default
         return $this->get('mock_type');
     }

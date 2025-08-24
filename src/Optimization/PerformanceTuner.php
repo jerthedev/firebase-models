@@ -2,22 +2,22 @@
 
 namespace JTD\FirebaseModels\Optimization;
 
-use JTD\FirebaseModels\Cache\CacheManager;
-use JTD\FirebaseModels\Optimization\QueryOptimizer;
-use JTD\FirebaseModels\Optimization\MemoryManager;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use JTD\FirebaseModels\Cache\CacheManager;
 
 /**
  * Performance Tuner for comprehensive Firestore optimization.
- * 
+ *
  * Coordinates query optimization, memory management, and caching
  * strategies for maximum performance in production environments.
  */
 class PerformanceTuner
 {
     protected static array $performanceMetrics = [];
+
     protected static array $optimizationRules = [];
+
     protected static array $config = [
         'enable_auto_tuning' => true,
         'performance_monitoring' => true,
@@ -37,7 +37,7 @@ class PerformanceTuner
     {
         static::loadOptimizationRules();
         static::configureSubsystems();
-        
+
         if (static::$config['performance_monitoring']) {
             static::startPerformanceMonitoring();
         }
@@ -136,11 +136,11 @@ class PerformanceTuner
     {
         try {
             $defaultOperations = [
-                'simple_query' => fn() => static::benchmarkSimpleQuery(),
-                'complex_query' => fn() => static::benchmarkComplexQuery(),
-                'batch_operation' => fn() => static::benchmarkBatchOperation(),
-                'cache_operation' => fn() => static::benchmarkCacheOperation(),
-                'memory_operation' => fn() => static::benchmarkMemoryOperation(),
+                'simple_query' => fn () => static::benchmarkSimpleQuery(),
+                'complex_query' => fn () => static::benchmarkComplexQuery(),
+                'batch_operation' => fn () => static::benchmarkBatchOperation(),
+                'cache_operation' => fn () => static::benchmarkCacheOperation(),
+                'memory_operation' => fn () => static::benchmarkMemoryOperation(),
             ];
 
             $operations = array_merge($defaultOperations, $operations);
@@ -186,6 +186,7 @@ class PerformanceTuner
     public static function getRecommendations(): array
     {
         $analysis = static::analyzePerformance();
+
         return $analysis['recommendations'];
     }
 
@@ -310,6 +311,7 @@ class PerformanceTuner
     protected static function calculateOverallScore(array $components): int
     {
         $scores = array_column($components, 'score');
+
         return empty($scores) ? 0 : (int) round(array_sum($scores) / count($scores));
     }
 
@@ -495,10 +497,10 @@ class PerformanceTuner
     {
         $avgTime = $stats['avg_execution_time_ms'] ?? 1000;
         $cacheHitRate = $stats['cache_hit_rate'] ?? 0;
-        
+
         $timeScore = max(0, 100 - ($avgTime / 10)); // Penalty for slow queries
         $cacheScore = $cacheHitRate * 100;
-        
+
         return (int) min(100, ($timeScore + $cacheScore) / 2);
     }
 
@@ -506,10 +508,10 @@ class PerformanceTuner
     {
         $usagePercent = $stats['usage_percentage'] ?? 100;
         $efficiency = static::calculateMemoryEfficiency($stats);
-        
+
         $usageScore = max(0, 100 - $usagePercent);
         $efficiencyScore = $efficiency;
-        
+
         return (int) min(100, ($usageScore + $efficiencyScore) / 2);
     }
 
@@ -517,10 +519,10 @@ class PerformanceTuner
     {
         $hitRate = ($stats['hit_rate'] ?? 0) * 100;
         $evictionRate = $stats['eviction_rate'] ?? 0;
-        
+
         $hitScore = $hitRate;
         $evictionScore = max(0, 100 - ($evictionRate * 100));
-        
+
         return (int) min(100, ($hitScore + $evictionScore) / 2);
     }
 
@@ -529,7 +531,7 @@ class PerformanceTuner
         // Calculate efficiency based on usage patterns and allocation management
         $baseEfficiency = 100 - ($stats['usage_percentage'] ?? 100);
         $allocationEfficiency = 100; // Simplified for now
-        
+
         return ($baseEfficiency + $allocationEfficiency) / 2;
     }
 
@@ -642,6 +644,7 @@ class PerformanceTuner
     {
         $queryScores = array_column(array_column($metrics, 'components'), 'queries');
         $scores = array_column($queryScores, 'score');
+
         return static::calculateTrend($scores);
     }
 
@@ -649,6 +652,7 @@ class PerformanceTuner
     {
         $cacheScores = array_column(array_column($metrics, 'components'), 'cache');
         $scores = array_column($cacheScores, 'score');
+
         return static::calculateTrend($scores);
     }
 
@@ -656,6 +660,7 @@ class PerformanceTuner
     {
         $memoryScores = array_column(array_column($metrics, 'components'), 'memory');
         $scores = array_column($memoryScores, 'score');
+
         return static::calculateTrend($scores);
     }
 }

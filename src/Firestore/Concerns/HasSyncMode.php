@@ -33,6 +33,7 @@ trait HasSyncMode
     public function hasLocalTable(): bool
     {
         $tableName = $this->getSyncTableName();
+
         return Schema::hasTable($tableName);
     }
 
@@ -61,7 +62,7 @@ trait HasSyncMode
 
         // Check sync strategy configuration
         $strategy = config('firebase-models.sync.read_strategy', 'local_first');
-        
+
         return match ($strategy) {
             'local_only' => true,
             'local_first' => $this->hasLocalTable(),
@@ -81,7 +82,7 @@ trait HasSyncMode
         }
 
         $strategy = config('firebase-models.sync.write_strategy', 'both');
-        
+
         return in_array($strategy, ['local_only', 'both']);
     }
 
@@ -95,7 +96,7 @@ trait HasSyncMode
         }
 
         $strategy = config('firebase-models.sync.write_strategy', 'both');
-        
+
         return in_array($strategy, ['firestore_only', 'both']);
     }
 
@@ -135,24 +136,25 @@ trait HasSyncMode
                 // Update existing record
                 unset($data['id']); // Don't update the ID
                 $data['updated_at'] = now();
-                
+
                 DB::table($tableName)->where('id', $id)->update($data);
             } else {
                 // Insert new record
                 $data['id'] = $id;
                 $data['created_at'] = $data['created_at'] ?? now();
                 $data['updated_at'] = now();
-                
+
                 DB::table($tableName)->insert($data);
             }
 
             return true;
         } catch (\Exception $e) {
-            \Log::error("Failed to save to local database: " . $e->getMessage(), [
+            \Log::error('Failed to save to local database: '.$e->getMessage(), [
                 'model' => static::class,
                 'id' => $id,
-                'table' => $tableName
+                'table' => $tableName,
             ]);
+
             return false;
         }
     }
@@ -173,10 +175,11 @@ trait HasSyncMode
 
             return $deleted > 0;
         } catch (\Exception $e) {
-            \Log::error("Failed to delete from local database: " . $e->getMessage(), [
+            \Log::error('Failed to delete from local database: '.$e->getMessage(), [
                 'model' => static::class,
-                'id' => $id
+                'id' => $id,
             ]);
+
             return false;
         }
     }
@@ -218,7 +221,7 @@ trait HasSyncMode
     public function newModelQuery(): \JTD\FirebaseModels\Firestore\FirestoreModelQueryBuilder
     {
         $query = parent::newModelQuery();
-        
+
         // Set sync mode preferences on the query builder
         if (method_exists($query, 'setSyncMode')) {
             $query->setSyncMode($this->shouldReadFromLocal());

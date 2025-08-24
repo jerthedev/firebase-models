@@ -8,6 +8,7 @@ namespace JTD\FirebaseModels\Firestore\Transactions\Exceptions;
 class TransactionRetryException extends TransactionException
 {
     protected int $attempts = 0;
+
     protected array $attemptErrors = [];
 
     /**
@@ -40,6 +41,7 @@ class TransactionRetryException extends TransactionException
     public function setAttempts(int $attempts): static
     {
         $this->attempts = $attempts;
+
         return $this;
     }
 
@@ -57,6 +59,7 @@ class TransactionRetryException extends TransactionException
     public function setAttemptErrors(array $errors): static
     {
         $this->attemptErrors = $errors;
+
         return $this;
     }
 
@@ -66,6 +69,7 @@ class TransactionRetryException extends TransactionException
     public function addAttemptError(int $attempt, string $error): static
     {
         $this->attemptErrors[$attempt] = $error;
+
         return $this;
     }
 
@@ -79,6 +83,7 @@ class TransactionRetryException extends TransactionException
         }
 
         $lastAttempt = max(array_keys($this->attemptErrors));
+
         return $this->attemptErrors[$lastAttempt];
     }
 

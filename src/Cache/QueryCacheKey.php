@@ -4,7 +4,7 @@ namespace JTD\FirebaseModels\Cache;
 
 /**
  * Generates consistent cache keys for Firestore queries.
- * 
+ *
  * This class creates deterministic cache keys based on query parameters,
  * ensuring that identical queries produce the same cache key while
  * different queries produce different keys.
@@ -18,7 +18,7 @@ class QueryCacheKey
     {
         // Normalize the query data to ensure consistent keys
         $normalized = static::normalizeQueryData($queryData);
-        
+
         // Create the key components
         $keyData = [
             'collection' => $collection,
@@ -28,7 +28,7 @@ class QueryCacheKey
 
         // Generate a hash of the key data
         $hash = hash('sha256', serialize($keyData));
-        
+
         return "firestore_query:{$collection}:{$hash}";
     }
 
@@ -47,7 +47,7 @@ class QueryCacheKey
     {
         $normalized = static::normalizeQueryData($queryData);
         $hash = hash('sha256', serialize($normalized));
-        
+
         return "firestore_count:{$collection}:{$hash}";
     }
 
@@ -58,7 +58,7 @@ class QueryCacheKey
     {
         $normalized = static::normalizeQueryData($queryData);
         $hash = hash('sha256', serialize($normalized));
-        
+
         return "firestore_exists:{$collection}:{$hash}";
     }
 
@@ -70,7 +70,7 @@ class QueryCacheKey
         // Sort paths to ensure consistent ordering
         sort($documentPaths);
         $hash = hash('sha256', serialize($documentPaths));
-        
+
         return "firestore_batch:{$hash}";
     }
 
@@ -119,9 +119,9 @@ class QueryCacheKey
     {
         // Use reflection to access protected properties
         $reflection = new \ReflectionClass($query);
-        
+
         $data = [];
-        
+
         // Extract where conditions
         if ($reflection->hasProperty('wheres')) {
             $wheresProperty = $reflection->getProperty('wheres');

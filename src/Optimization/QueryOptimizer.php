@@ -2,21 +2,23 @@
 
 namespace JTD\FirebaseModels\Optimization;
 
-use JTD\FirebaseModels\Facades\FirestoreDB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Intelligent Query Optimizer for Firestore operations.
- * 
+ *
  * Analyzes query patterns, suggests optimizations, and provides
  * automatic index recommendations for improved performance.
  */
 class QueryOptimizer
 {
     protected static array $queryStats = [];
+
     protected static array $indexSuggestions = [];
+
     protected static bool $enabled = true;
+
     protected static array $config = [
         'track_queries' => true,
         'suggest_indexes' => true,
@@ -114,7 +116,7 @@ class QueryOptimizer
                 'type' => 'too_many_filters',
                 'message' => 'Query has many filters, consider using composite indexes',
                 'severity' => 'medium',
-                'suggestion' => 'Create a composite index for frequently used filter combinations'
+                'suggestion' => 'Create a composite index for frequently used filter combinations',
             ];
         }
 
@@ -124,7 +126,7 @@ class QueryOptimizer
                 'type' => 'missing_limit',
                 'message' => 'Query on large collection without limit may be slow',
                 'severity' => 'high',
-                'suggestion' => 'Add a limit() clause to improve performance'
+                'suggestion' => 'Add a limit() clause to improve performance',
             ];
         }
 
@@ -132,7 +134,7 @@ class QueryOptimizer
         if (!empty($orders) && !empty($wheres)) {
             $orderField = $orders[0]['field'] ?? null;
             $hasMatchingFilter = false;
-            
+
             foreach ($wheres as $where) {
                 if ($where['field'] === $orderField) {
                     $hasMatchingFilter = true;
@@ -145,7 +147,7 @@ class QueryOptimizer
                     'type' => 'inefficient_ordering',
                     'message' => 'Ordering by field not used in filters requires composite index',
                     'severity' => 'medium',
-                    'suggestion' => "Create composite index with filters + {$orderField}"
+                    'suggestion' => "Create composite index with filters + {$orderField}",
                 ];
             }
         }
@@ -157,7 +159,7 @@ class QueryOptimizer
                     'type' => 'array_query',
                     'message' => 'Array queries can be expensive, consider denormalization',
                     'severity' => 'low',
-                    'suggestion' => 'Consider storing array elements as separate documents for better performance'
+                    'suggestion' => 'Consider storing array elements as separate documents for better performance',
                 ];
                 break;
             }
@@ -181,7 +183,7 @@ class QueryOptimizer
                 $optimizedLimit = 100; // Default safe limit
                 Log::info('QueryOptimizer: Auto-added limit to query', [
                     'collection' => $collection,
-                    'limit' => $optimizedLimit
+                    'limit' => $optimizedLimit,
                 ]);
             }
         }
@@ -194,7 +196,7 @@ class QueryOptimizer
             'wheres' => $optimizedWheres,
             'orders' => $optimizedOrders,
             'limit' => $optimizedLimit,
-            'optimizations_applied' => count($optimizations)
+            'optimizations_applied' => count($optimizations),
         ];
     }
 
@@ -208,13 +210,13 @@ class QueryOptimizer
         }
 
         $indexKey = static::generateIndexKey($collection, $wheres, $orders);
-        
+
         if (isset(static::$indexSuggestions[$indexKey])) {
             return; // Already suggested
         }
 
         $needsIndex = static::queryNeedsIndex($wheres, $orders);
-        
+
         if ($needsIndex) {
             $suggestion = static::generateIndexSuggestion($collection, $wheres, $orders);
             static::$indexSuggestions[$indexKey] = $suggestion;
@@ -225,7 +227,7 @@ class QueryOptimizer
 
             Log::info('QueryOptimizer: Index suggestion generated', [
                 'collection' => $collection,
-                'suggestion' => $suggestion
+                'suggestion' => $suggestion,
             ]);
         }
     }
@@ -242,7 +244,7 @@ class QueryOptimizer
             if ($where['operator'] === '=') {
                 $fields[] = [
                     'field' => $where['field'],
-                    'order' => 'ASCENDING'
+                    'order' => 'ASCENDING',
                 ];
             }
         }
@@ -252,7 +254,7 @@ class QueryOptimizer
             if (in_array($where['operator'], ['>', '>=', '<', '<='])) {
                 $fields[] = [
                     'field' => $where['field'],
-                    'order' => 'ASCENDING'
+                    'order' => 'ASCENDING',
                 ];
                 break; // Only one range filter allowed
             }
@@ -263,7 +265,7 @@ class QueryOptimizer
             $direction = strtoupper($order['direction'] ?? 'ASC');
             $fields[] = [
                 'field' => $order['field'],
-                'order' => $direction === 'DESC' ? 'DESCENDING' : 'ASCENDING'
+                'order' => $direction === 'DESC' ? 'DESCENDING' : 'ASCENDING',
             ];
         }
 
@@ -274,7 +276,7 @@ class QueryOptimizer
             'firebase_url' => static::generateFirebaseIndexUrl($collection, $fields),
             'priority' => static::calculateIndexPriority($wheres, $orders),
             'estimated_benefit' => static::estimateIndexBenefit($wheres, $orders),
-            'created_at' => now()->toISOString()
+            'created_at' => now()->toISOString(),
         ];
     }
 
@@ -317,7 +319,7 @@ class QueryOptimizer
                     'query_hash' => $queryHash,
                     'avg_time_ms' => $stats['avg_time_ms'],
                     'executions' => $stats['executions'],
-                    'recommendation' => 'Consider adding appropriate indexes or optimizing query structure'
+                    'recommendation' => 'Consider adding appropriate indexes or optimizing query structure',
                 ];
             }
 
@@ -326,7 +328,7 @@ class QueryOptimizer
                     'type' => 'low_cache_hit_rate',
                     'query_hash' => $queryHash,
                     'cache_hit_rate' => $stats['cache_hits'] / $stats['executions'],
-                    'recommendation' => 'Consider increasing cache TTL or reviewing cache strategy'
+                    'recommendation' => 'Consider increasing cache TTL or reviewing cache strategy',
                 ];
             }
         }
@@ -351,7 +353,8 @@ class QueryOptimizer
             array_column($wheres, 'field'),
             array_column($orders, 'field')
         );
-        return md5($collection . '_' . implode('_', $fields));
+
+        return md5($collection.'_'.implode('_', $fields));
     }
 
     /**
@@ -368,6 +371,7 @@ class QueryOptimizer
         if (!empty($wheres) && !empty($orders)) {
             $whereField = $wheres[0]['field'] ?? null;
             $orderField = $orders[0]['field'] ?? null;
+
             return $whereField !== $orderField;
         }
 
@@ -390,6 +394,7 @@ class QueryOptimizer
         usort($wheres, function ($a, $b) {
             $orderA = static::getFilterPriority($a['operator']);
             $orderB = static::getFilterPriority($b['operator']);
+
             return $orderA - $orderB;
         });
 
@@ -417,6 +422,7 @@ class QueryOptimizer
     {
         // This could be enhanced with actual collection size data
         $largeCollections = ['posts', 'users', 'events', 'logs', 'analytics'];
+
         return in_array($collection, $largeCollections);
     }
 
@@ -428,11 +434,11 @@ class QueryOptimizer
         $projectId = config('firebase.project_id', 'your-project-id');
         $indexData = [
             'collection' => $collection,
-            'fields' => $fields
+            'fields' => $fields,
         ];
-        
-        return "https://console.firebase.google.com/project/{$projectId}/firestore/indexes?" .
-               "create_composite=" . urlencode(json_encode($indexData));
+
+        return "https://console.firebase.google.com/project/{$projectId}/firestore/indexes?".
+               'create_composite='.urlencode(json_encode($indexData));
     }
 
     /**
@@ -441,7 +447,7 @@ class QueryOptimizer
     protected static function calculateIndexPriority(array $wheres, array $orders): string
     {
         $score = count($wheres) + count($orders);
-        
+
         return match (true) {
             $score >= 4 => 'high',
             $score >= 2 => 'medium',
@@ -455,7 +461,7 @@ class QueryOptimizer
     protected static function estimateIndexBenefit(array $wheres, array $orders): string
     {
         $complexity = count($wheres) + count($orders);
-        
+
         return match (true) {
             $complexity >= 3 => 'significant',
             $complexity >= 2 => 'moderate',
@@ -489,7 +495,7 @@ class QueryOptimizer
     }
 
     // Additional helper methods for statistics calculation...
-    
+
     protected static function calculateAverageExecutionTime(): float
     {
         if (empty(static::$queryStats)) {
@@ -498,7 +504,7 @@ class QueryOptimizer
 
         $totalTime = array_sum(array_column(static::$queryStats, 'total_time_ms'));
         $totalExecutions = array_sum(array_column(static::$queryStats, 'executions'));
-        
+
         return $totalExecutions > 0 ? $totalTime / $totalExecutions : 0;
     }
 
@@ -528,7 +534,7 @@ class QueryOptimizer
     {
         $totalHits = array_sum(array_column(static::$queryStats, 'cache_hits'));
         $totalExecutions = array_sum(array_column(static::$queryStats, 'executions'));
-        
+
         return $totalExecutions > 0 ? $totalHits / $totalExecutions : 0;
     }
 
@@ -538,7 +544,7 @@ class QueryOptimizer
             'query_hash' => $queryHash,
             'execution_time_ms' => $executionTimeMs,
             'result_count' => $resultCount,
-            'threshold_ms' => static::$config['slow_query_threshold_ms']
+            'threshold_ms' => static::$config['slow_query_threshold_ms'],
         ]);
     }
 
@@ -553,7 +559,7 @@ class QueryOptimizer
         // Remove oldest 10% of tracked queries
         $removeCount = (int) (count(static::$queryStats) * 0.1);
         $oldestQueries = array_slice(static::$queryStats, 0, $removeCount, true);
-        
+
         foreach (array_keys($oldestQueries) as $queryHash) {
             unset(static::$queryStats[$queryHash]);
         }

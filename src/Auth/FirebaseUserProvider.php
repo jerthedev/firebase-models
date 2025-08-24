@@ -2,18 +2,18 @@
 
 namespace JTD\FirebaseModels\Auth;
 
-use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Contracts\Hashing\Hasher;
 use Kreait\Firebase\Contract\Auth as FirebaseAuth;
-use Kreait\Firebase\Exception\Auth\UserNotFound;
+use Kreait\Firebase\Exception\Auth\FailedToVerifyToken;
 use Kreait\Firebase\Exception\Auth\InvalidIdToken;
 use Kreait\Firebase\Exception\Auth\RevokedIdToken;
-use Kreait\Firebase\Exception\Auth\FailedToVerifyToken;
+use Kreait\Firebase\Exception\Auth\UserNotFound;
 
 /**
  * Firebase User Provider for Laravel Authentication.
- * 
+ *
  * This provider integrates Firebase Authentication with Laravel's Auth system,
  * allowing Firebase users to be retrieved and authenticated using Laravel's
  * standard UserProvider interface.
@@ -53,21 +53,22 @@ class FirebaseUserProvider implements UserProvider
         try {
             // Get user from Firebase Auth
             $firebaseUser = $this->firebaseAuth->getUser($identifier);
-            
+
             // Create or update local user model
             $user = $this->createModel();
             $user->setFirebaseUserRecord($firebaseUser);
-            
+
             // Try to load additional data from Firestore if the model supports it
             if (method_exists($user, 'find')) {
                 $existingUser = $user->find($identifier);
                 if ($existingUser) {
                     // Merge Firebase data with existing Firestore data
                     $existingUser->setFirebaseUserRecord($firebaseUser);
+
                     return $existingUser;
                 }
             }
-            
+
             return $user;
         } catch (UserNotFound $e) {
             return null;
@@ -104,24 +105,25 @@ class FirebaseUserProvider implements UserProvider
             // Verify the Firebase ID token
             $verifiedIdToken = $this->firebaseAuth->verifyIdToken($credentials['token']);
             $uid = $verifiedIdToken->claims()->get('sub');
-            
+
             // Try to get existing user first
             $user = $this->retrieveById($uid);
-            
+
             if ($user) {
                 // Set the token on the existing user
                 if ($user instanceof FirebaseAuthenticatable) {
                     $user->setFirebaseToken($verifiedIdToken);
                 }
+
                 return $user;
             }
-            
+
             // If user doesn't exist, create a new one from the token
             $user = $this->createModel();
-            
+
             if ($user instanceof FirebaseAuthenticatable) {
                 $user->hydrateFromFirebaseToken($verifiedIdToken);
-                
+
                 // Try to get additional user data from Firebase Auth
                 try {
                     $firebaseUser = $this->firebaseAuth->getUser($uid);
@@ -130,9 +132,9 @@ class FirebaseUserProvider implements UserProvider
                     // User might be new, continue with token data only
                 }
             }
-            
+
             return $user;
-        } catch (InvalidIdToken | RevokedIdToken $e) {
+        } catch (InvalidIdToken|RevokedIdToken $e) {
             return null;
         }
     }
@@ -149,10 +151,10 @@ class FirebaseUserProvider implements UserProvider
         try {
             $verifiedIdToken = $this->firebaseAuth->verifyIdToken($credentials['token']);
             $tokenUid = $verifiedIdToken->claims()->get('sub');
-            
+
             // Check if the token UID matches the user's UID
             return $user->getAuthIdentifier() === $tokenUid;
-        } catch (InvalidIdToken | RevokedIdToken | FailedToVerifyToken $e) {
+        } catch (InvalidIdToken|RevokedIdToken|FailedToVerifyToken $e) {
             return false;
         }
     }
@@ -170,9 +172,9 @@ class FirebaseUserProvider implements UserProvider
      */
     public function createModel(): FirebaseAuthenticatable
     {
-        $class = '\\' . ltrim($this->model, '\\');
+        $class = '\\'.ltrim($this->model, '\\');
 
-        return new $class;
+        return new $class();
     }
 
     /**
@@ -217,54 +219,55 @@ class FirebaseUserProvider implements UserProvider
         try {
             // Create user in Firebase Auth
             $userProperties = [];
-            
+
             if (isset($userData['email'])) {
                 $userProperties['email'] = $userData['email'];
             }
-            
+
             if (isset($userData['name'])) {
                 $userProperties['displayName'] = $userData['name'];
             }
-            
+
             if (isset($userData['photo_url'])) {
                 $userProperties['photoUrl'] = $userData['photo_url'];
             }
-            
+
             if (isset($userData['phone_number'])) {
                 $userProperties['phoneNumber'] = $userData['phone_number'];
             }
-            
+
             if (isset($userData['email_verified'])) {
                 $userProperties['emailVerified'] = $userData['email_verified'];
             }
-            
+
             if (isset($userData['password'])) {
                 $userProperties['password'] = $userData['password'];
             }
 
             $firebaseUser = $this->firebaseAuth->createUser($userProperties);
-            
+
             // Create local user model
             $user = $this->createModel();
             $user->setFirebaseUserRecord($firebaseUser);
-            
+
             // Save additional data to Firestore if supported
             if (method_exists($user, 'save')) {
                 // Fill any additional attributes
                 $additionalData = array_diff_key($userData, array_flip([
-                    'email', 'name', 'photo_url', 'phone_number', 'email_verified', 'password'
+                    'email', 'name', 'photo_url', 'phone_number', 'email_verified', 'password',
                 ]));
-                
+
                 if (!empty($additionalData)) {
                     $user->fill($additionalData);
                 }
-                
+
                 $user->save();
             }
-            
+
             return $user;
         } catch (\Exception $e) {
             report($e);
+
             return null;
         }
     }
@@ -276,42 +279,43 @@ class FirebaseUserProvider implements UserProvider
     {
         try {
             $uid = $user->getAuthIdentifier();
-            
+
             // Update Firebase Auth user
             $userProperties = [];
-            
+
             if (isset($userData['email'])) {
                 $userProperties['email'] = $userData['email'];
             }
-            
+
             if (isset($userData['name'])) {
                 $userProperties['displayName'] = $userData['name'];
             }
-            
+
             if (isset($userData['photo_url'])) {
                 $userProperties['photoUrl'] = $userData['photo_url'];
             }
-            
+
             if (isset($userData['phone_number'])) {
                 $userProperties['phoneNumber'] = $userData['phone_number'];
             }
-            
+
             if (isset($userData['email_verified'])) {
                 $userProperties['emailVerified'] = $userData['email_verified'];
             }
-            
+
             if (!empty($userProperties)) {
                 $this->firebaseAuth->updateUser($uid, $userProperties);
             }
-            
+
             // Update local user model if supported
             if (method_exists($user, 'update')) {
                 $user->update($userData);
             }
-            
+
             return true;
         } catch (\Exception $e) {
             report($e);
+
             return false;
         }
     }
@@ -323,18 +327,19 @@ class FirebaseUserProvider implements UserProvider
     {
         try {
             $uid = $user->getAuthIdentifier();
-            
+
             // Delete from Firebase Auth
             $this->firebaseAuth->deleteUser($uid);
-            
+
             // Delete from Firestore if supported
             if (method_exists($user, 'delete')) {
                 $user->delete();
             }
-            
+
             return true;
         } catch (\Exception $e) {
             report($e);
+
             return false;
         }
     }

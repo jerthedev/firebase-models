@@ -4,13 +4,12 @@ namespace JTD\FirebaseModels\Sync\Strategies;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use JTD\FirebaseModels\Contracts\Sync\SyncStrategyInterface;
 use JTD\FirebaseModels\Contracts\Sync\ConflictResolverInterface;
 use JTD\FirebaseModels\Contracts\Sync\SchemaMapperInterface;
 use JTD\FirebaseModels\Contracts\Sync\SyncResultInterface;
-use JTD\FirebaseModels\Sync\Results\SyncResult;
+use JTD\FirebaseModels\Contracts\Sync\SyncStrategyInterface;
 use JTD\FirebaseModels\Facades\FirestoreDB;
-use Google\Cloud\Firestore\DocumentSnapshot;
+use JTD\FirebaseModels\Sync\Results\SyncResult;
 
 /**
  * One-way sync strategy that syncs data from Firestore to local database.
@@ -19,6 +18,7 @@ use Google\Cloud\Firestore\DocumentSnapshot;
 class OneWayStrategy implements SyncStrategyInterface
 {
     protected ConflictResolverInterface $conflictResolver;
+
     protected SchemaMapperInterface $schemaMapper;
 
     /**
@@ -27,7 +27,7 @@ class OneWayStrategy implements SyncStrategyInterface
     public function sync(string $collection, array $options = []): SyncResultInterface
     {
         $result = new SyncResult();
-        
+
         try {
             // Get sync options
             $batchSize = $options['batch_size'] ?? 100;
@@ -37,45 +37,46 @@ class OneWayStrategy implements SyncStrategyInterface
             Log::info("Starting one-way sync for collection: {$collection}", [
                 'batch_size' => $batchSize,
                 'since' => $since,
-                'dry_run' => $dryRun
+                'dry_run' => $dryRun,
             ]);
 
             // Check if we have a local table mapping
             if (!$this->schemaMapper->hasMapping($collection)) {
                 $result->addError("No local table mapping found for collection: {$collection}");
+
                 return $result;
             }
 
             // Get documents from Firestore
             $query = FirestoreDB::collection($collection);
-            
+
             // Apply since filter if provided
             if ($since) {
                 $query = $query->where('updated_at', '>=', $since);
             }
 
             $documents = $query->documents();
-            
+
             foreach ($documents as $document) {
                 $result->incrementProcessed();
-                
+
                 try {
                     $this->syncDocument($collection, $document->id(), array_merge($options, [
                         '_document_data' => $document->data(),
-                        '_result' => $result
+                        '_result' => $result,
                     ]));
                 } catch (\Exception $e) {
-                    $result->addError("Failed to sync document {$document->id()}: " . $e->getMessage(), [
+                    $result->addError("Failed to sync document {$document->id()}: ".$e->getMessage(), [
                         'document_id' => $document->id(),
-                        'collection' => $collection
+                        'collection' => $collection,
                     ]);
                 }
             }
 
             return $result;
-            
         } catch (\Exception $e) {
-            $result->addError("Sync failed for collection {$collection}: " . $e->getMessage());
+            $result->addError("Sync failed for collection {$collection}: ".$e->getMessage());
+
             return $result;
         }
     }
@@ -91,11 +92,12 @@ class OneWayStrategy implements SyncStrategyInterface
         try {
             // Get document data (either from options or fetch from Firestore)
             $firestoreData = $options['_document_data'] ?? null;
-            
+
             if (!$firestoreData) {
                 $document = FirestoreDB::document("{$collection}/{$documentId}")->snapshot();
                 if (!$document->exists()) {
                     $result->addError("Document not found in Firestore: {$documentId}");
+
                     return $result;
                 }
                 $firestoreData = $document->data();
@@ -111,21 +113,22 @@ class OneWayStrategy implements SyncStrategyInterface
             if ($existingRecord) {
                 // Check for conflicts
                 $existingData = (array) $existingRecord;
-                
+
                 if ($this->conflictResolver->hasConflict($firestoreData, $existingData)) {
                     $resolution = $this->conflictResolver->resolve($firestoreData, $existingData, [
                         'collection' => $collection,
-                        'document_id' => $documentId
+                        'document_id' => $documentId,
                     ]);
 
                     $result->addConflict($documentId, [
                         'action' => $resolution->getAction(),
                         'winning_source' => $resolution->getWinningSource(),
-                        'description' => $resolution->getDescription()
+                        'description' => $resolution->getDescription(),
                     ]);
 
                     if ($resolution->requiresManualIntervention()) {
                         Log::warning("Manual intervention required for document: {$documentId}");
+
                         return $result;
                     }
 
@@ -136,7 +139,7 @@ class OneWayStrategy implements SyncStrategyInterface
                 if (!$dryRun) {
                     DB::table($tableName)->where('id', $documentId)->update($localData);
                 }
-                
+
                 Log::debug("Updated local record for document: {$documentId}");
             } else {
                 // Insert new record
@@ -144,18 +147,19 @@ class OneWayStrategy implements SyncStrategyInterface
                     $localData['id'] = $documentId;
                     DB::table($tableName)->insert($localData);
                 }
-                
+
                 Log::debug("Inserted new local record for document: {$documentId}");
             }
 
             $result->incrementSynced();
-            return $result;
 
+            return $result;
         } catch (\Exception $e) {
-            $result->addError("Failed to sync document {$documentId}: " . $e->getMessage(), [
+            $result->addError("Failed to sync document {$documentId}: ".$e->getMessage(), [
                 'document_id' => $documentId,
-                'collection' => $collection
+                'collection' => $collection,
             ]);
+
             return $result;
         }
     }

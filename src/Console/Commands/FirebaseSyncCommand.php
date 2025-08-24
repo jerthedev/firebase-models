@@ -4,8 +4,8 @@ namespace JTD\FirebaseModels\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
-use JTD\FirebaseModels\Sync\SyncManager;
 use JTD\FirebaseModels\Contracts\Sync\SyncResultInterface;
+use JTD\FirebaseModels\Sync\SyncManager;
 
 /**
  * Artisan command for running Firebase sync operations.
@@ -59,6 +59,7 @@ class FirebaseSyncCommand extends Command
         if (!$this->syncManager->isSyncModeEnabled() && !$this->option('force')) {
             $this->error('❌ Sync mode is not enabled. Use --force to override.');
             $this->line('   Set FIREBASE_MODE=sync in your .env file to enable sync mode.');
+
             return self::FAILURE;
         }
 
@@ -69,9 +70,10 @@ class FirebaseSyncCommand extends Command
 
         // Get collections to sync
         $collections = $this->getCollectionsToSync();
-        
+
         if ($collections->isEmpty()) {
             $this->warn('⚠️  No collections to sync.');
+
             return self::SUCCESS;
         }
 
@@ -81,6 +83,7 @@ class FirebaseSyncCommand extends Command
         // Confirm if not in dry-run mode
         if (!$this->option('dry-run') && !$this->confirmSync()) {
             $this->info('Sync cancelled.');
+
             return self::SUCCESS;
         }
 
@@ -99,6 +102,7 @@ class FirebaseSyncCommand extends Command
                 \Carbon\Carbon::parse($since);
             } catch (\Exception $e) {
                 $this->error("❌ Invalid timestamp format: {$since}");
+
                 return false;
             }
         }
@@ -107,6 +111,7 @@ class FirebaseSyncCommand extends Command
         if ($batchSize = $this->option('batch-size')) {
             if (!is_numeric($batchSize) || $batchSize < 1) {
                 $this->error("❌ Invalid batch size: {$batchSize}");
+
                 return false;
             }
         }
@@ -115,6 +120,7 @@ class FirebaseSyncCommand extends Command
         if ($timeout = $this->option('timeout')) {
             if (!is_numeric($timeout) || $timeout < 1) {
                 $this->error("❌ Invalid timeout: {$timeout}");
+
                 return false;
             }
         }
@@ -136,7 +142,7 @@ class FirebaseSyncCommand extends Command
         // Multiple collections option
         elseif ($collectionsOption = $this->option('collections')) {
             $collections = collect(explode(',', $collectionsOption))
-                ->map(fn($c) => trim($c))
+                ->map(fn ($c) => trim($c))
                 ->filter();
         }
         // Default collections from config
@@ -144,7 +150,7 @@ class FirebaseSyncCommand extends Command
             $configCollections = config('firebase-models.sync.schedule.collections', '');
             if ($configCollections) {
                 $collections = collect(explode(',', $configCollections))
-                    ->map(fn($c) => trim($c))
+                    ->map(fn ($c) => trim($c))
                     ->filter();
             }
         }
@@ -152,9 +158,9 @@ class FirebaseSyncCommand extends Command
         // Apply exclusions
         if ($exclude = $this->option('exclude')) {
             $excludeList = collect(explode(',', $exclude))
-                ->map(fn($c) => trim($c))
+                ->map(fn ($c) => trim($c))
                 ->filter();
-            
+
             $collections = $collections->diff($excludeList);
         }
 
@@ -175,7 +181,7 @@ class FirebaseSyncCommand extends Command
                 ['Collections', $collections->implode(', ')],
                 ['Since', $this->option('since') ?: 'All time'],
                 ['Batch Size', $this->option('batch-size') ?: config('firebase-models.sync.batch_size', 100)],
-                ['Timeout', $this->option('timeout') ?: config('firebase-models.sync.timeout', 300) . 's'],
+                ['Timeout', $this->option('timeout') ?: config('firebase-models.sync.timeout', 300).'s'],
             ]
         );
         $this->newLine();
@@ -207,25 +213,24 @@ class FirebaseSyncCommand extends Command
 
         foreach ($collections as $collection) {
             $progressBar->setMessage("Syncing {$collection}...");
-            
+
             try {
                 $result = $this->syncCollection($collection);
                 $totalResults->put($collection, $result);
-                
+
                 if (!$result->isSuccessful()) {
                     $hasErrors = true;
                 }
-                
             } catch (\Exception $e) {
                 $hasErrors = true;
                 $this->newLine();
-                $this->error("❌ Failed to sync {$collection}: " . $e->getMessage());
-                
+                $this->error("❌ Failed to sync {$collection}: ".$e->getMessage());
+
                 if ($this->option('verbose')) {
                     $this->line($e->getTraceAsString());
                 }
             }
-            
+
             $progressBar->advance();
         }
 
@@ -260,7 +265,7 @@ class FirebaseSyncCommand extends Command
     protected function displayResults(Collection $results, float $duration): void
     {
         $this->info('📊 Sync Results:');
-        
+
         $tableData = [];
         $totalProcessed = 0;
         $totalSynced = 0;
@@ -269,14 +274,14 @@ class FirebaseSyncCommand extends Command
 
         foreach ($results as $collection => $result) {
             $summary = $result->getSummary();
-            
+
             $tableData[] = [
                 $collection,
                 $summary['processed'],
                 $summary['synced'],
                 $summary['conflicts'],
                 $summary['errors'],
-                $summary['success_rate'] . '%'
+                $summary['success_rate'].'%',
             ];
 
             $totalProcessed += $summary['processed'];
@@ -293,7 +298,7 @@ class FirebaseSyncCommand extends Command
             $totalSynced,
             $totalConflicts,
             $totalErrors,
-            $totalProcessed > 0 ? round(($totalSynced / $totalProcessed) * 100, 2) . '%' : '0%'
+            $totalProcessed > 0 ? round(($totalSynced / $totalProcessed) * 100, 2).'%' : '0%',
         ];
 
         $this->table(
@@ -301,14 +306,14 @@ class FirebaseSyncCommand extends Command
             $tableData
         );
 
-        $this->info("⏱️  Duration: " . round($duration, 2) . " seconds");
-        
+        $this->info('⏱️  Duration: '.round($duration, 2).' seconds');
+
         if ($totalErrors > 0) {
             $this->error("❌ Sync completed with {$totalErrors} errors.");
         } elseif ($totalConflicts > 0) {
             $this->warn("⚠️  Sync completed with {$totalConflicts} conflicts.");
         } else {
-            $this->info("✅ Sync completed successfully!");
+            $this->info('✅ Sync completed successfully!');
         }
     }
 }

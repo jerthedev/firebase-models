@@ -2,12 +2,11 @@
 
 /**
  * PHPUnit 12 Modernization Tool
- * 
+ *
  * Converts Pest PHP describe/it structure to PHPUnit class methods with #[Test] attributes.
- * 
+ *
  * Usage: php scripts/convert-describe-it.php <file-path>
  */
-
 if ($argc < 2) {
     echo "Usage: php scripts/convert-describe-it.php <file-path>\n";
     exit(1);
@@ -23,35 +22,44 @@ if (!file_exists($filePath)) {
 class DescribeItConverter
 {
     private string $content;
+
     private array $testMethods = [];
+
     private string $className;
+
     private string $namespace;
+
     private array $imports = [];
+
     private array $modelClasses = [];
+
     private bool $hasSetUp = false;
+
     private bool $hasTearDown = false;
+
     private string $setUpBody = '';
+
     private string $tearDownBody = '';
-    
+
     public function __construct(string $filePath)
     {
         $this->content = file_get_contents($filePath);
         $this->extractClassName($filePath);
         $this->extractNamespace($filePath);
     }
-    
+
     private function extractClassName(string $filePath): void
     {
         $fileName = basename($filePath, '.php');
         $this->className = $fileName;
     }
-    
+
     private function extractNamespace(string $filePath): void
     {
         // Extract namespace from file path
-        $relativePath = str_replace(getcwd() . '/', '', dirname($filePath));
+        $relativePath = str_replace(getcwd().'/', '', dirname($filePath));
         $namespaceParts = explode('/', $relativePath);
-        
+
         // Convert tests/Unit/... to JTD\FirebaseModels\Tests\Unit\...
         if ($namespaceParts[0] === 'tests') {
             $namespaceParts[0] = 'JTD\\FirebaseModels\\Tests';
@@ -60,7 +68,7 @@ class DescribeItConverter
             $this->namespace = 'JTD\\FirebaseModels\\Tests\\Unit';
         }
     }
-    
+
     public function convert(): string
     {
         $this->extractImports();
@@ -86,36 +94,36 @@ class DescribeItConverter
 
         foreach ($matches as $match) {
             $this->modelClasses[] = $match[0];
-            echo "Found class: " . $match[1] . "\n";
+            echo 'Found class: '.$match[1]."\n";
         }
     }
-    
+
     private function extractImports(): void
     {
         // Extract existing use statements
         preg_match_all('/^use\s+([^;]+);/m', $this->content, $matches);
         $this->imports = $matches[1] ?? [];
-        
+
         // Add required imports for PHPUnit
         $requiredImports = [
             'JTD\\FirebaseModels\\Tests\\TestSuites\\UnitTestSuite',
-            'PHPUnit\\Framework\\Attributes\\Test'
+            'PHPUnit\\Framework\\Attributes\\Test',
         ];
-        
+
         foreach ($requiredImports as $import) {
             if (!in_array($import, $this->imports)) {
                 $this->imports[] = $import;
             }
         }
     }
-    
+
     private function extractTestMethods(): void
     {
         // Find all it() functions with better regex to handle nested braces
         $pattern = '/it\([\'"]([^\'\"]+)[\'"],\s*function\s*\(\)\s*\{/';
         preg_match_all($pattern, $this->content, $matches, PREG_OFFSET_CAPTURE);
 
-        echo "Found " . count($matches[0]) . " it() functions\n";
+        echo 'Found '.count($matches[0])." it() functions\n";
 
         foreach ($matches[0] as $index => $match) {
             $description = $matches[1][$index][0];
@@ -131,7 +139,7 @@ class DescribeItConverter
                 $this->testMethods[] = [
                     'name' => $methodName,
                     'description' => $description,
-                    'body' => $this->cleanMethodBody($body)
+                    'body' => $this->cleanMethodBody($body),
                 ];
                 echo "  -> Converted to: $methodName\n";
             } else {
@@ -160,12 +168,13 @@ class DescribeItConverter
             // Found matching brace, extract body (excluding the closing brace and });)
             $bodyEnd = $pos - 1;
             $body = substr($this->content, $startPos, $bodyEnd - $startPos);
+
             return $body;
         }
 
         return null;
     }
-    
+
     private function extractHooks(): void
     {
         // Check for beforeEach with better pattern matching
@@ -192,7 +201,7 @@ class DescribeItConverter
             }
         }
     }
-    
+
     private function generateMethodName(string $description): string
     {
         // Convert description to snake_case method name
@@ -220,37 +229,37 @@ class DescribeItConverter
 
         // Ensure it starts with "it_" or "test_"
         if (!str_starts_with($name, 'it_') && !str_starts_with($name, 'test_')) {
-            $name = 'it_' . $name;
+            $name = 'it_'.$name;
         }
 
         // Ensure unique method names
         $originalName = $name;
         $counter = 1;
         while (in_array($name, array_column($this->testMethods, 'name'))) {
-            $name = $originalName . '_' . $counter;
+            $name = $originalName.'_'.$counter;
             $counter++;
         }
 
         return $name;
     }
-    
+
     private function cleanMethodBody(string $body): string
     {
         // Remove extra indentation and clean up the body
         $lines = explode("\n", $body);
         $cleanLines = [];
-        
+
         foreach ($lines as $line) {
             $trimmed = trim($line);
             if (!empty($trimmed)) {
                 // Remove excessive indentation but preserve relative indentation
-                $cleanLines[] = '        ' . ltrim($line);
+                $cleanLines[] = '        '.ltrim($line);
             }
         }
-        
+
         return implode("\n", $cleanLines);
     }
-    
+
     private function generateClassStructure(): string
     {
         $output = "<?php\n\n";
@@ -266,7 +275,7 @@ class DescribeItConverter
         // Add model classes if any
         foreach ($this->modelClasses as $modelClass) {
             $output .= "// Test model class\n";
-            $output .= $modelClass . "\n\n";
+            $output .= $modelClass."\n\n";
         }
 
         $output .= "/**\n";
@@ -276,36 +285,36 @@ class DescribeItConverter
         $output .= " * Generated by PHPUnit 12 Modernization Tool.\n";
         $output .= " */\n";
         $output .= "class {$this->className} extends UnitTestSuite\n{\n";
-        
+
         // Add setUp method if needed
         if ($this->hasSetUp) {
             $output .= "    protected function setUp(): void\n";
             $output .= "    {\n";
             $output .= "        parent::setUp();\n";
-            $output .= $this->setUpBody . "\n";
+            $output .= $this->setUpBody."\n";
             $output .= "    }\n\n";
         }
-        
+
         // Add tearDown method if needed
         if ($this->hasTearDown) {
             $output .= "    protected function tearDown(): void\n";
             $output .= "    {\n";
-            $output .= $this->tearDownBody . "\n";
+            $output .= $this->tearDownBody."\n";
             $output .= "        parent::tearDown();\n";
             $output .= "    }\n\n";
         }
-        
+
         // Add test methods
         foreach ($this->testMethods as $method) {
             $output .= "    #[Test]\n";
             $output .= "    public function {$method['name']}()\n";
             $output .= "    {\n";
-            $output .= $method['body'] . "\n";
+            $output .= $method['body']."\n";
             $output .= "    }\n\n";
         }
-        
+
         $output .= "}\n";
-        
+
         return $output;
     }
 }
@@ -313,21 +322,20 @@ class DescribeItConverter
 // Main execution
 try {
     echo "Converting describe/it structure in: $filePath\n";
-    
+
     $converter = new DescribeItConverter($filePath);
     $convertedContent = $converter->convert();
-    
+
     // Create backup
-    $backupPath = $filePath . '.backup';
+    $backupPath = $filePath.'.backup';
     copy($filePath, $backupPath);
     echo "Created backup: $backupPath\n";
-    
+
     // Write converted content
     file_put_contents($filePath, $convertedContent);
     echo "Conversion complete!\n";
     echo "Original file backed up and new structure written.\n";
-    
 } catch (Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
+    echo 'Error: '.$e->getMessage()."\n";
     exit(1);
 }

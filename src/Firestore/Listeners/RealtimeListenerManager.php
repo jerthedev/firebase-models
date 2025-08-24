@@ -2,23 +2,20 @@
 
 namespace JTD\FirebaseModels\Firestore\Listeners;
 
-use JTD\FirebaseModels\Facades\FirestoreDB;
-use JTD\FirebaseModels\Firestore\Listeners\DocumentListener;
-use JTD\FirebaseModels\Firestore\Listeners\CollectionListener;
-use JTD\FirebaseModels\Firestore\Listeners\QueryListener;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Event;
 use Exception;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Real-time Listener Manager for Firestore.
- * 
+ *
  * Manages document, collection, and query listeners with automatic
  * reconnection, error handling, and Laravel event integration.
  */
 class RealtimeListenerManager
 {
     protected static array $listeners = [];
+
     protected static array $config = [
         'auto_reconnect' => true,
         'max_reconnect_attempts' => 5,
@@ -38,7 +35,7 @@ class RealtimeListenerManager
     ): DocumentListener {
         $listener = new DocumentListener($collection, $documentId, $callback, $options);
         $listenerId = static::generateListenerId('document', $collection, $documentId);
-        
+
         static::$listeners[$listenerId] = $listener;
         $listener->start();
 
@@ -46,7 +43,7 @@ class RealtimeListenerManager
             Log::info('Started document listener', [
                 'collection' => $collection,
                 'document' => $documentId,
-                'listener_id' => $listenerId
+                'listener_id' => $listenerId,
             ]);
         }
 
@@ -63,14 +60,14 @@ class RealtimeListenerManager
     ): CollectionListener {
         $listener = new CollectionListener($collection, $callback, $options);
         $listenerId = static::generateListenerId('collection', $collection);
-        
+
         static::$listeners[$listenerId] = $listener;
         $listener->start();
 
         if (static::$config['log_events']) {
             Log::info('Started collection listener', [
                 'collection' => $collection,
-                'listener_id' => $listenerId
+                'listener_id' => $listenerId,
             ]);
         }
 
@@ -88,7 +85,7 @@ class RealtimeListenerManager
     ): QueryListener {
         $listener = new QueryListener($collection, $wheres, $callback, $options);
         $listenerId = static::generateListenerId('query', $collection, md5(serialize($wheres)));
-        
+
         static::$listeners[$listenerId] = $listener;
         $listener->start();
 
@@ -96,7 +93,7 @@ class RealtimeListenerManager
             Log::info('Started query listener', [
                 'collection' => $collection,
                 'wheres' => $wheres,
-                'listener_id' => $listenerId
+                'listener_id' => $listenerId,
             ]);
         }
 
@@ -209,7 +206,7 @@ class RealtimeListenerManager
      */
     protected static function generateListenerId(string $type, string ...$parts): string
     {
-        return $type . '_' . implode('_', $parts) . '_' . uniqid();
+        return $type.'_'.implode('_', $parts).'_'.uniqid();
     }
 
     /**
@@ -222,11 +219,11 @@ class RealtimeListenerManager
         }
 
         $listener = static::$listeners[$listenerId];
-        
+
         Log::error('Listener error', [
             'listener_id' => $listenerId,
             'error' => $error->getMessage(),
-            'type' => $listener->getType()
+            'type' => $listener->getType(),
         ]);
 
         // Fire Laravel event
@@ -253,8 +250,9 @@ class RealtimeListenerManager
         if ($attempts >= static::$config['max_reconnect_attempts']) {
             Log::warning('Max reconnect attempts reached', [
                 'listener_id' => $listenerId,
-                'attempts' => $attempts
+                'attempts' => $attempts,
             ]);
+
             return;
         }
 
@@ -265,7 +263,7 @@ class RealtimeListenerManager
         Log::info('Scheduling listener reconnection', [
             'listener_id' => $listenerId,
             'delay_ms' => $delay,
-            'attempt' => $attempts + 1
+            'attempt' => $attempts + 1,
         ]);
 
         // Simulate reconnection
@@ -281,7 +279,7 @@ class RealtimeListenerManager
         // In a real implementation, this would start a background process
         // to monitor listener health and send heartbeat events
         Log::info('Started listener heartbeat monitoring', [
-            'interval_ms' => static::$config['heartbeat_interval_ms']
+            'interval_ms' => static::$config['heartbeat_interval_ms'],
         ]);
     }
 

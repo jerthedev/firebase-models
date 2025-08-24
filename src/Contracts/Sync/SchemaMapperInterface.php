@@ -11,7 +11,6 @@ interface SchemaMapperInterface
      * Get the local table name for a Firestore collection.
      *
      * @param string $collection The Firestore collection name
-     * @return string
      */
     public function getTableName(string $collection): string;
 
@@ -20,7 +19,6 @@ interface SchemaMapperInterface
      *
      * @param string $collection The Firestore collection name
      * @param array $firestoreData The document data from Firestore
-     * @return array
      */
     public function mapToLocal(string $collection, array $firestoreData): array;
 
@@ -29,7 +27,6 @@ interface SchemaMapperInterface
      *
      * @param string $collection The Firestore collection name
      * @param array $localData The data from local database
-     * @return array
      */
     public function mapToFirestore(string $collection, array $localData): array;
 
@@ -37,7 +34,6 @@ interface SchemaMapperInterface
      * Get the column mapping for a collection.
      *
      * @param string $collection The Firestore collection name
-     * @return array
      */
     public function getColumnMapping(string $collection): array;
 
@@ -45,7 +41,6 @@ interface SchemaMapperInterface
      * Check if a collection has a local table mapping.
      *
      * @param string $collection The Firestore collection name
-     * @return bool
      */
     public function hasMapping(string $collection): bool;
 
@@ -55,7 +50,6 @@ interface SchemaMapperInterface
      * @param string $collection The Firestore collection name
      * @param string $table The local table name
      * @param array $columnMapping Column mapping configuration
-     * @return void
      */
     public function registerMapping(string $collection, string $table, array $columnMapping = []): void;
 }

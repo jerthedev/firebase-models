@@ -51,6 +51,7 @@ class HasMany extends Relation
         if (empty($keys)) {
             // If no keys, add a constraint that will return no results
             $this->query->where($this->foreignKey, '=', '__no_match__');
+
             return;
         }
 
@@ -95,7 +96,7 @@ class HasMany extends Relation
 
         foreach ($models as $model) {
             $key = $model->getAttribute($this->localKey);
-            
+
             if (isset($dictionary[$key])) {
                 $model->setRelation($relation, new Collection($dictionary[$key]));
             }
@@ -113,11 +114,11 @@ class HasMany extends Relation
 
         foreach ($results as $result) {
             $key = $result->getAttribute($this->foreignKey);
-            
+
             if (!isset($dictionary[$key])) {
                 $dictionary[$key] = [];
             }
-            
+
             $dictionary[$key][] = $result;
         }
 
@@ -138,7 +139,7 @@ class HasMany extends Relation
     public function create(array $attributes = []): FirestoreModel
     {
         $attributes[$this->foreignKey] = $this->getParentKey();
-        
+
         return $this->related->newQuery()->create($attributes);
     }
 
@@ -148,7 +149,7 @@ class HasMany extends Relation
     public function save(FirestoreModel $model): FirestoreModel
     {
         $model->setAttribute($this->foreignKey, $this->getParentKey());
-        
+
         return $model->save() ? $model : false;
     }
 
@@ -202,7 +203,7 @@ class HasMany extends Relation
     public function firstOrCreate(array $attributes = [], array $values = []): FirestoreModel
     {
         $attributes[$this->foreignKey] = $this->getParentKey();
-        
+
         if ($instance = $this->where($attributes)->first()) {
             return $instance;
         }
@@ -216,7 +217,7 @@ class HasMany extends Relation
     public function firstOrNew(array $attributes = [], array $values = []): FirestoreModel
     {
         $attributes[$this->foreignKey] = $this->getParentKey();
-        
+
         if ($instance = $this->where($attributes)->first()) {
             return $instance;
         }
@@ -230,10 +231,11 @@ class HasMany extends Relation
     public function updateOrCreate(array $attributes, array $values = []): FirestoreModel
     {
         $attributes[$this->foreignKey] = $this->getParentKey();
-        
+
         if ($instance = $this->where($attributes)->first()) {
             $instance->fill($values);
             $instance->save();
+
             return $instance;
         }
 
@@ -246,7 +248,7 @@ class HasMany extends Relation
     public function update(array $attributes): int
     {
         $updated = 0;
-        
+
         foreach ($this->get() as $model) {
             if ($model->fill($attributes)->save()) {
                 $updated++;
@@ -262,7 +264,7 @@ class HasMany extends Relation
     public function delete(): int
     {
         $deleted = 0;
-        
+
         foreach ($this->get() as $model) {
             if ($model->delete()) {
                 $deleted++;

@@ -14,7 +14,7 @@ class TestDataFactory
     public static function createUser(array $overrides = []): array
     {
         return array_merge([
-            'id' => 'user_' . uniqid(),
+            'id' => 'user_'.uniqid(),
             'name' => 'Test User',
             'email' => 'test@example.com',
             'email_verified' => true,
@@ -47,12 +47,12 @@ class TestDataFactory
     public static function createPost(array $overrides = []): array
     {
         return array_merge([
-            'id' => 'post_' . uniqid(),
+            'id' => 'post_'.uniqid(),
             'title' => 'Test Post Title',
             'content' => 'This is test post content with some meaningful text for testing purposes.',
             'excerpt' => 'This is a test post excerpt.',
             'status' => 'published',
-            'author_id' => 'user_' . uniqid(),
+            'author_id' => 'user_'.uniqid(),
             'category' => 'general',
             'tags' => ['test', 'post', 'content'],
             'featured' => false,
@@ -81,10 +81,10 @@ class TestDataFactory
     public static function createComment(array $overrides = []): array
     {
         return array_merge([
-            'id' => 'comment_' . uniqid(),
+            'id' => 'comment_'.uniqid(),
             'content' => 'This is a test comment with meaningful content.',
-            'author_id' => 'user_' . uniqid(),
-            'post_id' => 'post_' . uniqid(),
+            'author_id' => 'user_'.uniqid(),
+            'post_id' => 'post_'.uniqid(),
             'parent_id' => null,
             'status' => 'approved',
             'like_count' => 0,
@@ -105,7 +105,7 @@ class TestDataFactory
     public static function createCategory(array $overrides = []): array
     {
         return array_merge([
-            'id' => 'category_' . uniqid(),
+            'id' => 'category_'.uniqid(),
             'name' => 'Test Category',
             'slug' => 'test-category',
             'description' => 'This is a test category description.',
@@ -133,16 +133,16 @@ class TestDataFactory
     public static function createProduct(array $overrides = []): array
     {
         return array_merge([
-            'id' => 'product_' . uniqid(),
+            'id' => 'product_'.uniqid(),
             'name' => 'Test Product',
             'description' => 'This is a test product with detailed description.',
-            'sku' => 'TEST-' . strtoupper(uniqid()),
+            'sku' => 'TEST-'.strtoupper(uniqid()),
             'price' => 99.99,
             'sale_price' => null,
             'currency' => 'USD',
             'stock_quantity' => 100,
             'stock_status' => 'in_stock',
-            'category_id' => 'category_' . uniqid(),
+            'category_id' => 'category_'.uniqid(),
             'brand' => 'Test Brand',
             'weight' => 1.5,
             'dimensions' => [
@@ -172,9 +172,9 @@ class TestDataFactory
     public static function createOrder(array $overrides = []): array
     {
         return array_merge([
-            'id' => 'order_' . uniqid(),
-            'order_number' => 'ORD-' . strtoupper(uniqid()),
-            'customer_id' => 'user_' . uniqid(),
+            'id' => 'order_'.uniqid(),
+            'order_number' => 'ORD-'.strtoupper(uniqid()),
+            'customer_id' => 'user_'.uniqid(),
             'status' => 'pending',
             'payment_status' => 'pending',
             'total_amount' => 199.98,
@@ -184,7 +184,7 @@ class TestDataFactory
             'currency' => 'USD',
             'items' => [
                 [
-                    'product_id' => 'product_' . uniqid(),
+                    'product_id' => 'product_'.uniqid(),
                     'quantity' => 2,
                     'price' => 99.99,
                     'total' => 199.98,
@@ -219,21 +219,21 @@ class TestDataFactory
     public static function createMultiple(string $type, int $count, array $baseOverrides = []): array
     {
         $items = [];
-        $method = 'create' . ucfirst($type);
-        
+        $method = 'create'.ucfirst($type);
+
         if (!method_exists(self::class, $method)) {
             throw new \InvalidArgumentException("Unknown data type: {$type}");
         }
-        
+
         for ($i = 0; $i < $count; $i++) {
             $overrides = array_merge($baseOverrides, [
                 'sequence' => $i,
-                'batch_id' => 'batch_' . uniqid(),
+                'batch_id' => 'batch_'.uniqid(),
             ]);
-            
+
             $items[] = self::$method($overrides);
         }
-        
+
         return $items;
     }
 
@@ -244,10 +244,10 @@ class TestDataFactory
     {
         // Create users
         $users = self::createMultiple('user', 3);
-        
+
         // Create categories
         $categories = self::createMultiple('category', 2);
-        
+
         // Create posts with relationships
         $posts = [];
         foreach ($users as $user) {
@@ -258,7 +258,7 @@ class TestDataFactory
                 ]);
             }
         }
-        
+
         // Create comments with relationships
         $comments = [];
         foreach ($posts as $post) {
@@ -269,7 +269,7 @@ class TestDataFactory
                 ]);
             }
         }
-        
+
         return [
             'users' => $users,
             'categories' => $categories,
@@ -284,7 +284,7 @@ class TestDataFactory
     public static function createHierarchicalCategories(int $depth = 3, int $childrenPerLevel = 2): array
     {
         $categories = [];
-        
+
         // Create root categories
         for ($i = 0; $i < $childrenPerLevel; $i++) {
             $rootCategory = self::createCategory([
@@ -293,12 +293,12 @@ class TestDataFactory
                 'parent_id' => null,
             ]);
             $categories[] = $rootCategory;
-            
+
             // Create subcategories recursively
             $subcategories = self::createSubcategories($rootCategory['id'], $depth - 1, $childrenPerLevel, 1);
             $categories = array_merge($categories, $subcategories);
         }
-        
+
         return $categories;
     }
 
@@ -310,9 +310,9 @@ class TestDataFactory
         if ($remainingDepth <= 0) {
             return [];
         }
-        
+
         $subcategories = [];
-        
+
         for ($i = 0; $i < $childrenPerLevel; $i++) {
             $subcategory = self::createCategory([
                 'name' => "Category Level {$currentLevel} - {$i}",
@@ -320,12 +320,12 @@ class TestDataFactory
                 'level' => $currentLevel,
             ]);
             $subcategories[] = $subcategory;
-            
+
             // Create children recursively
             $children = self::createSubcategories($subcategory['id'], $remainingDepth - 1, $childrenPerLevel, $currentLevel + 1);
             $subcategories = array_merge($subcategories, $children);
         }
-        
+
         return $subcategories;
     }
 }

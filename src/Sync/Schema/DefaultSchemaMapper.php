@@ -2,8 +2,8 @@
 
 namespace JTD\FirebaseModels\Sync\Schema;
 
-use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use JTD\FirebaseModels\Contracts\Sync\SchemaMapperInterface;
 
 /**
@@ -50,7 +50,7 @@ class DefaultSchemaMapper implements SchemaMapperInterface
         foreach ($firestoreData as $field => $value) {
             // Get the local column name
             $localColumn = $mapping[$field] ?? $field;
-            
+
             // Skip if mapped to null (excluded field)
             if ($localColumn === null) {
                 continue;
@@ -77,7 +77,7 @@ class DefaultSchemaMapper implements SchemaMapperInterface
         foreach ($localData as $column => $value) {
             // Get the Firestore field name
             $firestoreField = $mapping[$column] ?? $column;
-            
+
             // Skip if mapped to null or is the ID field
             if ($firestoreField === null || $column === 'id') {
                 continue;
@@ -96,7 +96,7 @@ class DefaultSchemaMapper implements SchemaMapperInterface
     public function getColumnMapping(string $collection): array
     {
         $customMapping = $this->mappings[$collection]['columns'] ?? [];
-        
+
         return array_merge($this->defaultMappings, $customMapping);
     }
 
@@ -167,6 +167,7 @@ class DefaultSchemaMapper implements SchemaMapperInterface
         // Handle JSON columns (convert back to array)
         if (is_string($value) && $this->isJsonColumn($column)) {
             $decoded = json_decode($value, true);
+
             return $decoded !== null ? $decoded : $value;
         }
 
@@ -201,7 +202,7 @@ class DefaultSchemaMapper implements SchemaMapperInterface
     {
         // Common JSON column patterns
         $jsonPatterns = ['_data', '_meta', '_config', '_settings', '_attributes'];
-        
+
         foreach ($jsonPatterns as $pattern) {
             if (Str::contains($column, $pattern)) {
                 return true;

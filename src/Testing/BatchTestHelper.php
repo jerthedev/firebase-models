@@ -29,7 +29,7 @@ class BatchTestHelper
 
         for ($i = 1; $i <= $count; $i++) {
             $record = $template;
-            
+
             // Add unique identifiers
             foreach ($record as $key => $value) {
                 if (is_string($value) && strpos($value, '{i}') !== false) {
@@ -72,7 +72,7 @@ class BatchTestHelper
     {
         if (!$result->isSuccess()) {
             throw new \PHPUnit\Framework\AssertionFailedError(
-                'Batch operation failed: ' . $result->getError()
+                'Batch operation failed: '.$result->getError()
             );
         }
 
@@ -205,22 +205,22 @@ class BatchTestHelper
             'empty_collection' => [
                 'type' => 'create',
                 'collection' => '',
-                'data' => ['test' => 'data']
+                'data' => ['test' => 'data'],
             ],
             'invalid_id' => [
                 'type' => 'update',
                 'collection' => 'test',
                 'id' => 'invalid/id',
-                'data' => ['test' => 'data']
+                'data' => ['test' => 'data'],
             ],
             'large_document' => [
                 'type' => 'create',
                 'collection' => 'test',
-                'data' => ['large_field' => str_repeat('x', 2000000)] // 2MB
+                'data' => ['large_field' => str_repeat('x', 2000000)], // 2MB
             ],
             'missing_data' => [
                 'type' => 'create',
-                'collection' => 'test'
+                'collection' => 'test',
                 // Missing 'data' field
             ],
         ];
@@ -307,7 +307,7 @@ class BatchTestHelper
     public static function cleanupTestData(string $collection, array $documentIds): BatchResult
     {
         return BatchManager::bulkDelete($collection, $documentIds, [
-            'log_operations' => false
+            'log_operations' => false,
         ]);
     }
 
@@ -322,8 +322,8 @@ class BatchTestHelper
 
         for ($i = 0; $i < $count; $i++) {
             $data[] = [
-                'title' => 'Random Document ' . uniqid(),
-                'content' => 'Random content ' . str_repeat('x', rand(10, 100)),
+                'title' => 'Random Document '.uniqid(),
+                'content' => 'Random content '.str_repeat('x', rand(10, 100)),
                 'status' => $statuses[array_rand($statuses)],
                 'category' => $categories[array_rand($categories)],
                 'score' => rand(1, 100),

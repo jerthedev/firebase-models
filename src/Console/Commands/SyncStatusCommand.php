@@ -79,7 +79,7 @@ class SyncStatusCommand extends Command
                 ['Strategy', $config['strategy'] ?? 'N/A', ''],
                 ['Conflict Policy', $config['conflict_policy'] ?? 'N/A', ''],
                 ['Batch Size', $config['batch_size'] ?? 'N/A', ''],
-                ['Timeout', ($config['timeout'] ?? 'N/A') . 's', ''],
+                ['Timeout', ($config['timeout'] ?? 'N/A').'s', ''],
                 ['Retry Attempts', $config['retry_attempts'] ?? 'N/A', ''],
             ]
         );
@@ -91,7 +91,7 @@ class SyncStatusCommand extends Command
     protected function showStrategiesAndResolvers(): void
     {
         $this->info('🔧 Available Components:');
-        
+
         $strategies = $this->syncManager->getAvailableStrategies();
         $resolvers = $this->syncManager->getAvailableConflictResolvers();
 
@@ -112,14 +112,15 @@ class SyncStatusCommand extends Command
         $this->info('📊 Collection Status:');
 
         $collections = $this->getCollectionsToCheck();
-        
+
         if ($collections->isEmpty()) {
             $this->warn('No collections configured for sync.');
+
             return;
         }
 
         $tableData = [];
-        
+
         foreach ($collections as $collection) {
             $status = $this->getCollectionSyncStatus($collection);
             $tableData[] = [
@@ -127,7 +128,7 @@ class SyncStatusCommand extends Command
                 $status['has_mapping'] ? '✅' : '❌',
                 $status['table_exists'] ? '✅' : '❌',
                 $status['can_sync'] ? '✅' : '❌',
-                $status['table_name'] ?? 'N/A'
+                $status['table_name'] ?? 'N/A',
             ];
         }
 
@@ -161,7 +162,7 @@ class SyncStatusCommand extends Command
 
         if ($isEnabled) {
             $this->info('💡 To set up the schedule, add this to your app/Console/Kernel.php:');
-            $this->line('   $schedule->command(\'firebase:sync:scheduled\')->' . ($scheduleConfig['frequency'] ?? 'hourly') . '();');
+            $this->line('   $schedule->command(\'firebase:sync:scheduled\')->'.($scheduleConfig['frequency'] ?? 'hourly').'();');
         }
     }
 
@@ -172,7 +173,7 @@ class SyncStatusCommand extends Command
     {
         if ($collectionsOption = $this->option('collections')) {
             return collect(explode(',', $collectionsOption))
-                ->map(fn($c) => trim($c))
+                ->map(fn ($c) => trim($c))
                 ->filter();
         }
 
@@ -180,12 +181,13 @@ class SyncStatusCommand extends Command
         $configCollections = config('firebase-models.sync.schedule.collections', '');
         if ($configCollections) {
             return collect(explode(',', $configCollections))
-                ->map(fn($c) => trim($c))
+                ->map(fn ($c) => trim($c))
                 ->filter();
         }
 
         // Get from sync mappings
         $mappings = config('firebase-models.sync.mappings', []);
+
         return collect(array_keys($mappings));
     }
 
@@ -195,11 +197,11 @@ class SyncStatusCommand extends Command
     protected function getCollectionSyncStatus(string $collection): array
     {
         $schemaMapper = $this->syncManager->getSchemaMapper();
-        
+
         $hasMapping = $schemaMapper->hasMapping($collection);
         $tableName = $hasMapping ? $schemaMapper->getTableName($collection) : null;
         $tableExists = $tableName ? Schema::hasTable($tableName) : false;
-        
+
         return [
             'has_mapping' => $hasMapping,
             'table_name' => $tableName,
@@ -219,23 +221,23 @@ class SyncStatusCommand extends Command
         foreach ($collections as $collection) {
             $this->newLine();
             $this->line("Collection: <comment>{$collection}</comment>");
-            
+
             $status = $this->getCollectionSyncStatus($collection);
             $schemaMapper = $this->syncManager->getSchemaMapper();
-            
+
             if ($status['has_mapping']) {
                 $mapping = $schemaMapper->getColumnMapping($collection);
                 $this->line("  Table: {$status['table_name']}");
-                $this->line("  Column Mapping: " . json_encode($mapping, JSON_PRETTY_PRINT));
-                
+                $this->line('  Column Mapping: '.json_encode($mapping, JSON_PRETTY_PRINT));
+
                 if ($status['table_exists']) {
                     $columns = Schema::getColumnListing($status['table_name']);
-                    $this->line("  Table Columns: " . implode(', ', $columns));
+                    $this->line('  Table Columns: '.implode(', ', $columns));
                 } else {
-                    $this->line("  <error>Table does not exist</error>");
+                    $this->line('  <error>Table does not exist</error>');
                 }
             } else {
-                $this->line("  <error>No mapping configured</error>");
+                $this->line('  <error>No mapping configured</error>');
             }
         }
     }

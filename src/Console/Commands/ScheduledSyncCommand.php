@@ -50,6 +50,7 @@ class ScheduledSyncCommand extends Command
             if (!$this->option('quiet')) {
                 $this->info('Scheduled sync is disabled.');
             }
+
             return self::SUCCESS;
         }
 
@@ -59,32 +60,34 @@ class ScheduledSyncCommand extends Command
             if (!$this->option('quiet')) {
                 $this->error('Sync mode is not enabled.');
             }
+
             return self::FAILURE;
         }
 
         $startTime = microtime(true);
-        
+
         try {
             // Get collections to sync
             $collections = $this->getCollectionsToSync();
-            
+
             if ($collections->isEmpty()) {
                 if (!$this->option('quiet')) {
                     $this->info('No collections configured for scheduled sync.');
                 }
+
                 return self::SUCCESS;
             }
 
             if (!$this->option('quiet')) {
-                $this->info("Starting scheduled sync for collections: " . $collections->implode(', '));
+                $this->info('Starting scheduled sync for collections: '.$collections->implode(', '));
             }
 
             // Perform sync
             $results = $this->performSync($collections);
-            
+
             // Log results
             $this->logResults($results, microtime(true) - $startTime);
-            
+
             // Check for errors
             $hasErrors = $results->contains(function ($result) {
                 return !$result->isSuccessful();
@@ -99,15 +102,14 @@ class ScheduledSyncCommand extends Command
             }
 
             return $hasErrors ? self::FAILURE : self::SUCCESS;
-
         } catch (\Exception $e) {
-            Log::error('Scheduled sync failed: ' . $e->getMessage(), [
+            Log::error('Scheduled sync failed: '.$e->getMessage(), [
                 'exception' => $e,
-                'collections' => $this->getCollectionsToSync()->toArray()
+                'collections' => $this->getCollectionsToSync()->toArray(),
             ]);
 
             if (!$this->option('quiet')) {
-                $this->error('Scheduled sync failed: ' . $e->getMessage());
+                $this->error('Scheduled sync failed: '.$e->getMessage());
             }
 
             return self::FAILURE;
@@ -122,7 +124,7 @@ class ScheduledSyncCommand extends Command
         // Use command option if provided
         if ($collectionsOption = $this->option('collections')) {
             return collect(explode(',', $collectionsOption))
-                ->map(fn($c) => trim($c))
+                ->map(fn ($c) => trim($c))
                 ->filter();
         }
 
@@ -130,7 +132,7 @@ class ScheduledSyncCommand extends Command
         $configCollections = config('firebase-models.sync.schedule.collections', '');
         if ($configCollections) {
             return collect(explode(',', $configCollections))
-                ->map(fn($c) => trim($c))
+                ->map(fn ($c) => trim($c))
                 ->filter();
         }
 
@@ -159,15 +161,14 @@ class ScheduledSyncCommand extends Command
                     $summary = $result->getSummary();
                     $this->line("  {$collection}: {$summary['synced']}/{$summary['processed']} synced");
                 }
-
             } catch (\Exception $e) {
-                Log::error("Failed to sync collection {$collection}: " . $e->getMessage(), [
+                Log::error("Failed to sync collection {$collection}: ".$e->getMessage(), [
                     'collection' => $collection,
-                    'exception' => $e
+                    'exception' => $e,
                 ]);
 
                 if (!$this->option('quiet')) {
-                    $this->error("  {$collection}: Failed - " . $e->getMessage());
+                    $this->error("  {$collection}: Failed - ".$e->getMessage());
                 }
             }
         }
@@ -189,9 +190,9 @@ class ScheduledSyncCommand extends Command
 
         foreach ($results as $collection => $result) {
             $summary = $result->getSummary();
-            
+
             $collectionResults[$collection] = $summary;
-            
+
             $totalProcessed += $summary['processed'];
             $totalSynced += $summary['synced'];
             $totalConflicts += $summary['conflicts'];
@@ -205,9 +206,9 @@ class ScheduledSyncCommand extends Command
                 'synced' => $totalSynced,
                 'conflicts' => $totalConflicts,
                 'errors' => $totalErrors,
-                'success_rate' => $totalProcessed > 0 ? round(($totalSynced / $totalProcessed) * 100, 2) : 0
+                'success_rate' => $totalProcessed > 0 ? round(($totalSynced / $totalProcessed) * 100, 2) : 0,
             ],
-            'collections' => $collectionResults
+            'collections' => $collectionResults,
         ];
 
         if ($totalErrors > 0) {

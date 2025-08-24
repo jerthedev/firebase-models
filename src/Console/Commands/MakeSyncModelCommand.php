@@ -31,7 +31,7 @@ class MakeSyncModelCommand extends GeneratorCommand
      */
     protected function getStub(): string
     {
-        return __DIR__ . '/../../../stubs/firestore-model-sync.stub';
+        return __DIR__.'/../../../stubs/firestore-model-sync.stub';
     }
 
     /**
@@ -39,7 +39,7 @@ class MakeSyncModelCommand extends GeneratorCommand
      */
     protected function getDefaultNamespace($rootNamespace): string
     {
-        return $rootNamespace . '\Models';
+        return $rootNamespace.'\Models';
     }
 
     /**
@@ -65,6 +65,7 @@ class MakeSyncModelCommand extends GeneratorCommand
     {
         $collection = $this->option('collection') ?: Str::snake(Str::pluralStudly(class_basename($this->argument('name'))));
         $stub = str_replace('{{ collection }}', $collection, $stub);
+
         return $this;
     }
 
@@ -75,6 +76,7 @@ class MakeSyncModelCommand extends GeneratorCommand
     {
         $table = $this->option('table') ?: Str::snake(Str::pluralStudly(class_basename($this->argument('name'))));
         $stub = str_replace('{{ table }}', $table, $stub);
+
         return $this;
     }
 
@@ -84,16 +86,17 @@ class MakeSyncModelCommand extends GeneratorCommand
     protected function replaceFillable(string &$stub): static
     {
         $fillable = $this->option('fillable');
-        
+
         if ($fillable) {
             $fillableArray = collect(explode(',', $fillable))
-                ->map(fn($field) => "'" . trim($field) . "'")
+                ->map(fn ($field) => "'".trim($field)."'")
                 ->implode(",\n        ");
         } else {
-            $fillableArray = "// Add your fillable attributes here";
+            $fillableArray = '// Add your fillable attributes here';
         }
 
         $stub = str_replace('{{ fillable }}', $fillableArray, $stub);
+
         return $this;
     }
 
@@ -103,16 +106,17 @@ class MakeSyncModelCommand extends GeneratorCommand
     protected function replaceHidden(string &$stub): static
     {
         $hidden = $this->option('hidden');
-        
+
         if ($hidden) {
             $hiddenArray = collect(explode(',', $hidden))
-                ->map(fn($field) => "'" . trim($field) . "'")
+                ->map(fn ($field) => "'".trim($field)."'")
                 ->implode(",\n        ");
         } else {
-            $hiddenArray = "// Add your hidden attributes here";
+            $hiddenArray = '// Add your hidden attributes here';
         }
 
         $stub = str_replace('{{ hidden }}', $hiddenArray, $stub);
+
         return $this;
     }
 
@@ -122,19 +126,21 @@ class MakeSyncModelCommand extends GeneratorCommand
     protected function replaceCasts(string &$stub): static
     {
         $casts = $this->option('casts');
-        
+
         if ($casts) {
             $castsArray = collect(explode(',', $casts))
                 ->map(function ($cast) {
                     [$field, $type] = explode(':', trim($cast));
-                    return "'" . trim($field) . "' => '" . trim($type) . "'";
+
+                    return "'".trim($field)."' => '".trim($type)."'";
                 })
                 ->implode(",\n        ");
         } else {
-            $castsArray = "// Add your casts here";
+            $castsArray = '// Add your casts here';
         }
 
         $stub = str_replace('{{ casts }}', $castsArray, $stub);
+
         return $this;
     }
 
@@ -162,16 +168,16 @@ class MakeSyncModelCommand extends GeneratorCommand
         if ($result !== false) {
             $this->info('Sync-enabled Firestore model created successfully.');
             $this->newLine();
-            
+
             // Show next steps
             $this->info('Next steps:');
             $this->line('1. Configure sync mapping in config/firebase-models.php');
             $this->line('2. Create the local database table migration');
             $this->line('3. Run: php artisan firebase:sync:status to verify setup');
-            
+
             $collection = $this->option('collection') ?: Str::snake(Str::pluralStudly(class_basename($this->argument('name'))));
             $table = $this->option('table') ?: $collection;
-            
+
             $this->newLine();
             $this->info('Example sync mapping configuration:');
             $this->line("'sync' => [");
@@ -180,10 +186,10 @@ class MakeSyncModelCommand extends GeneratorCommand
             $this->line("            'table' => '{$table}',");
             $this->line("            'columns' => [");
             $this->line("                // 'firestore_field' => 'local_column',");
-            $this->line("            ],");
-            $this->line("        ],");
-            $this->line("    ],");
-            $this->line("],");
+            $this->line('            ],');
+            $this->line('        ],');
+            $this->line('    ],');
+            $this->line('],');
         }
 
         return $result;

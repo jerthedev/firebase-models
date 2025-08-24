@@ -2,15 +2,14 @@
 
 namespace JTD\FirebaseModels\Tests\Unit;
 
-use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
-use JTD\FirebaseModels\Tests\Models\TestPost;
-use JTD\FirebaseModels\Tests\Models\TestUser;
+use JTD\FirebaseModels\Facades\FirestoreDB;
 use JTD\FirebaseModels\Firestore\Batch\BatchManager;
 use JTD\FirebaseModels\Firestore\Batch\BatchOperation;
 use JTD\FirebaseModels\Firestore\Batch\BatchResult;
-use JTD\FirebaseModels\Facades\FirestoreDB;
-use PHPUnit\Framework\Attributes\Test;
+use JTD\FirebaseModels\Tests\Models\TestPost;
+use JTD\FirebaseModels\Tests\TestSuites\UnitTestSuite;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
 #[Group('unit')]
 #[Group('advanced')]
@@ -94,16 +93,16 @@ class BatchOperationsTest extends UnitTestSuite
         $batch = BatchManager::create()
             ->insert('posts', 'new-post', [
                 'title' => 'New Post',
-                'content' => 'New content'
+                'content' => 'New content',
             ])
             ->update('posts', 'existing-post', [
                 'views' => FirestoreDB::increment(1),
-                'updated_at' => now()
+                'updated_at' => now(),
             ])
             ->delete('posts', 'old-post')
             ->upsert('users', 'user-123', [
                 'last_active' => now(),
-                'login_count' => FirestoreDB::increment(1)
+                'login_count' => FirestoreDB::increment(1),
             ]);
 
         $result = $batch->commit();
@@ -125,7 +124,7 @@ class BatchOperationsTest extends UnitTestSuite
             $largeDataset[] = [
                 'title' => "Post {$i}",
                 'content' => "Content for post {$i}",
-                'index' => $i
+                'index' => $i,
             ];
         }
 
@@ -133,7 +132,7 @@ class BatchOperationsTest extends UnitTestSuite
 
         $result = BatchManager::bulkInsert('posts', $largeDataset, [
             'chunk_size' => 500,
-            'auto_chunk' => true
+            'auto_chunk' => true,
         ]);
 
         expect($result)->toBeInstanceOf(BatchResult::class);
@@ -170,7 +169,7 @@ class BatchOperationsTest extends UnitTestSuite
             $documents[] = [
                 'title' => "Performance Test {$i}",
                 'content' => str_repeat('x', 100), // 100 chars
-                'index' => $i
+                'index' => $i,
             ];
         }
 
@@ -178,7 +177,7 @@ class BatchOperationsTest extends UnitTestSuite
 
         $startTime = microtime(true);
         $result = BatchManager::bulkInsert('posts', $documents, [
-            'monitor_performance' => true
+            'monitor_performance' => true,
         ]);
         $totalTime = (microtime(true) - $startTime) * 1000;
 
@@ -198,16 +197,16 @@ class BatchOperationsTest extends UnitTestSuite
                 'title' => 'Post with Transforms',
                 'created_at' => FirestoreDB::serverTimestamp(),
                 'views' => 0,
-                'tags' => []
+                'tags' => [],
             ])
             ->update('posts', 'post-2', [
                 'views' => FirestoreDB::increment(5),
                 'updated_at' => FirestoreDB::serverTimestamp(),
-                'tags' => FirestoreDB::arrayUnion(['php', 'laravel'])
+                'tags' => FirestoreDB::arrayUnion(['php', 'laravel']),
             ])
             ->update('posts', 'post-3', [
                 'tags' => FirestoreDB::arrayRemove(['deprecated']),
-                'old_field' => FirestoreDB::delete()
+                'old_field' => FirestoreDB::delete(),
             ]);
 
         $result = $batch->commit();
@@ -223,16 +222,17 @@ class BatchOperationsTest extends UnitTestSuite
 
         $batch = BatchManager::create()
             ->insertIf('posts', 'conditional-post', [
-                'title' => 'Conditional Post'
+                'title' => 'Conditional Post',
             ], function ($docRef) {
                 // Only insert if document doesn't exist
                 return !$docRef->snapshot()->exists();
             })
             ->updateIf('users', 'user-123', [
-                'last_login' => now()
+                'last_login' => now(),
             ], function ($docRef) {
                 // Only update if user is active
                 $data = $docRef->snapshot()->data();
+
                 return $data['active'] ?? false;
             });
 
@@ -276,10 +276,10 @@ class BatchOperationsTest extends UnitTestSuite
                     'completed' => $completed,
                     'total' => $total,
                     'batch' => $currentBatch,
-                    'percentage' => round(($completed / $total) * 100, 2)
+                    'percentage' => round(($completed / $total) * 100, 2),
                 ];
             },
-            'chunk_size' => 10
+            'chunk_size' => 10,
         ]);
 
         expect($result->isSuccess())->toBeTrue();
@@ -303,8 +303,8 @@ class BatchOperationsTest extends UnitTestSuite
             'validate' => true,
             'validation_rules' => [
                 'title' => 'required|min:1',
-                'content' => 'string'
-            ]
+                'content' => 'string',
+            ],
         ]);
 
         expect($result)->toBeInstanceOf(BatchResult::class);
@@ -321,7 +321,7 @@ class BatchOperationsTest extends UnitTestSuite
         $documents = array_fill(0, 25, ['title' => 'Stats Test', 'content' => 'Content']);
 
         $result = BatchManager::bulkInsert('posts', $documents, [
-            'collect_statistics' => true
+            'collect_statistics' => true,
         ]);
 
         expect($result->isSuccess())->toBeTrue();
@@ -368,7 +368,7 @@ class BatchOperationsTest extends UnitTestSuite
                 'title' => "Memory Test {$i}",
                 'content' => str_repeat('x', 500), // 500 chars per document
                 'index' => $i,
-                'metadata' => array_fill(0, 10, "meta_{$i}")
+                'metadata' => array_fill(0, 10, "meta_{$i}"),
             ];
         }
 
@@ -379,7 +379,7 @@ class BatchOperationsTest extends UnitTestSuite
         $result = BatchManager::bulkInsert('posts', $largeDataset, [
             'memory_efficient' => true,
             'chunk_size' => 100,
-            'clear_processed_chunks' => true
+            'clear_processed_chunks' => true,
         ]);
 
         $finalMemory = memory_get_usage(true);

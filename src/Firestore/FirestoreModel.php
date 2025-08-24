@@ -2,45 +2,40 @@
 
 namespace JTD\FirebaseModels\Firestore;
 
-use Google\Cloud\Firestore\DocumentSnapshot;
-use Google\Cloud\Firestore\DocumentReference;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Arr;
+use ArrayAccess;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use JsonSerializable;
-use ArrayAccess;
 use JTD\FirebaseModels\Facades\FirestoreDB;
-use JTD\FirebaseModels\Firestore\Concerns\HasAttributes;
-use JTD\FirebaseModels\Firestore\Concerns\HasEloquentAccessors;
-use JTD\FirebaseModels\Firestore\Concerns\HasScopes;
-use JTD\FirebaseModels\Firestore\Concerns\HasTimestamps;
-use JTD\FirebaseModels\Firestore\Concerns\HasEvents;
 use JTD\FirebaseModels\Firestore\Concerns\GuardsAttributes;
-use JTD\FirebaseModels\Firestore\Concerns\HasSyncMode;
-use JTD\FirebaseModels\Firestore\Concerns\HasTransactions;
+use JTD\FirebaseModels\Firestore\Concerns\HasAttributes;
 use JTD\FirebaseModels\Firestore\Concerns\HasBatchOperations;
+use JTD\FirebaseModels\Firestore\Concerns\HasEvents;
 use JTD\FirebaseModels\Firestore\Concerns\HasRelationships;
+use JTD\FirebaseModels\Firestore\Concerns\HasScopes;
+use JTD\FirebaseModels\Firestore\Concerns\HasSyncMode;
+use JTD\FirebaseModels\Firestore\Concerns\HasTimestamps;
+use JTD\FirebaseModels\Firestore\Concerns\HasTransactions;
 
 /**
  * Abstract Firestore Model providing Eloquent-like functionality for Firestore documents.
- * 
+ *
  * This class provides a 1:1 compatible API with Laravel's Eloquent Model,
  * adapted for Firestore's document-based architecture.
  */
 abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonSerializable
 {
-    use HasAttributes,
-        HasScopes,
-        HasTimestamps,
-        HasEvents,
-        GuardsAttributes,
-        HasSyncMode,
-        HasTransactions,
+    use GuardsAttributes,
+        HasAttributes,
         HasBatchOperations,
-        HasRelationships {
+        HasEvents,
+        HasRelationships,
+        HasScopes,
+        HasSyncMode,
+        HasTimestamps,
+        HasTransactions {
             HasRelationships::getRelationValue insteadof HasAttributes;
             HasRelationships::getRelationshipFromMethod insteadof HasAttributes;
             HasEvents::fireModelEvent insteadof HasRelationships;
@@ -299,7 +294,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
      */
     public static function getCollectionName(): string
     {
-        return (new static)->getCollection();
+        return (new static())->getCollection();
     }
 
     /**
@@ -308,6 +303,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     public function setCollection(string $collection): static
     {
         $this->collection = $collection;
+
         return $this;
     }
 
@@ -325,6 +321,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     public function setKeyName(string $key): static
     {
         $this->primaryKey = $key;
+
         return $this;
     }
 
@@ -381,7 +378,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
      */
     public static function query(): FirestoreQueryBuilder
     {
-        return (new static)->newQuery();
+        return (new static())->newQuery();
     }
 
     /**
@@ -431,6 +428,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
         $model = new static($attributes);
         $model->exists = $exists;
         $model->setCollection($this->getCollection());
+
         return $model;
     }
 
@@ -442,6 +440,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
         $model = $this->newInstance([], true);
         $model->setRawAttributes($attributes, true);
         $model->fireModelEvent('retrieved', false);
+
         return $model;
     }
 
@@ -572,6 +571,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     protected function setKeysForSaveQuery(FirestoreQueryBuilder $query): FirestoreQueryBuilder
     {
         $query->where($this->getKeyName(), '=', $this->getKeyForSaveQuery());
+
         return $query;
     }
 
@@ -589,7 +589,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     protected function finishSave(array $options): void
     {
         $this->fireModelEvent('saved', false);
-        
+
         if ($this->isDirty() && ($options['touch'] ?? true)) {
             $this->touchOwners();
         }
@@ -692,7 +692,8 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     public function isDirty($attributes = null): bool
     {
         return $this->hasChanges(
-            $this->getDirty(), is_array($attributes) ? $attributes : func_get_args()
+            $this->getDirty(),
+            is_array($attributes) ? $attributes : func_get_args()
         );
     }
 
@@ -768,6 +769,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     public function setPerPage(int $perPage): static
     {
         $this->perPage = $perPage;
+
         return $this;
     }
 
@@ -947,7 +949,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
      */
     public static function __callStatic(string $method, array $parameters): mixed
     {
-        return (new static)->$method(...$parameters);
+        return (new static())->$method(...$parameters);
     }
 
     /**
@@ -1011,7 +1013,9 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     protected static function throwBadMethodCallException(string $method): void
     {
         throw new \BadMethodCallException(sprintf(
-            'Call to undefined method %s::%s()', static::class, $method
+            'Call to undefined method %s::%s()',
+            static::class,
+            $method
         ));
     }
 
@@ -1029,6 +1033,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     public function setIncrementing(bool $value): static
     {
         $this->incrementing = $value;
+
         return $this;
     }
 
@@ -1046,6 +1051,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     public function setKeyType(string $type): static
     {
         $this->keyType = $type;
+
         return $this;
     }
 
@@ -1071,6 +1077,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     public function setRelation(string $relation, mixed $value): static
     {
         $this->relations[$relation] = $value;
+
         return $this;
     }
 
@@ -1080,6 +1087,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     public function unsetRelation(string $relation): static
     {
         unset($this->relations[$relation]);
+
         return $this;
     }
 
@@ -1097,6 +1105,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     public function setRelations(array $relations): static
     {
         $this->relations = $relations;
+
         return $this;
     }
 
@@ -1114,6 +1123,7 @@ abstract class FirestoreModel implements Arrayable, ArrayAccess, Jsonable, JsonS
     public function setTouchedRelations(array $touches): static
     {
         $this->touches = $touches;
+
         return $this;
     }
 

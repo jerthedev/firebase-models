@@ -119,11 +119,11 @@ return [
 
     'auth' => [
         'guard' => env('FIREBASE_AUTH_GUARD', 'firebase'),
-        
+
         'provider' => env('FIREBASE_AUTH_PROVIDER', 'firebase_users'),
-        
+
         'user_model' => env('FIREBASE_USER_MODEL', 'App\\Models\\User'),
-        
+
         'token_cache_ttl' => env('FIREBASE_TOKEN_CACHE_TTL', 3600), // 1 hour
     ],
 
@@ -138,9 +138,9 @@ return [
 
     'query' => [
         'default_limit' => env('FIREBASE_QUERY_DEFAULT_LIMIT', 25),
-        
+
         'max_limit' => env('FIREBASE_QUERY_MAX_LIMIT', 1000),
-        
+
         'timeout' => env('FIREBASE_QUERY_TIMEOUT', 30), // seconds
     ],
 
@@ -155,9 +155,9 @@ return [
 
     'logging' => [
         'enabled' => env('FIREBASE_LOGGING_ENABLED', false),
-        
+
         'channel' => env('FIREBASE_LOG_CHANNEL', 'stack'),
-        
+
         'level' => env('FIREBASE_LOG_LEVEL', 'info'),
     ],
 ];

@@ -2,14 +2,14 @@
 
 namespace JTD\FirebaseModels\Tests\E2E;
 
-use Orchestra\Testbench\TestCase as Orchestra;
-use Kreait\Firebase\Factory;
-use Kreait\Firebase\Contract\Firestore;
-use Kreait\Firebase\Contract\Auth as FirebaseAuthContract;
 use Google\Cloud\Firestore\FirestoreClient;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Kreait\Firebase\Contract\Auth as FirebaseAuthContract;
+use Kreait\Firebase\Contract\Firestore;
+use Kreait\Firebase\Factory;
+use Orchestra\Testbench\TestCase as Orchestra;
 
 /**
  * Base test case for End-to-End testing with real Firebase API.
@@ -23,6 +23,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 abstract class BaseE2ETestCase extends Orchestra
 {
     use RefreshDatabase;
+
     /**
      * Firebase Factory instance for E2E testing.
      */
@@ -151,7 +152,7 @@ abstract class BaseE2ETestCase extends Orchestra
         }
 
         $credentials = json_decode(file_get_contents($credentialsPath), true);
-        
+
         if (!$credentials || !isset($credentials['project_id'])) {
             $this->markTestSkipped('Invalid E2E credentials format');
         }
@@ -160,7 +161,7 @@ abstract class BaseE2ETestCase extends Orchestra
         Config::set('firebase.mock_mode', false);
         Config::set('firebase.project_id', $credentials['project_id']);
         Config::set('firebase.credentials', $credentials);
-        
+
         // Configure cache for E2E testing
         Config::set('cache.default', 'array');
         Config::set('firebase-models.cache.store', 'array');
@@ -174,8 +175,8 @@ abstract class BaseE2ETestCase extends Orchestra
     {
         // Try multiple path resolution methods
         $possiblePaths = [
-            __DIR__ . '/../credentials/e2e-credentials.json',
-            dirname(__DIR__) . '/credentials/e2e-credentials.json',
+            __DIR__.'/../credentials/e2e-credentials.json',
+            dirname(__DIR__).'/credentials/e2e-credentials.json',
         ];
 
         // If base_path is available, try that too
@@ -194,7 +195,7 @@ abstract class BaseE2ETestCase extends Orchestra
         }
 
         // Return the most likely path even if it doesn't exist
-        return __DIR__ . '/../credentials/e2e-credentials.json';
+        return __DIR__.'/../credentials/e2e-credentials.json';
     }
 
     /**
@@ -213,18 +214,18 @@ abstract class BaseE2ETestCase extends Orchestra
             $this->realFirestore = $this->firebaseFactory->createFirestore();
             $this->realFirebaseAuth = $this->firebaseFactory->createAuth();
         } catch (\Exception $e) {
-            $this->markTestSkipped('Firebase client creation failed: ' . $e->getMessage());
+            $this->markTestSkipped('Firebase client creation failed: '.$e->getMessage());
         }
 
         // Bind the real Firebase clients to the application container
-        $this->app->singleton('firebase.factory', fn() => $this->firebaseFactory);
-        $this->app->singleton(Firestore::class, fn() => $this->realFirestore);
-        $this->app->singleton(FirebaseAuthContract::class, fn() => $this->realFirebaseAuth);
-        $this->app->singleton('firebase.firestore', fn() => $this->realFirestore);
-        $this->app->singleton('firebase.auth', fn() => $this->realFirebaseAuth);
+        $this->app->singleton('firebase.factory', fn () => $this->firebaseFactory);
+        $this->app->singleton(Firestore::class, fn () => $this->realFirestore);
+        $this->app->singleton(FirebaseAuthContract::class, fn () => $this->realFirebaseAuth);
+        $this->app->singleton('firebase.firestore', fn () => $this->realFirestore);
+        $this->app->singleton('firebase.auth', fn () => $this->realFirebaseAuth);
 
         // Bind FirestoreClient to use the real one
-        $this->app->singleton(FirestoreClient::class, fn() => $this->realFirestore->database());
+        $this->app->singleton(FirestoreClient::class, fn () => $this->realFirestore->database());
 
         // Bind FirestoreDatabase to use the real client
         $this->app->singleton('firestore.db', function ($app) {
@@ -237,7 +238,7 @@ abstract class BaseE2ETestCase extends Orchestra
      */
     protected function generateTestPrefix(): void
     {
-        $this->testCollectionPrefix = 'e2e_test_' . date('Ymd_His') . '_' . Str::random(8);
+        $this->testCollectionPrefix = 'e2e_test_'.date('Ymd_His').'_'.Str::random(8);
     }
 
     /**
@@ -245,8 +246,9 @@ abstract class BaseE2ETestCase extends Orchestra
      */
     protected function getTestCollection(string $baseName): string
     {
-        $collectionName = $this->testCollectionPrefix . '_' . $baseName;
+        $collectionName = $this->testCollectionPrefix.'_'.$baseName;
         $this->testCollections[] = $collectionName;
+
         return $collectionName;
     }
 
@@ -256,7 +258,7 @@ abstract class BaseE2ETestCase extends Orchestra
     protected function createTestDocument(string $collection, array $data, ?string $id = null): array
     {
         $collection = $this->getTestCollection($collection);
-        
+
         if ($id) {
             $docRef = $this->realFirestore->database()->collection($collection)->document($id);
             $docRef->set($data);
@@ -268,7 +270,7 @@ abstract class BaseE2ETestCase extends Orchestra
 
         $this->testDocuments[] = [
             'collection' => $collection,
-            'id' => $documentId
+            'id' => $documentId,
         ];
 
         return array_merge($data, ['id' => $documentId]);
@@ -280,16 +282,16 @@ abstract class BaseE2ETestCase extends Orchestra
     protected function createTestUser(array $properties = []): array
     {
         $defaultProperties = [
-            'email' => 'test_' . Str::random(8) . '@example.com',
+            'email' => 'test_'.Str::random(8).'@example.com',
             'password' => 'testpassword123',
-            'displayName' => 'Test User ' . Str::random(4),
+            'displayName' => 'Test User '.Str::random(4),
             'emailVerified' => false,
         ];
 
         $userProperties = array_merge($defaultProperties, $properties);
-        
+
         $userRecord = $this->realFirebaseAuth->createUser($userProperties);
-        
+
         $this->testUsers[] = $userRecord->uid;
 
         return [
@@ -407,7 +409,7 @@ abstract class BaseE2ETestCase extends Orchestra
         $this->assertTrue($document->exists(), "Document {$id} should exist in collection {$collection}");
 
         $actualData = $document->data();
-        
+
         foreach ($expectedData as $key => $value) {
             $this->assertEquals($value, $actualData[$key] ?? null, "Document field {$key} should match expected value");
         }

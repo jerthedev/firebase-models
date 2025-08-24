@@ -2,19 +2,21 @@
 
 /**
  * Test Runner for Restructured Test Organization
- * 
+ *
  * This script demonstrates the new test organization structure
  * and provides optimized test execution based on suite types.
  */
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__.'/../vendor/autoload.php';
 
 use JTD\FirebaseModels\Tests\Utilities\TestConfigManager;
 
 class RestructuredTestRunner
 {
     private TestConfigManager $config;
+
     private array $suiteConfigs;
+
     private string $baseCommand;
 
     public function __construct()
@@ -22,7 +24,7 @@ class RestructuredTestRunner
         $this->config = TestConfigManager::getInstance();
         $this->config->applyMemoryLimit();
         $this->baseCommand = 'php vendor/bin/phpunit -c tests/phpunit-restructured.xml';
-        
+
         $this->setupSuiteConfigurations();
     }
 
@@ -77,17 +79,17 @@ class RestructuredTestRunner
     {
         $this->printHeader();
         $this->printConfiguration();
-        
+
         $totalStartTime = microtime(true);
         $results = [];
-        
+
         // Run suites in order of speed (fastest first)
         $suiteOrder = ['Unit-UltraLight', 'Performance', 'Integration-Lightweight', 'Feature-Full', 'Legacy'];
-        
+
         foreach ($suiteOrder as $suite) {
             $results[$suite] = $this->runSuite($suite);
         }
-        
+
         $totalTime = microtime(true) - $totalStartTime;
         $this->printSummary($results, $totalTime);
     }
@@ -100,34 +102,34 @@ class RestructuredTestRunner
         if (!isset($this->suiteConfigs[$suiteName])) {
             throw new InvalidArgumentException("Unknown test suite: {$suiteName}");
         }
-        
+
         $config = $this->suiteConfigs[$suiteName];
-        
-        echo "\n" . str_repeat('=', 80) . "\n";
+
+        echo "\n".str_repeat('=', 80)."\n";
         echo "Running Test Suite: {$suiteName}\n";
         echo "Description: {$config['description']}\n";
         echo "Memory Limit: {$config['memory_limit']}\n";
         echo "Mock Type: {$config['mock_type']}\n";
-        echo str_repeat('=', 80) . "\n";
-        
+        echo str_repeat('=', 80)."\n";
+
         $startTime = microtime(true);
         $startMemory = memory_get_usage();
-        
+
         // Set environment variables for this suite
         putenv("TEST_MOCK_TYPE={$config['mock_type']}");
         putenv("TEST_MEMORY_LIMIT={$config['memory_limit']}");
         putenv("TEST_TIMEOUT={$config['timeout']}");
-        
+
         // Build and execute command
         $command = $this->buildCommand($suiteName, $config);
         $output = [];
         $returnCode = 0;
-        
-        exec($command . ' 2>&1', $output, $returnCode);
-        
+
+        exec($command.' 2>&1', $output, $returnCode);
+
         $endTime = microtime(true);
         $endMemory = memory_get_usage();
-        
+
         $result = [
             'suite' => $suiteName,
             'success' => $returnCode === 0,
@@ -136,9 +138,9 @@ class RestructuredTestRunner
             'output' => $output,
             'return_code' => $returnCode,
         ];
-        
+
         $this->printSuiteResult($result);
-        
+
         return $result;
     }
 
@@ -149,15 +151,15 @@ class RestructuredTestRunner
     {
         $command = $this->baseCommand;
         $command .= " --testsuite={$suiteName}";
-        
+
         // Add memory limit
-        $command = "php -d memory_limit={$config['memory_limit']} " . substr($command, 4);
-        
+        $command = "php -d memory_limit={$config['memory_limit']} ".substr($command, 4);
+
         // Add timeout if supported
         if (function_exists('pcntl_alarm')) {
-            $command = "timeout {$config['timeout']} " . $command;
+            $command = "timeout {$config['timeout']} ".$command;
         }
-        
+
         return $command;
     }
 
@@ -181,15 +183,15 @@ class RestructuredTestRunner
     private function printConfiguration(): void
     {
         $config = $this->config->getConfigSummary();
-        
+
         echo "\nCurrent Configuration:\n";
         echo "  Environment: {$config['environment']}\n";
         echo "  Default Mock Type: {$config['mock_type']}\n";
         echo "  Memory Limit: {$config['memory_limit']}\n";
         echo "  Timeout: {$config['timeout']}s\n";
-        echo "  CI Mode: " . ($config['is_ci'] ? 'Yes' : 'No') . "\n";
-        echo "  Logging: " . ($config['logging_enabled'] ? 'Enabled' : 'Disabled') . "\n";
-        echo "  Profiling: " . ($config['profiling_enabled'] ? 'Enabled' : 'Disabled') . "\n";
+        echo '  CI Mode: '.($config['is_ci'] ? 'Yes' : 'No')."\n";
+        echo '  Logging: '.($config['logging_enabled'] ? 'Enabled' : 'Disabled')."\n";
+        echo '  Profiling: '.($config['profiling_enabled'] ? 'Enabled' : 'Disabled')."\n";
     }
 
     /**
@@ -200,11 +202,11 @@ class RestructuredTestRunner
         $status = $result['success'] ? '✅ PASSED' : '❌ FAILED';
         $duration = number_format($result['duration'], 2);
         $memory = $this->formatBytes($result['memory_used']);
-        
+
         echo "\nResult: {$status}\n";
         echo "Duration: {$duration}s\n";
         echo "Memory Used: {$memory}\n";
-        
+
         if (!$result['success']) {
             echo "\nError Output:\n";
             echo implode("\n", array_slice($result['output'], -10)); // Last 10 lines
@@ -216,18 +218,18 @@ class RestructuredTestRunner
      */
     private function printSummary(array $results, float $totalTime): void
     {
-        echo "\n" . str_repeat('=', 80) . "\n";
+        echo "\n".str_repeat('=', 80)."\n";
         echo "TEST EXECUTION SUMMARY\n";
-        echo str_repeat('=', 80) . "\n";
-        
+        echo str_repeat('=', 80)."\n";
+
         $passed = 0;
         $failed = 0;
-        
+
         foreach ($results as $result) {
             $status = $result['success'] ? '✅' : '❌';
             $duration = number_format($result['duration'], 2);
             $memory = $this->formatBytes($result['memory_used']);
-            
+
             echo sprintf(
                 "%s %-20s %6ss %10s\n",
                 $status,
@@ -235,15 +237,15 @@ class RestructuredTestRunner
                 $duration,
                 $memory
             );
-            
+
             if ($result['success']) {
                 $passed++;
             } else {
                 $failed++;
             }
         }
-        
-        echo str_repeat('-', 80) . "\n";
+
+        echo str_repeat('-', 80)."\n";
         echo sprintf(
             "Total: %d suites, %d passed, %d failed in %.2fs\n",
             count($results),
@@ -251,7 +253,7 @@ class RestructuredTestRunner
             $failed,
             $totalTime
         );
-        
+
         if ($failed > 0) {
             echo "\n❌ Some test suites failed. Check the output above for details.\n";
             exit(1);
@@ -267,13 +269,13 @@ class RestructuredTestRunner
     {
         $units = ['B', 'KB', 'MB', 'GB'];
         $unitIndex = 0;
-        
+
         while ($bytes >= 1024 && $unitIndex < count($units) - 1) {
             $bytes /= 1024;
             $unitIndex++;
         }
-        
-        return round($bytes, 1) . $units[$unitIndex];
+
+        return round($bytes, 1).$units[$unitIndex];
     }
 
     /**
@@ -282,7 +284,7 @@ class RestructuredTestRunner
     public function listSuites(): void
     {
         echo "Available Test Suites:\n\n";
-        
+
         foreach ($this->suiteConfigs as $name => $config) {
             echo "  {$name}\n";
             echo "    Description: {$config['description']}\n";
@@ -296,18 +298,18 @@ class RestructuredTestRunner
 // Command line interface
 if (php_sapi_name() === 'cli') {
     $runner = new RestructuredTestRunner();
-    
+
     $command = $argv[1] ?? 'all';
-    
+
     switch ($command) {
         case 'all':
             $runner->runAll();
             break;
-            
+
         case 'list':
             $runner->listSuites();
             break;
-            
+
         default:
             if (in_array($command, ['Unit-UltraLight', 'Integration-Lightweight', 'Feature-Full', 'Performance', 'Legacy'])) {
                 $result = $runner->runSuite($command);

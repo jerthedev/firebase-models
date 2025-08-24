@@ -10,10 +10,15 @@ use JTD\FirebaseModels\Contracts\Sync\ConflictResolutionInterface;
 class ConflictResolution implements ConflictResolutionInterface
 {
     protected array $resolvedData;
+
     protected string $action;
+
     protected string $winningSource;
+
     protected string $description;
+
     protected bool $requiresManualIntervention;
+
     protected array $metadata;
 
     /**

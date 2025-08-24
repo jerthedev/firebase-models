@@ -6,7 +6,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Request-scoped cache for Firestore operations.
- * 
+ *
  * This cache stores query results for the duration of a single HTTP request,
  * reducing redundant Firestore API calls and improving performance for
  * operations that might query the same data multiple times.
@@ -50,10 +50,12 @@ class RequestCache
 
         if (array_key_exists($key, static::$cache)) {
             static::$stats['hits']++;
+
             return static::$cache[$key];
         }
 
         static::$stats['misses']++;
+
         return null;
     }
 
@@ -124,7 +126,7 @@ class RequestCache
     public static function getHitRate(): float
     {
         $total = static::$stats['hits'] + static::$stats['misses'];
-        
+
         if ($total === 0) {
             return 0.0;
         }
@@ -211,7 +213,7 @@ class RequestCache
             // Remove 20% of oldest entries
             $removeCount = (int) (count(static::$cache) * 0.2);
             $keysToRemove = array_slice(array_keys(static::$cache), 0, $removeCount);
-            
+
             foreach ($keysToRemove as $key) {
                 unset(static::$cache[$key]);
             }
@@ -235,7 +237,7 @@ class RequestCache
             ksort($keyData['params']);
         }
 
-        return 'firestore:' . md5(serialize($keyData));
+        return 'firestore:'.md5(serialize($keyData));
     }
 
     /**

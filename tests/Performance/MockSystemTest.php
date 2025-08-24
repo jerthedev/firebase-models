@@ -2,9 +2,9 @@
 
 namespace JTD\FirebaseModels\Tests\Performance;
 
+use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
 use JTD\FirebaseModels\Tests\TestSuites\PerformanceTestSuite;
 use JTD\FirebaseModels\Tests\Utilities\TestDataFactory;
-use JTD\FirebaseModels\Tests\Helpers\FirestoreMock;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -16,7 +16,6 @@ use PHPUnit\Framework\Attributes\Test;
  * Tests the consolidated FirestoreMock system for performance and functionality.
  * Previously tested multiple mock types, now focuses on single FirestoreMock implementation.
  */
-
 class MockSystemTest extends PerformanceTestSuite
 {
     protected function setUp(): void
@@ -86,7 +85,7 @@ class MockSystemTest extends PerformanceTestSuite
                 $testData = TestDataFactory::createUser([
                     'id' => "user{$i}",
                     'name' => "User {$i}",
-                    'email' => "user{$i}@example.com"
+                    'email' => "user{$i}@example.com",
                 ]);
 
                 $mock->storeDocument('users', "user{$i}", $testData);
@@ -127,7 +126,7 @@ class MockSystemTest extends PerformanceTestSuite
                     'id' => $i,
                     'name' => "Product {$i}",
                     'price' => rand(10, 1000),
-                    'category' => 'test'
+                    'category' => 'test',
                 ]);
 
                 $mock->storeDocument('products', "product_{$i}", $testData);
@@ -166,8 +165,8 @@ class MockSystemTest extends PerformanceTestSuite
                     'metadata' => [
                         'created' => date('Y-m-d H:i:s'),
                         'index' => $i,
-                        'active' => $i % 2 === 0
-                    ]
+                        'active' => $i % 2 === 0,
+                    ],
                 ]);
 
                 $mock->storeDocument('large_users', "user_{$i}", $testData);

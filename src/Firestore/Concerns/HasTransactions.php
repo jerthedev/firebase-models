@@ -5,7 +5,6 @@ namespace JTD\FirebaseModels\Firestore\Concerns;
 use Google\Cloud\Firestore\Transaction;
 use JTD\FirebaseModels\Facades\FirestoreDB;
 use JTD\FirebaseModels\Firestore\Transactions\TransactionManager;
-use JTD\FirebaseModels\Firestore\Transactions\TransactionResult;
 
 /**
  * Trait for handling transactions in Firestore models.
@@ -111,7 +110,7 @@ trait HasTransactions
         }
 
         $docRef = $this->getDocumentReference();
-        
+
         if (empty($this->getKey())) {
             // Generate a new document ID
             $docRef = FirestoreDB::collection($this->getCollection())->newDocument();
@@ -193,6 +192,7 @@ trait HasTransactions
                     $model->saveWithTransaction($transaction);
                 }
             }
+
             return true;
         });
     }
@@ -209,6 +209,7 @@ trait HasTransactions
                     $model->deleteWithTransaction($transaction);
                 }
             }
+
             return true;
         });
     }
@@ -238,6 +239,7 @@ trait HasTransactions
 
             // Apply updates
             $this->fill($updates);
+
             return $this->saveWithTransaction($transaction);
         });
     }

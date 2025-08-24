@@ -3,9 +3,8 @@
 namespace JTD\FirebaseModels\Tests\E2E\Models;
 
 use JTD\FirebaseModels\Tests\E2E\BaseE2ETestCase;
-use JTD\FirebaseModels\Tests\E2E\Models\TestUser;
-use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Basic E2E tests for model operations with real Firebase.
@@ -15,12 +14,13 @@ use PHPUnit\Framework\Attributes\Group;
 class BasicModelE2ETest extends BaseE2ETestCase
 {
     private TestUser $userModel;
+
     private string $testCollection;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->testCollection = $this->getTestCollection('users');
         $this->userModel = (new TestUser())->setCollection($this->testCollection);
     }
